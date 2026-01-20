@@ -27,3 +27,46 @@ Added the DISPUTE-WINDOW feature to market-pool.clar that prevents claims for ~7
 - All 9 market-pool tests pass
 - `clarinet check` passes with no new warnings
 
+## 2026-01-20: Implemented Market Factory Contract
+
+### Summary
+Created the market-factory.clar contract that creates and manages prediction market pools, enabling permissionless market creation with collateral requirements.
+
+### Changes Made
+
+1. **contracts/market-factory.clar** (new file):
+   - Added `MINIMUM-COLLATERAL` constant (u50000000 = 50 USDC)
+   - Added `DEFAULT-RESOLUTION-WINDOW` constant (u1008 = ~7 days in blocks)
+   - Implemented `markets` map storing pool-contract, creator, question, deadline, resolution-deadline, created-at, active
+   - Implemented `creator-markets` map to track markets by creator (max 100 per creator)
+   - Implemented `get-market-count`, `get-market`, `get-creator-markets` read-only functions
+   - Implemented `create-market` function that:
+     - Validates question, deadlines, and collateral amount
+     - Transfers collateral from creator to contract
+     - Creates market entry with sequential ID
+     - Adds market ID to creator's market list
+   - Implemented `deactivate-market` admin function (only contract owner)
+   - Implemented `update-pool-contract` function for pool contract registration
+   - Added comprehensive error constants for all validation failures
+
+2. **contracts/market-factory.clar**:
+   - Added `update-pool-contract` function for pool contract registration
+
+3. **tests/market-factory.test.ts** (new file):
+   - Tests for constants (MINIMUM-COLLATERAL, DEFAULT-RESOLUTION-WINDOW)
+   - Tests for market creation with minimum collateral
+   - Tests for market creation using default resolution deadline
+   - Tests for validation (empty question, past deadline, insufficient collateral)
+   - Tests for sequential market IDs
+   - Tests for get-market and get-creator-markets
+   - Tests for deactivate-market (owner only, already inactive, non-existent)
+   - Tests for collateral transfer from creator to contract
+
+4. **Clarinet.toml**:
+   - Added market-factory contract configuration with mock-usdc dependency
+
+### Verification
+- All 19 market-factory tests pass
+- All 9 market-pool tests pass
+- `clarinet check` passes with no new warnings (only pre-existing warnings in other contracts)
+
