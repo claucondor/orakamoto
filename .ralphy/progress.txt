@@ -1,0 +1,29 @@
+# Ralphy Progress Log
+
+## 2026-01-20: Implemented DISPUTE-WINDOW parameter
+
+### Summary
+Added the DISPUTE-WINDOW feature to market-pool.clar that prevents claims for ~7 days after market resolution, allowing time for disputes.
+
+### Changes Made
+
+1. **contracts/market-pool.clar**:
+   - Added `DISPUTE-WINDOW` constant (u1008 = ~7 days in blocks)
+   - Added `ERR-DISPUTE-WINDOW-ACTIVE` error constant (u1013)
+   - Added `resolution-block` data variable to track when market was resolved
+   - Updated `resolve` function to store `resolution-block` and emit `dispute-window-ends` in event
+   - Updated `claim` function to check that dispute window has passed before allowing claims
+   - Added `get-dispute-window-info` read-only function for checking dispute window status
+
+2. **tests/market-pool.test.ts** (new file):
+   - Tests for DISPUTE-WINDOW constant value
+   - Tests for resolution-block being set on resolve
+   - Tests for claim rejection during dispute window
+   - Tests for claim success after dispute window passes
+   - Edge case tests for exact boundary behavior
+   - Full lifecycle test (create -> trade -> resolve -> wait -> claim)
+
+### Verification
+- All 9 market-pool tests pass
+- `clarinet check` passes with no new warnings
+

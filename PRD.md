@@ -124,8 +124,8 @@ Update this file every time you deploy or redeploy contracts.
 - [x] Implement buy-outcome function using CPMM formula with 1% fee
 - [x] Implement sell-outcome function to sell tokens back to pool
 - [x] Implement resolve function restricted to creator after deadline (basic - no dispute window)
-- [ ] Implement DISPUTE-WINDOW parameter (default: u1008 = ~7 days) - time after resolution before claims are allowed
-- [x] Implement claim function for winners (basic - needs dispute window check)
+- [x] Implement DISPUTE-WINDOW parameter (default: u1008 = ~7 days) - time after resolution before claims are allowed
+- [x] Implement claim function for winners (with dispute window check)
 - [ ] Add is-disputed flag and dispute-deadline to market state
 - [ ] Implement open-dispute function (Phase 5 will add DAO voting, for now just blocks claims)
 - [ ] Implement finalize-resolution function to close dispute window and enable claims

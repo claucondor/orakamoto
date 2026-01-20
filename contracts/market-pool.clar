@@ -10,6 +10,7 @@
 (define-constant LP-FEE-SHARE-BP u7000)         ;; 70% of fees go to LPs
 (define-constant CREATOR-FEE-SHARE-BP u1000)    ;; 10% of fees go to creator
 (define-constant PROTOCOL-FEE-SHARE-BP u2000)   ;; 20% of fees go to protocol
+(define-constant DISPUTE-WINDOW u1008)          ;; ~7 days in blocks (144 blocks/day * 7)
 
 ;; Error Constants
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
@@ -25,6 +26,7 @@
 (define-constant ERR-NO-WINNINGS (err u1010))
 (define-constant ERR-NOT-INITIALIZED (err u1011))
 (define-constant ERR-ALREADY-INITIALIZED (err u1012))
+(define-constant ERR-DISPUTE-WINDOW-ACTIVE (err u1013))
 
 ;; Data Variables - Market State
 (define-data-var market-question (string-utf8 256) u"")
@@ -39,6 +41,7 @@
 (define-data-var total-liquidity uint u0)
 (define-data-var accumulated-fees uint u0)
 (define-data-var is-initialized bool false)
+(define-data-var resolution-block uint u0)      ;; Block height when market was resolved
 
 ;; Data Maps
 (define-map lp-balances principal uint)
@@ -144,6 +147,22 @@
 
 (define-read-only (get-accumulated-fees)
   (ok (var-get accumulated-fees))
+)
+
+;; Get dispute window info - useful for checking when claims will be available
+(define-read-only (get-dispute-window-info)
+  (let
+    (
+      (res-block (var-get resolution-block))
+      (is-res (var-get is-resolved))
+    )
+    (ok {
+      dispute-window-blocks: DISPUTE-WINDOW,
+      resolution-block: res-block,
+      dispute-window-ends: (if is-res (+ res-block DISPUTE-WINDOW) u0),
+      claims-enabled: (and is-res (>= block-height (+ res-block DISPUTE-WINDOW)))
+    })
+  )
 )
 
 ;; AMM Math Functions
@@ -420,23 +439,27 @@
 
     (var-set is-resolved true)
     (var-set winning-outcome (some outcome))
+    (var-set resolution-block block-height)
 
-    (print { event: "market-resolved", resolver: caller, winning-outcome: outcome })
+    (print { event: "market-resolved", resolver: caller, winning-outcome: outcome, dispute-window-ends: (+ block-height DISPUTE-WINDOW) })
     (ok true)
   )
 )
 
 ;; Claim Winnings
-;; Winners can claim after resolution
+;; Winners can claim after resolution AND after the dispute window has passed
 (define-public (claim)
   (let
     (
       (caller tx-sender)
       (winning (var-get winning-outcome))
+      (res-block (var-get resolution-block))
     )
     (asserts! (var-get is-initialized) ERR-NOT-INITIALIZED)
     (asserts! (var-get is-resolved) ERR-MARKET-NOT-ACTIVE)
     (asserts! (is-some winning) ERR-MARKET-NOT-ACTIVE)
+    ;; Check that dispute window has passed
+    (asserts! (>= block-height (+ res-block DISPUTE-WINDOW)) ERR-DISPUTE-WINDOW-ACTIVE)
     (asserts! (not (default-to false (map-get? has-claimed caller))) ERR-ALREADY-CLAIMED)
 
     (let
