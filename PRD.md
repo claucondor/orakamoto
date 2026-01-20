@@ -126,9 +126,9 @@ Update this file every time you deploy or redeploy contracts.
 - [x] Implement resolve function restricted to creator after deadline (basic - no dispute window)
 - [x] Implement DISPUTE-WINDOW parameter (default: u1008 = ~7 days) - time after resolution before claims are allowed
 - [x] Implement claim function for winners (with dispute window check)
-- [ ] Add is-disputed flag and dispute-deadline to market state
-- [ ] Implement open-dispute function (Phase 5 will add DAO voting, for now just blocks claims)
-- [ ] Implement finalize-resolution function to close dispute window and enable claims
+- [x] Add is-disputed flag and dispute-deadline to market state
+- [x] Implement open-dispute function (Phase 5 will add DAO voting, for now just blocks claims)
+- [x] Implement finalize-resolution function to close dispute window and enable claims
 - [x] Write comprehensive tests for market-pool in tests/market-pool.test.ts
 
 ### Market Factory Contract
