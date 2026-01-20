@@ -25,6 +25,8 @@ const ERR_NO_WINNINGS = 1010n;
 const ERR_NOT_INITIALIZED = 1011n;
 const ERR_ALREADY_INITIALIZED = 1012n;
 const ERR_DISPUTE_WINDOW_ACTIVE = 1013n;
+const ERR_DISPUTE_ALREADY_OPENED = 1014n;
+const ERR_DISPUTE_ALREADY_CLOSED = 1015n;
 
 // Helper function to initialize market for tests
 function initializeMarket(caller: string, deadline: number, resDeadline: number) {
