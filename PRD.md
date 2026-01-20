@@ -1,0 +1,582 @@
+# StackPredict Protocol - Development Tasks
+
+## Project Overview
+Prediction Market Protocol on Stacks (Bitcoin L2) using Clarity smart contracts.
+- Permissionless market creation
+- AMM-based trading (CPMM for binary, LMSR for multi-outcome)
+- LP yield from trading fees + DeFi yield integration
+- Binary and multi-outcome markets
+
+**IMPORTANT: All development is for DEVNET environment.**
+- Use LOCAL trait references (`.sip-010-trait.sip-010-trait`)
+- All contracts are mocks/local versions
+- Do NOT reference mainnet contract addresses in code
+- Mainnet addresses in docs are for future reference only
+
+---
+
+## Project Structure
+
+```
+contracts/
+├── traits/
+│   ├── sip-010-trait.clar          # Local copy of SIP-010 (for devnet)
+│   ├── prediction-market-trait.clar
+│   └── oracle-trait.clar
+├── mocks/
+│   ├── mock-oracle.clar
+│   └── mock-zest-vault.clar
+├── mock-usdc.clar
+├── market-pool.clar
+├── market-factory.clar
+├── multi-outcome-pool.clar         # Phase 2
+├── yield-vault.clar                # Phase 3
+├── yield-distributor.clar          # Phase 3
+├── oracle-resolver.clar            # Phase 4
+├── pyth-oracle-wrapper.clar        # Phase 4
+├── governance-token.clar           # Phase 5
+└── governance.clar                 # Phase 5
+tests/
+├── mock-usdc.test.ts
+├── market-pool.test.ts
+├── market-factory.test.ts
+└── integration.test.ts
+```
+
+## Setup Instructions
+
+**1. Install dependencies:**
+```bash
+npm install
+```
+
+**2. Add contracts to Clarinet.toml:**
+When creating a new contract, register it in Clarinet.toml:
+```toml
+[contracts.mock-usdc]
+path = "contracts/mock-usdc.clar"
+
+[contracts.sip-010-trait]
+path = "contracts/traits/sip-010-trait.clar"
+
+[contracts.market-pool]
+path = "contracts/market-pool.clar"
+depends_on = ["mock-usdc", "sip-010-trait"]
+```
+
+**3. Use LOCAL trait references in devnet:**
+```clarity
+;; In devnet/testnet, use local trait (deployed with your contracts):
+(impl-trait .sip-010-trait.sip-010-trait)
+
+;; In mainnet, use official trait:
+;; (impl-trait 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard.sip-010-trait)
+```
+
+**4. Contract dependencies order:**
+Deploy in this order (Clarinet handles this automatically):
+1. sip-010-trait.clar
+2. mock-usdc.clar
+3. prediction-market-trait.clar
+4. market-pool.clar
+5. market-factory.clar
+
+**5. Document all deployed addresses:**
+After deploying contracts, create/update `DEPLOYMENTS.md` with:
+```markdown
+# Deployed Contracts
+
+## Devnet
+| Contract | Address | Deployed |
+|----------|---------|----------|
+| sip-010-trait | ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sip-010-trait | YYYY-MM-DD |
+| mock-usdc | ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.mock-usdc | YYYY-MM-DD |
+...
+```
+Update this file every time you deploy or redeploy contracts.
+
+---
+
+## Phase 1: MVP - Core Protocol
+
+### Traits & Interfaces
+- [x] Create SIP-010 trait in contracts/traits/sip-010-trait.clar - Standard fungible token interface
+- [x] Create prediction-market-trait in contracts/traits/prediction-market-trait.clar - Interface for prediction markets with functions: get-market-info, get-prices, get-reserves, add-liquidity, remove-liquidity, buy-outcome, sell-outcome, resolve, claim
+
+### Mock USDC Token
+- [x] Create mock-usdc.clar implementing SIP-010 trait with 6 decimals
+- [x] Implement transfer, get-name, get-symbol, get-decimals, get-balance, get-total-supply, get-token-uri functions
+- [x] Add faucet function allowing anyone to mint up to 10000 USDC for testing
+- [x] Add mint function restricted to contract owner
+- [x] Add burn function for token holders
+- [x] Write tests for mock-usdc in tests/mock-usdc.test.ts covering faucet limits, transfers, and access control
+
+### Market Pool Contract (Binary Markets)
+- [x] Create market-pool.clar with constants: PRECISION u1000000, TRADING-FEE-BP u100 (1%), LP-FEE-SHARE-BP u7000 (70%), CREATOR-FEE-SHARE-BP u1000 (10%), PROTOCOL-FEE-SHARE-BP u2000 (20%)
+- [x] Define error constants: ERR-NOT-AUTHORIZED, ERR-MARKET-NOT-ACTIVE, ERR-MARKET-ALREADY-RESOLVED, ERR-DEADLINE-NOT-PASSED, ERR-INVALID-OUTCOME, ERR-INSUFFICIENT-BALANCE, ERR-INSUFFICIENT-LIQUIDITY, ERR-ZERO-AMOUNT, ERR-SLIPPAGE-TOO-HIGH, ERR-ALREADY-CLAIMED, ERR-NO-WINNINGS
+- [x] Implement data variables: market-question, market-creator, market-deadline, resolution-deadline, creator-collateral, is-resolved, winning-outcome, yes-reserve, no-reserve, total-liquidity, accumulated-fees
+- [x] Implement data maps: lp-balances, outcome-balances, has-claimed
+- [x] Implement initialize function to set market parameters
+- [x] Implement read-only functions: get-market-info, get-prices (using CPMM formula), get-reserves, get-lp-balance, get-outcome-balance
+- [x] Implement AMM math functions: calculate-tokens-out, calculate-amount-in, calculate-fee
+- [x] Implement add-liquidity function that splits deposit 50/50 between YES/NO reserves and mints LP tokens
+- [x] Implement remove-liquidity function that returns proportional share of reserves plus fee share
+- [x] Implement buy-outcome function using CPMM formula with 1% fee
+- [x] Implement sell-outcome function to sell tokens back to pool
+- [x] Implement resolve function restricted to creator after deadline (basic - no dispute window)
+- [ ] Implement DISPUTE-WINDOW parameter (default: u1008 = ~7 days) - time after resolution before claims are allowed
+- [x] Implement claim function for winners (basic - needs dispute window check)
+- [ ] Add is-disputed flag and dispute-deadline to market state
+- [ ] Implement open-dispute function (Phase 5 will add DAO voting, for now just blocks claims)
+- [ ] Implement finalize-resolution function to close dispute window and enable claims
+- [ ] Write comprehensive tests for market-pool in tests/market-pool.test.ts
+
+### Market Factory Contract
+- [ ] Create market-factory.clar with MINIMUM-COLLATERAL u50000000 (50 USDC) and DEFAULT-RESOLUTION-WINDOW u1008 (~7 days)
+- [ ] Implement market-count variable and markets map storing pool-contract, creator, question, deadline, created-at, active
+- [ ] Implement creator-markets map to track markets by creator
+- [ ] Implement get-market-count, get-market, get-creator-markets read-only functions
+- [ ] Implement create-market function that registers new market with collateral requirement
+- [ ] Implement deactivate-market admin function
+- [ ] Write tests for market-factory in tests/market-factory.test.ts
+
+### Phase 1 Verification
+- [ ] Write end-to-end test: create market -> add liquidity -> buy YES -> buy NO -> resolve -> claim winnings
+- [ ] Run clarinet check to verify all contracts compile without errors
+- [ ] Run clarinet test to ensure all tests pass
+
+### Test File Template
+```typescript
+import { describe, it, expect, beforeEach } from 'vitest';
+import { Cl } from '@stacks/transactions';
+
+const accounts = simnet.getAccounts();
+const deployer = accounts.get('deployer')!;
+const wallet1 = accounts.get('wallet_1')!;
+
+describe('Contract Name', () => {
+  beforeEach(() => {
+    // Setup: mint tokens, etc.
+  });
+
+  it('should do something', () => {
+    const result = simnet.callPublicFn(
+      'contract-name',
+      'function-name',
+      [Cl.uint(100), Cl.standardPrincipal(wallet1)],
+      wallet1
+    );
+    expect(result.result).toBeOk(Cl.bool(true));
+  });
+
+  it('should read data', () => {
+    const result = simnet.callReadOnlyFn(
+      'contract-name',
+      'get-something',
+      [Cl.standardPrincipal(wallet1)],
+      wallet1
+    );
+    expect(result.result).toBeOk(Cl.uint(100));
+  });
+});
+```
+
+### Token Transfers Note
+All token transfers in contracts MUST use actual contract-call:
+```clarity
+;; Transfer FROM user TO contract:
+(try! (contract-call? .mock-usdc transfer amount tx-sender (as-contract tx-sender) none))
+
+;; Transfer FROM contract TO user:
+(try! (as-contract (contract-call? .mock-usdc transfer amount tx-sender recipient none)))
+```
+Do NOT leave transfers commented out.
+
+---
+
+## Phase 2: Multi-Outcome Markets
+
+### LMSR (Logarithmic Market Scoring Rule) Implementation
+
+**IMPORTANT: Clarity has no native ln() or exp() functions.**
+Use integer approximations:
+- Taylor series for exp: exp(x) ≈ 1 + x + x²/2 + x³/6 (for small x)
+- Lookup tables for common values
+- Scale all values by PRECISION (u1000000) to maintain accuracy
+
+- [ ] Create multi-outcome-pool.clar supporting 2-10 outcomes per market
+- [ ] Implement exp-approximation helper function using Taylor series or lookup table
+- [ ] Implement ln-approximation helper function
+- [ ] Implement LMSR cost function: Cost(q) = b * ln(sum(exp(q_i / b))) where b is liquidity parameter
+- [ ] Implement price calculation: Price_i = exp(q_i / b) / sum(exp(q_j / b))
+- [ ] Implement buy-outcome for multi-outcome using LMSR
+- [ ] Implement sell-outcome for multi-outcome
+- [ ] Handle resolution with multiple possible winners
+- [ ] Write tests for LMSR math accuracy and edge cases
+
+### Multi-Outcome Factory
+- [ ] Extend market-factory to support multi-outcome market creation
+- [ ] Add outcome-count parameter to create-market
+- [ ] Store outcome labels in market metadata
+- [ ] Write tests for multi-outcome market lifecycle
+
+---
+
+## Phase 3: Yield Integration (Zest Protocol Mock)
+
+### Zest Protocol Interface Research
+Reference: https://github.com/Zest-Protocol/zest-contracts
+Real Zest functions to mock:
+- supply(lp, pool-reserve, asset, amount, owner) -> deposits asset, returns bool
+- withdraw(pool-reserve, asset, oracle, assets, amount, current-balance, owner) -> returns uint withdrawn
+- borrow(pool-reserve, oracle, asset-to-borrow, lp, assets, amount, fee-calculator, interest-rate-mode, owner)
+- repay(asset, amount-to-repay, on-behalf-of, payer)
+
+### Mock Zest Vault
+- [ ] Create contracts/mocks/mock-zest-vault.clar implementing same interface as real Zest
+- [ ] Implement supply function that accepts USDC deposits and tracks balances
+- [ ] Implement withdraw function that returns deposited amount plus simulated yield
+- [ ] Implement get-balance and get-yield-earned read-only functions
+- [ ] Add configurable yield-rate-bp for testing different APY scenarios
+- [ ] Write tests verifying mock behaves like real Zest interface
+
+### Yield Vault Integration
+- [ ] Create yield-vault.clar that wraps mock-zest-vault (swappable for real Zest in production)
+- [ ] Implement deposit-idle-funds to move 90% of pool liquidity to yield source
+- [ ] Implement withdraw-for-trade to pull funds when needed for large trades
+- [ ] Implement harvest-yield to collect and distribute earned yield
+- [ ] Track yield per LP token for fair distribution
+
+### Yield Distributor
+- [ ] Create yield-distributor.clar to handle yield distribution logic
+- [ ] Calculate yield share per LP based on time-weighted LP balance
+- [ ] Implement claim-yield for LPs to claim accumulated yield
+- [ ] Write tests for yield accrual and distribution math
+
+---
+
+## Phase 4: Oracle Integration
+
+### Oracle Trait
+- [ ] Create contracts/traits/oracle-trait.clar defining: get-price(asset) -> (response uint uint)
+- [ ] Support price with 8 decimals precision (standard oracle format)
+
+### Mock Oracle (for devnet)
+- [ ] Create contracts/mocks/mock-oracle.clar implementing oracle-trait
+- [ ] Allow admin to set prices manually for testing
+- [ ] Implement set-price(asset, price) admin function
+- [ ] Implement get-price(asset) read-only function
+- [ ] Write tests for mock oracle
+
+### Pyth Oracle Integration (for testnet/mainnet)
+Reference: https://github.com/stx-labs/stacks-pyth-bridge
+Contract: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
+- [ ] Create pyth-oracle-wrapper.clar that calls pyth-oracle-v4.read-price-feed
+- [ ] Map price feed IDs for BTC, STX, ETH, USDC
+- [ ] Handle price staleness checks (max age parameter)
+- [ ] Write integration tests using Pyth testnet
+
+### Auto-Resolution System
+- [ ] Create oracle-resolver.clar for markets that can resolve via oracle
+- [ ] Define market types: MANUAL (creator resolves), PRICE_TARGET (oracle resolves when price hits target), TIME_BASED (oracle price at deadline)
+- [ ] Implement check-resolution that anyone can call to trigger auto-resolution
+- [ ] Add oracle-market-config map storing oracle address, price-feed-id, target-price, resolution-type
+- [ ] Write tests for each resolution type
+
+---
+
+## Phase 5: Governance
+
+### Governance Model: "Skin in the Game"
+
+**Token: $PRED** - earned by participating, not bought via ICO.
+
+**How to earn $PRED:**
+- LPs earn by providing liquidity (proportional to time + amount)
+- Traders earn by trading volume
+- Market creators earn if their market has high volume/participation
+
+**Voting Power:** Tokens + time staked (vote-escrow style like veCRV)
+- 1 $PRED staked 1 week = 1 vote
+- 1 $PRED staked 1 year = 4 votes (multiplier for commitment)
+
+**Initial Distribution:**
+- 40% - Community rewards (LPs, traders, creators) - emitted over 4 years
+- 25% - Treasury (controlled by DAO)
+- 20% - Team (vesting 3 years, 1 year cliff)
+- 15% - Early contributors/investors (vesting 2 years)
+
+**What can be governed:**
+- Resolve disputed markets (if creator resolves incorrectly)
+- Curate markets (feature/hide)
+- Adjust fees per category (sports, crypto, politics)
+- Whitelist oracles for auto-resolution
+- Treasury spending
+
+### Governance Token
+- [ ] Create governance-token.clar (SIP-010) named $PRED
+- [ ] Implement mint function restricted to reward contracts
+- [ ] Implement burn function for token holders
+- [ ] Add delegate function for vote delegation
+- [ ] Create vesting-vault.clar for team/investor vesting with cliff and linear unlock
+
+### Reward Distribution
+- [ ] Create lp-rewards.clar to distribute $PRED to LPs based on time-weighted liquidity
+- [ ] Create trader-rewards.clar to distribute $PRED based on trading volume
+- [ ] Create creator-rewards.clar to distribute $PRED based on market success metrics
+- [ ] Implement epoch-based distribution (weekly epochs)
+
+### Vote Escrow
+- [ ] Create vote-escrow.clar for staking $PRED to get voting power
+- [ ] Implement lock function with duration parameter (1 week to 4 years)
+- [ ] Calculate voting power: amount * (lock_duration / max_duration)
+- [ ] Implement extend-lock and increase-amount functions
+- [ ] Implement withdraw after lock expires
+
+### Governance Contract
+- [ ] Create governance.clar for proposal and voting system
+- [ ] Define proposal types: PARAMETER_CHANGE, TREASURY_SPEND, DISPUTE_RESOLUTION, ORACLE_WHITELIST, EMERGENCY_ACTION
+- [ ] Implement create-proposal with minimum voting power threshold (e.g., 1% of total)
+- [ ] Implement vote(proposal-id, support) using vote-escrow balance
+- [ ] Voting period: 7 days, Timelock: 2 days
+- [ ] Quorum: 10% of total voting power must participate
+- [ ] Implement execute-proposal after voting period and quorum reached
+- [ ] Implement cancel-proposal for proposer or if threshold drops
+
+### Dispute Resolution
+- [ ] Create dispute.clar for challenging market resolutions
+- [ ] Allow anyone to open dispute by staking $PRED (slashed if frivolous)
+- [ ] Disputed markets enter 7-day voting period
+- [ ] If dispute succeeds: challenger gets reward, creator loses collateral
+- [ ] If dispute fails: challenger stake slashed, distributed to voters
+
+### Governable Parameters
+- [ ] TRADING-FEE-BP (default: 100 = 1%)
+- [ ] LP-FEE-SHARE-BP (default: 7000 = 70%)
+- [ ] CREATOR-FEE-SHARE-BP (default: 1000 = 10%)
+- [ ] PROTOCOL-FEE-SHARE-BP (default: 2000 = 20%)
+- [ ] MINIMUM-COLLATERAL (default: 50 USDC)
+- [ ] RESOLUTION-WINDOW (default: 7 days) - time for creator to resolve after deadline
+- [ ] DISPUTE-WINDOW (default: 7 days) - lock period after resolution before claims allowed
+- [ ] DISPUTE-STAKE (amount of $PRED to open dispute)
+- [ ] Protocol treasury address
+
+### Market Resolution Flow
+```
+1. Market deadline passes
+   ↓
+2. Creator has RESOLUTION-WINDOW to resolve (set winning outcome)
+   ↓
+3. DISPUTE-WINDOW starts (funds locked, no claims)
+   ↓
+4a. No dispute → finalize-resolution() → claims enabled
+4b. Dispute opened → DAO votes →
+    - If dispute wins: outcome reversed, creator loses collateral
+    - If dispute fails: original outcome confirmed, disputer loses stake
+   ↓
+5. Claims enabled for winners
+```
+
+### Governance Security
+- [ ] Implement emergency-pause requiring 30% quorum and 80% approval
+- [ ] Add proposal cooldown per address (1 proposal per week)
+- [ ] Implement guardian multisig for critical emergencies (can pause, cannot change params)
+- [ ] Write tests for governance attacks: flash loan voting, last-minute swings, etc.
+
+---
+
+## Security Guidelines
+
+### Clarity Built-in Protections
+Clarity provides these protections by design:
+- **No reentrancy**: Contract cannot call back into itself during execution
+- **Overflow/underflow protection**: Invalid arithmetic auto-aborts transaction
+- **Mandatory response handling**: Cannot ignore failed operations
+- **Decidable execution**: Always terminates, accurate cost prediction
+
+### CRITICAL: tx-sender vs contract-caller
+
+```clarity
+;; tx-sender = original transaction initiator (NEVER changes in call chain)
+;; contract-caller = immediate caller (changes with each contract hop)
+
+;; VULNERABLE TO PHISHING:
+(define-public (transfer (amount uint) (sender principal) (recipient principal))
+  (begin
+    (asserts! (is-eq tx-sender sender) (err u401))  ;; BAD - attacker can trick user
+    ...))
+
+;; SECURE:
+(define-public (admin-function)
+  (begin
+    (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)  ;; GOOD
+    ...))
+```
+
+**Rule**: Use `contract-caller` for authentication. Only use `tx-sender` when you need the original initiator.
+
+### Security Checklist
+- [ ] All admin functions check `contract-caller` not `tx-sender`
+- [ ] All public functions return `(response)` type
+- [ ] All `contract-call?` results handled with `try!` or `unwrap!`
+- [ ] All inputs validated with `asserts!`
+- [ ] Zero amounts rejected: `(asserts! (> amount u0) ERR-ZERO-AMOUNT)`
+- [ ] State validated before mutations (is-resolved, deadline, etc)
+- [ ] Events emitted for all state changes: `(print {event: "name", ...})`
+- [ ] No hardcoded mainnet addresses in devnet code
+
+### Common Vulnerabilities to Avoid
+1. **Phishing via tx-sender**: Use contract-caller for auth
+2. **Unchecked responses**: Always use try!/unwrap! on contract-call?
+3. **Missing input validation**: Validate all parameters
+4. **State inconsistency**: Check preconditions before mutations
+5. **Improper asset transfers**: Use as-contract correctly
+
+---
+
+## Technical Specifications
+
+### CPMM Formulas (Binary Markets)
+```
+Price_YES = Reserve_NO / (Reserve_YES + Reserve_NO)
+Price_NO = Reserve_YES / (Reserve_YES + Reserve_NO)
+tokens_out = (reserve_out * amount_in) / (reserve_in + amount_in)
+```
+
+### LMSR Formulas (Multi-Outcome Markets)
+```
+Cost(q) = b * ln(sum(exp(q_i / b)))
+Price_i = exp(q_i / b) / sum(exp(q_j / b))
+b = liquidity parameter (higher = more liquid, less price impact)
+```
+
+### Fee Structure
+- Total: 1% (100 basis points)
+- LPs: 70% of fees
+- Creator: 10% of fees
+- Protocol: 20% of fees
+
+### Token Standards
+- SIP-010 for fungible tokens
+- 6 decimals for USDC-like precision
+- 8 decimals for oracle prices
+
+### External Contract References (Mainnet)
+- Pyth Oracle: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
+- RedStone Verify: SPDBEG5X8XD50SPM1JJH0E5CTXGDV5NJTKAKKR5V.redstone-verify
+- SIP-010 Trait: SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard
+- Zest Pool Borrow: (check latest from Zest docs)
+
+---
+
+## Resources & References
+
+### Getting Testnet STX Tokens
+
+**Option 1: Hiro Platform Faucet (Recommended)**
+- URL: https://platform.hiro.so/faucet
+- Provides 500 STX per request
+- Requires Stacks wallet connected
+
+**Option 2: Stacks Explorer Sandbox**
+- URL: https://explorer.stacks.co/sandbox/faucet?chain=testnet
+- Navigate to "Faucet" tab and click "Request STX"
+- Requires login with Stacks wallet
+
+**Option 3: API Request**
+```bash
+curl -X POST "https://api.testnet.hiro.so/extended/v1/faucets/stx?address=YOUR_TESTNET_ADDRESS"
+```
+
+**Option 4: LearnWeb3 Faucet**
+- URL: https://learnweb3.io/faucets/stacks/
+- Multi-chain faucet, simple interface
+
+### SIP-010 Token Implementation
+
+**Adding SIP-010 Trait to Project:**
+```bash
+clarinet requirements add SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard
+```
+
+**Minimal SIP-010 Token Template:**
+```clarity
+(impl-trait 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard.sip-010-trait)
+
+(define-constant contract-owner tx-sender)
+(define-constant err-owner-only (err u100))
+(define-constant err-not-token-owner (err u101))
+
+(define-fungible-token my-token)
+
+(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+  (begin
+    (asserts! (is-eq tx-sender sender) err-not-token-owner)
+    (try! (ft-transfer? my-token amount sender recipient))
+    (match memo to-print (print to-print) 0x)
+    (ok true)))
+
+(define-read-only (get-name) (ok "My Token"))
+(define-read-only (get-symbol) (ok "MTK"))
+(define-read-only (get-decimals) (ok u6))
+(define-read-only (get-balance (who principal)) (ok (ft-get-balance my-token who)))
+(define-read-only (get-total-supply) (ok (ft-get-supply my-token)))
+(define-read-only (get-token-uri) (ok none))
+
+(define-public (mint (amount uint) (recipient principal))
+  (begin
+    (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+    (ft-mint? my-token amount recipient)))
+```
+
+### Deployment Commands
+
+**Verify contracts compile:**
+```bash
+clarinet check
+```
+
+**Run tests:**
+```bash
+clarinet test
+```
+
+**Start local devnet:**
+```bash
+clarinet devnet start
+```
+
+**Deploy to devnet:**
+```bash
+clarinet deployments apply --devnet
+```
+
+**Generate testnet deployment plan:**
+```bash
+clarinet deployments generate --testnet --medium-cost
+```
+
+**Deploy to testnet:**
+```bash
+clarinet deployments apply --testnet
+```
+
+**Generate mainnet deployment plan:**
+```bash
+clarinet deployments generate --mainnet --high-cost
+```
+
+**Deploy to mainnet (with encrypted mnemonic):**
+```bash
+clarinet deployments encrypt  # First time: encrypts your mnemonic
+clarinet deployments apply --mainnet  # Prompts for password
+```
+
+### Documentation Links
+- Clarity Book: https://book.clarity-lang.org/
+- SIP-010 Standard: https://book.clarity-lang.org/ch10-03-sip010-ft-standard.html
+- Creating SIP-010 Token: https://book.clarity-lang.org/ch10-04-creating-a-sip010-ft.html
+- Clarinet Deployment: https://docs.stacks.co/clarinet/contract-deployment
+- Stacks API: https://docs.hiro.so/stacks/api
+- Pyth Oracle Stacks: https://docs.pyth.network/price-feeds/core/use-real-time-data/pull-integration/stacks
+- Zest Protocol Contracts: https://github.com/Zest-Protocol/zest-contracts
