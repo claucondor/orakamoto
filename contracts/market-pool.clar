@@ -27,6 +27,8 @@
 (define-constant ERR-NOT-INITIALIZED (err u1011))
 (define-constant ERR-ALREADY-INITIALIZED (err u1012))
 (define-constant ERR-DISPUTE-WINDOW-ACTIVE (err u1013))
+(define-constant ERR-DISPUTE-ALREADY-OPENED (err u1014))
+(define-constant ERR-DISPUTE-ALREADY-CLOSED (err u1015))
 
 ;; Data Variables - Market State
 (define-data-var market-question (string-utf8 256) u"")
@@ -35,6 +37,7 @@
 (define-data-var resolution-deadline uint u0)
 (define-data-var creator-collateral uint u0)
 (define-data-var is-resolved bool false)
+(define-data-var is-disputed bool false)
 (define-data-var winning-outcome (optional uint) none)
 (define-data-var yes-reserve uint u0)
 (define-data-var no-reserve uint u0)
@@ -42,6 +45,7 @@
 (define-data-var accumulated-fees uint u0)
 (define-data-var is-initialized bool false)
 (define-data-var resolution-block uint u0)      ;; Block height when market was resolved
+(define-data-var dispute-deadline uint u0)    ;; When dispute window ends
 
 ;; Data Maps
 (define-map lp-balances principal uint)
@@ -481,5 +485,104 @@
       (print { event: "winnings-claimed", winner: caller, amount: winner-balance })
       (ok winner-balance)
     )
+  )
+)
+
+;; Open Dispute
+;; Only creator can open dispute immediately after resolution (before finalizing)
+;; Blocks claims during dispute window
+(define-public (open-dispute (stake-amount uint))
+  (let
+    (
+      (caller contract-caller)
+      (winning (var-get winning-outcome))
+    )
+    (asserts! (var-get is-initialized) ERR-NOT-INITIALIZED)
+    (asserts! (var-get is-resolved) ERR-MARKET-NOT-ACTIVE)
+    (asserts! (is-some winning) ERR-MARKET-NOT-ACTIVE)
+    (asserts! (not (var-get is-disputed)) ERR-DISPUTE-ALREADY-OPENED)
+    (asserts! (>= stake-amount u0) ERR-ZERO-AMOUNT)
+    ;; Dispute can only be opened by creator, after resolution, before finalization
+    ;; (finalization happens automatically after dispute window, or via finalize-resolution)
+    (asserts! (is-eq caller (var-get market-creator)) ERR-NOT-AUTHORIZED)
+
+    ;; Mark market as disputed
+    (var-set is-disputed true)
+
+    ;; Set dispute deadline (same as resolution deadline for now)
+    (var-set dispute-deadline (+ (var-get resolution-block) DISPUTE-WINDOW))
+
+    ;; Mint dispute tokens to creator for staking
+    ;; Dispute tokens can be burned by loser or used to finalize
+    (map-set lp-balances caller (+ (default-to u0 (map-get? lp-balances caller)) stake-amount))
+
+    (print { event: "dispute-opened", opener: caller, winning-outcome: winning, stake-amount: stake-amount })
+    (ok stake-amount)
+  )
+)
+
+;; Finalize Resolution
+;; Called after dispute window passes (either automatically or manually by creator)
+;; If no dispute was opened, this is the same as resolve
+;; If dispute was opened but not resolved by DAO, this can revert to original outcome
+(define-public (finalize-resolution (approve-dispute (optional bool)))
+  (let
+    (
+      (caller contract-caller)
+      (winning (var-get winning-outcome))
+      (current-dispute-deadline (var-get dispute-deadline))
+    )
+    (asserts! (var-get is-initialized) ERR-NOT-INITIALIZED)
+    (asserts! (var-get is-resolved) ERR-MARKET-ALREADY-RESOLVED)
+    (asserts! (>= block-height (var-get resolution-block)) ERR-DEADLINE-NOT-PASSED)
+    (asserts! (>= block-height current-dispute-deadline) ERR-DISPUTE-WINDOW-ACTIVE)
+
+    ;; Check if dispute was opened and what to do
+    (if (var-get is-disputed)
+      ;; If disputed, check if we're in the original timeframe or after dispute window
+      (if (or (is-none approve-dispute) (is-eq (unwrap! approve-dispute ERR-MARKET-NOT-ACTIVE) false))
+        (begin
+          ;; Revert to original resolution (creator's choice wins)
+          (var-set is-disputed false)
+          (print { event: "dispute-reverted", reverter: caller, winning-outcome: (unwrap! winning ERR-MARKET-NOT-ACTIVE) })
+          (ok { reverted: true, final-outcome: (unwrap! winning ERR-MARKET-NOT-ACTIVE) })
+        )
+        (begin
+          ;; Dispute approved - original resolution stands
+          (var-set is-disputed false)
+          (print { event: "dispute-finalized", approver: caller, winning-outcome: (unwrap! winning ERR-MARKET-NOT-ACTIVE) })
+          (ok { reverted: false, final-outcome: (unwrap! winning ERR-MARKET-NOT-ACTIVE) })
+        )
+      )
+      ;; No dispute was opened - simply finalize
+      (begin
+        (var-set is-disputed false)
+        (print { event: "resolution-finalized", finalizer: caller, winning-outcome: (unwrap! winning ERR-MARKET-NOT-ACTIVE) })
+        (ok { reverted: false, final-outcome: (unwrap! winning ERR-MARKET-NOT-ACTIVE) })
+      )
+    )
+  )
+)
+
+;; Get Dispute Status
+;; Returns information about whether a dispute was opened and when it ends
+(define-read-only (get-dispute-status)
+  (let
+    (
+      (res-block (var-get resolution-block))
+      (res-deadline (var-get resolution-deadline))
+      (dis-deadline (var-get dispute-deadline))
+      (is-dis (var-get is-disputed))
+      (winning (var-get winning-outcome))
+    )
+    (ok {
+      is-resolved: (var-get is-resolved),
+      winning-outcome: winning,
+      is-disputed: is-dis,
+      resolution-block: res-block,
+      resolution-deadline: res-deadline,
+      dispute-deadline: dis-deadline,
+      claims-enabled: (and (var-get is-resolved) (>= block-height (+ res-block DISPUTE-WINDOW)))
+    })
   )
 )
