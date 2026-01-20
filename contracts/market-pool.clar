@@ -29,6 +29,8 @@
 (define-constant ERR-DISPUTE-WINDOW-ACTIVE (err u1013))
 (define-constant ERR-DISPUTE-ALREADY-OPENED (err u1014))
 (define-constant ERR-DISPUTE-ALREADY-CLOSED (err u1015))
+(define-constant ERR-ALREADY-DEPOSITED (err u1016))
+(define-constant ERR-INSUFFICIENT-IDLE-LIQUIDITY (err u1017))
 
 ;; Data Variables - Market State
 (define-data-var market-question (string-utf8 256) u"")
@@ -46,6 +48,7 @@
 (define-data-var is-initialized bool false)
 (define-data-var resolution-block uint u0)      ;; Block height when market was resolved
 (define-data-var dispute-deadline uint u0)    ;; When dispute window ends
+(define-data-var deposited-to-yield uint u0)  ;; Amount deposited to yield source
 
 ;; Data Maps
 (define-map lp-balances principal uint)
@@ -583,6 +586,129 @@
       resolution-deadline: res-deadline,
       dispute-deadline: dis-deadline,
       claims-enabled: (and (var-get is-resolved) (>= block-height (+ res-block DISPUTE-WINDOW)))
+    })
+  )
+)
+
+;; Deposit Idle Funds to Yield Source
+;; Moves 90% of idle pool liquidity to the yield source (mock-zest-vault)
+;; This allows the pool to earn yield on unused liquidity
+;; Only callable by contract owner when market is active (before resolution)
+(define-public (deposit-idle-funds)
+  (let
+    (
+      (caller contract-caller)
+      (yes-res (var-get yes-reserve))
+      (no-res (var-get no-reserve))
+      (total-reserves (+ yes-res no-res))
+      (current-deposited (var-get deposited-to-yield))
+    )
+    (asserts! (var-get is-initialized) ERR-NOT-INITIALIZED)
+    (asserts! (not (var-get is-resolved)) ERR-MARKET-ALREADY-RESOLVED)
+    (asserts! (is-eq caller (var-get market-creator)) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq current-deposited u0) ERR-ALREADY-DEPOSITED)
+    (asserts! (>= total-reserves u1000000) ERR-INSUFFICIENT-LIQUIDITY) ;; Minimum 1 USDC
+
+    ;; Calculate 90% of total reserves
+    ;; 90% = 9000 / 10000
+    (let
+      (
+        (amount-to-deposit (/ (* total-reserves u9000) u10000))
+        ;; Calculate remaining liquidity for each reserve (proportional split)
+        (remaining-yes (- yes-res (/ (* yes-res u9000) u10000)))
+        (remaining-no (- no-res (/ (* no-res u9000) u10000)))
+      )
+      (asserts! (> amount-to-deposit u0) ERR-INSUFFICIENT-IDLE-LIQUIDITY)
+
+      ;; Transfer USDC to yield source (mock-zest-vault)
+      ;; The vault will mint zUSDC shares to this contract
+      (try! (contract-call? .mock-zest-vault supply amount-to-deposit (as-contract tx-sender)))
+
+      ;; Update reserves - reduce by 90%
+      (var-set yes-reserve remaining-yes)
+      (var-set no-reserve remaining-no)
+
+      ;; Track deposited amount
+      (var-set deposited-to-yield amount-to-deposit)
+
+      (print
+        {
+          event: "idle-funds-deposited",
+          amount: amount-to-deposit,
+          remaining-yes: remaining-yes,
+          remaining-no: remaining-no,
+          yield-source: .mock-zest-vault
+        }
+      )
+      (ok amount-to-deposit)
+    )
+  )
+)
+
+;; Withdraw Yield Funds
+;; Withdraws deposited funds from yield source back to pool reserves
+;; Only callable by contract owner after funds have been deposited
+(define-public (withdraw-yield-funds)
+  (let
+    (
+      (caller contract-caller)
+      (deposited (var-get deposited-to-yield))
+      (yes-res (var-get yes-reserve))
+      (no-res (var-get no-reserve))
+    )
+    (asserts! (is-eq caller (var-get market-creator)) ERR-NOT-AUTHORIZED)
+    (asserts! (> deposited u0) ERR-INSUFFICIENT-LIQUIDITY)
+
+    ;; Calculate amount to withdraw (including any yield earned)
+    ;; The vault will return the amount plus yield
+    (let
+      (
+        ;; Get the contract's zUSDC balance from the vault
+        (contract-shares (unwrap! (contract-call? .mock-zest-vault get-balance (as-contract tx-sender)) ERR-INSUFFICIENT-LIQUIDITY))
+        ;; Withdraw all shares
+        (usdc-returned (try! (contract-call? .mock-zest-vault withdraw contract-shares (as-contract tx-sender))))
+        ;; Split returned amount proportionally between yes and no reserves
+        (half-return (/ usdc-returned u2))
+      )
+      ;; Update reserves - add back the returned amount (split 50/50)
+      (var-set yes-reserve (+ yes-res half-return))
+      (var-set no-reserve (+ no-res half-return))
+
+      ;; Reset deposited amount tracking
+      (var-set deposited-to-yield u0)
+
+      (print
+        {
+          event: "yield-funds-withdrawn",
+          amount-withdrawn: usdc-returned,
+          new-yes-reserve: (+ yes-res half-return),
+          new-no-reserve: (+ no-res half-return),
+          yield-source: .mock-zest-vault
+        }
+      )
+      (ok usdc-returned)
+    )
+  )
+)
+
+;; Read-only: Get amount deposited to yield source
+(define-read-only (get-deposited-to-yield)
+  (ok (var-get deposited-to-yield))
+)
+
+;; Read-only: Get available liquidity (reserves minus deposited)
+(define-read-only (get-available-liquidity)
+  (let
+    (
+      (yes-res (var-get yes-reserve))
+      (no-res (var-get no-reserve))
+      (deposited (var-get deposited-to-yield))
+    )
+    (ok {
+      yes-reserve: yes-res,
+      no-reserve: no-res,
+      deposited-to-yield: deposited,
+      total-available: (+ yes-res no-res)
     })
   )
 )

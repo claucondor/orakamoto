@@ -1,5 +1,72 @@
 # Ralphy Progress Log
 
+## 2026-01-20: Implemented Deposit Idle Funds to Yield Source
+
+### Summary
+Implemented `deposit-idle-funds` functionality that moves 90% of pool liquidity to the yield source (mock-zest-vault) to earn yield on idle funds. This feature is available in both market-pool (binary prediction markets) and multi-outcome-pool (LMSR-based markets).
+
+### Changes Made
+
+1. **contracts/market-pool.clar**:
+   - Added new error constants:
+     - `ERR-ALREADY-DEPOSITED` (u1016) - Prevents multiple deposits
+     - `ERR-INSUFFICIENT-IDLE-LIQUIDITY` (u1017) - Ensures sufficient liquidity for deposit
+   - Added `deposited-to-yield` data variable to track amount deposited to yield source
+   - Implemented `deposit-idle-funds` function:
+     - Only callable by market creator
+     - Only callable before market resolution
+     - Moves 90% of total reserves (yes + no) to mock-zest-vault
+     - Reduces both yes-reserve and no-reserve proportionally
+     - Tracks deposited amount for future withdrawals
+   - Implemented `withdraw-yield-funds` function:
+     - Only callable by market creator
+     - Withdraws all deposited funds (including earned yield) from vault
+     - Returns funds to pool reserves (split 50/50 between yes/no)
+     - Resets deposited tracking to 0
+   - Added read-only functions:
+     - `get-deposited-to-yield`: Returns amount currently deposited to yield source
+     - `get-available-liquidity`: Returns breakdown of reserves and deposited amount
+
+2. **contracts/multi-outcome-pool.clar**:
+   - Added new error constants:
+     - `ERR-ALREADY-DEPOSITED` (u2018)
+     - `ERR-INSUFFICIENT-IDLE-LIQUIDITY` (u2019)
+   - Added `deposited-to-yield` data variable
+   - Implemented `deposit-idle-funds` function:
+     - Same logic as market-pool but operates on `total-liquidity`
+     - Only callable by market creator before resolution
+     - Moves 90% of total liquidity to yield source
+   - Implemented `withdraw-yield-funds` function:
+     - Withdraws deposited funds back to total liquidity
+     - Includes earned yield in returned amount
+   - Added read-only functions:
+     - `get-deposited-to-yield`
+     - `get-available-liquidity`
+
+3. **Clarinet.toml**:
+   - Updated `market-pool` to depend on `mock-zest-vault`
+   - Updated `multi-outcome-pool` to depend on `mock-zest-vault`
+
+4. **tests/deposit-idle-funds.test.ts** (new file):
+   - Comprehensive tests for market-pool deposit-idle-funds:
+     - Deposit 90% of liquidity to yield source
+     - Only market creator can deposit
+     - Reject deposit if market resolved
+     - Reject deposit if already deposited
+     - Reject deposit if not initialized
+     - Show available liquidity after deposit
+   - Tests for withdraw-yield-funds:
+     - Withdraw deposited funds back to pool
+     - Only market creator can withdraw
+     - Reject withdraw if no funds deposited
+   - Same test coverage for multi-outcome-pool
+   - Integration test for full yield cycle
+
+### Verification
+- All 7 contracts compile successfully (`clarinet check` passes)
+- Only informational warnings (no errors)
+- Total contracts: 7 (all checked successfully)
+
 ## 2026-01-20: Implemented Integration Tests and Fixed Test Issues
 
 ### Summary

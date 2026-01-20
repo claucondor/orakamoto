@@ -17,7 +17,7 @@ depends_on = ["sip-010-trait"]
 
 [contracts.market-pool]
 path = "contracts/market-pool.clar"
-depends_on = ["mock-usdc", "sip-010-trait", "prediction-market-trait"]
+depends_on = ["mock-usdc", "sip-010-trait", "prediction-market-trait", "mock-zest-vault"]
 
 [contracts.market-factory]
 path = "contracts/market-factory.clar"
@@ -25,7 +25,7 @@ depends_on = ["mock-usdc"]
 
 [contracts.multi-outcome-pool]
 path = "contracts/multi-outcome-pool.clar"
-depends_on = ["mock-usdc"]
+depends_on = ["mock-usdc", "mock-zest-vault"]
 
 [contracts.mock-zest-vault]
 path = "contracts/mocks/mock-zest-vault.clar"
