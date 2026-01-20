@@ -348,3 +348,67 @@ Created the mock-zest-vault.clar contract that simulates Zest Protocol yield far
 - Contract compiles successfully
 - Total test count: 133 passed / 140 (7 pre-existing failures in multi-outcome-pool unrelated to this change)
 
+
+## 2026-01-20: Implemented Yield Vault Contract (Wrapper for Mock Zest Vault)
+
+### Summary
+Created the yield-vault.clar contract that provides a yield-bearing vault interface. This contract manages USDC deposits and generates yield through a configurable APY rate. The contract is designed to be swappable with production Zest Protocol vault contracts via trait-based architecture.
+
+### Changes Made
+
+1. **contracts/yield-vault.clar** (new file):
+   - Implemented SIP-010 fungible token interface (yUSDC - yield-bearing USDC shares)
+   - Added vault-trait interface for production swap capability
+   - Implemented `supply` function:
+     - Accepts USDC deposits from users
+     - Mints yUSDC shares proportional to deposit (1:1 for first deposit)
+     - Tracks total deposits and user-specific deposits
+   - Implemented `withdraw` function:
+     - Burns yUSDC shares
+     - Returns USDC amount including accrued yield
+     - Calculates proportional share based on vault performance
+   - Implemented `harvest-yield` function:
+     - Calculates yield based on blocks elapsed and yield rate
+     - Formula: yield = (deposits × yield-rate × blocks-elapsed) / (10000 × 525600)
+     - Mints new yUSDC shares to distribute yield proportionally to all holders
+   - Added read-only functions:
+     - `get-total-deposits`: Total USDC in vault
+     - `get-total-yield-earned`: Cumulative yield since inception
+     - `get-yield-rate`: Current APY in basis points
+     - `get-apy`: Current APY
+     - `get-pending-yield`: User's share of pending yield
+     - `get-effective-balance`: User's balance including yield
+     - `get-user-deposits`: User's original deposited amount
+   - Added admin functions:
+     - `set-yield-rate`: Configure APY for testing (max 100%)
+     - `mint/burn`: Admin token management
+   - Events emitted for all actions (supply, withdraw, yield-harvest, transfer)
+   - Error codes: ERR-NOT-AUTHORIZED (u200), ERR-NOT-TOKEN-OWNER (u201), ERR-ZERO-AMOUNT (u202), ERR-INSUFFICIENT-BALANCE (u203), ERR-VAULT-NOT-INITIALIZED (u204), ERR-INSUFFICIENT-LIQUIDITY (u205)
+
+2. **tests/yield-vault.test.ts** (new file):
+   - 32 comprehensive tests covering:
+     - Token constants (name, symbol, decimals)
+     - Supply/Deposit functionality with share calculation
+     - Withdraw functionality with yield calculation
+     - Yield rate configuration
+     - Yield harvesting after block progression
+     - Read-only helper functions (effective balance, pending yield, APY)
+     - Admin mint/burn operations
+     - SIP-010 transfer
+     - Integration test: Supply → Yield → Withdraw
+
+3. **Clarinet.toml**:
+   - Added yield-vault contract configuration with mock-usdc and sip-010-trait dependencies
+
+### Design Notes
+- The yield-vault contract is a self-contained yield-bearing vault that manages yield internally
+- It can be swapped for a production Zest Protocol vault contract via the vault-trait interface
+- The contract uses the same yield calculation formula as mock-zest-vault for consistency
+- In production, this contract can be replaced with a real Zest Protocol vault without changing the user-facing interface
+
+### Verification
+- All 32 yield-vault tests pass
+- `clarinet check` passes with only informational warnings (no errors)
+- Contract compiles successfully
+- Total test count: 165 passed / 172 (7 pre-existing failures in multi-outcome-pool unrelated to this change)
+
