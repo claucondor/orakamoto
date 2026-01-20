@@ -11,8 +11,9 @@ const wallet3 = accounts.get('wallet_3')!;
 const FAUCET_LIMIT = 10_000_000_000n; // 10000 USDC with 6 decimals
 const ERR_NOT_AUTHORIZED = 100n;
 const ERR_NOT_TOKEN_OWNER = 101n;
-const ERR_ZERO_AMOUNT = 102n;
-const ERR_FAUCET_LIMIT_EXCEEDED = 103n;
+const ERR_FAUCET_LIMIT_EXCEEDED = 102n;
+const ERR_INSUFFICIENT_BALANCE = 103n;
+const ERR_ZERO_AMOUNT = 104n;
 
 describe('Mock USDC Token', () => {
   describe('SIP-010 Metadata', () => {
@@ -169,7 +170,7 @@ describe('Mock USDC Token', () => {
       // Check claimed amount
       const claimed = simnet.callReadOnlyFn(
         'mock-usdc',
-        'get-faucet-claimed',
+        'get-faucet-claims',
         [Cl.standardPrincipal(wallet1)],
         wallet1
       );
@@ -315,7 +316,7 @@ describe('Mock USDC Token', () => {
         ],
         wallet1
       );
-      // ft-transfer? returns (err u1) for insufficient balance
+      // ft-transfer? returns (err u1) for insufficient balance (native Clarity error)
       expect(result.result).toBeErr(Cl.uint(1));
     });
 
@@ -485,8 +486,8 @@ describe('Mock USDC Token', () => {
         [Cl.uint(5_000_000_001n)],
         wallet1
       );
-      // ft-burn? returns (err u1) for insufficient balance
-      expect(result.result).toBeErr(Cl.uint(1));
+      // ft-burn? returns (err u1) for insufficient balance, but our wrapper returns ERR-INSUFFICIENT-BALANCE
+      expect(result.result).toBeErr(Cl.uint(ERR_INSUFFICIENT_BALANCE));
     });
 
     it('should update total supply after burning', () => {

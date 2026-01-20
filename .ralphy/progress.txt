@@ -1,5 +1,41 @@
 # Ralphy Progress Log
 
+## 2026-01-20: Implemented Integration Tests and Fixed Test Issues
+
+### Summary
+Created comprehensive integration tests for the complete market lifecycle and fixed existing test issues in mock-usdc.test.ts.
+
+### Changes Made
+
+1. **tests/integration.test.ts** (new file):
+   - Created end-to-end integration test covering the full market lifecycle:
+     - Create market via factory
+     - Initialize market pool with initial liquidity
+     - Add liquidity as LP
+     - Buy YES tokens (wallet1)
+     - Buy NO tokens (wallet2)
+     - Advance past deadline and resolve market
+     - Wait for dispute window to pass
+     - Claim winnings (winner)
+     - Verify loser cannot claim
+   - Added test for NO as winning outcome
+   - Added test for liquidity provision and removal
+
+2. **tests/mock-usdc.test.ts**:
+   - Fixed error code constants to match actual contract values:
+     - ERR-ZERO-AMOUNT: u104 (was incorrectly u102)
+     - ERR-FAUCET-LIMIT-EXCEEDED: u102 (was incorrectly u103)
+     - ERR-INSUFFICIENT-BALANCE: u103 (was incorrectly u101)
+   - Fixed function name: `get-faucet-claims` (was incorrectly `get-faucet-claimed`)
+   - Fixed balance comparison for transfer exceeding balance test (returns err u1 from ft-transfer?)
+
+3. **PRD.md**:
+   - Marked Phase 1 Verification tasks as complete
+
+### Verification
+- All 63 tests pass (9 market-pool tests, 19 market-factory tests, 35 mock-usdc tests, 3 integration tests)
+- `clarinet check` passes with only informational warnings (no errors)
+
 ## 2026-01-20: Implemented DISPUTE-WINDOW parameter
 
 ### Summary

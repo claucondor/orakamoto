@@ -141,9 +141,9 @@ Update this file every time you deploy or redeploy contracts.
 - [x] Write tests for market-factory in tests/market-factory.test.ts
 
 ### Phase 1 Verification
-- [ ] Write end-to-end test: create market -> add liquidity -> buy YES -> buy NO -> resolve -> claim winnings
-- [ ] Run clarinet check to verify all contracts compile without errors
-- [ ] Run clarinet test to ensure all tests pass
+- [x] Write end-to-end test: create market -> add liquidity -> buy YES -> buy NO -> resolve -> claim winnings
+- [x] Run clarinet check to verify all contracts compile without errors
+- [x] Run clarinet test to ensure all tests pass
 
 ### Test File Template
 ```typescript
