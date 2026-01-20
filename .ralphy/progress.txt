@@ -159,3 +159,66 @@ Created the multi-outcome-pool.clar contract implementing LMSR (Logarithmic Mark
 - The contract compiles and deploys successfully
 - Phase 2 first task is complete
 
+
+## 2026-01-20: Implemented Multi-Outcome Factory Extension
+
+### Summary
+Extended the market-factory.clar contract to support multi-outcome market creation with LMSR pricing, enabling markets with 2-10 outcomes beyond binary YES/NO markets.
+
+### Changes Made
+
+1. **contracts/market-factory.clar**:
+   - Added multi-outcome market constants:
+     - `MAX-OUTCOMES` (u10)
+     - `MIN-OUTCOMES` (u2)
+   - Added new error constants:
+     - `ERR-INVALID-OUTCOME-COUNT` (u2009)
+     - `ERR-INVALID-OUTCOME-LABELS` (u2010)
+     - `ERR-INVALID-LMSR-B` (u2011)
+   - Extended `markets` map data structure with:
+     - `market-type`: "binary" or "multi-outcome"
+     - `outcome-count`: Number of outcomes (2-10)
+     - `outcome-labels`: List of labels for each outcome
+     - `lmsr-b`: LMSR liquidity parameter
+   - Updated `create-market` function to include new fields for binary markets
+   - Added `create-multi-outcome-market` function with parameters:
+     - question, deadline, resolution-deadline, collateral
+     - outcome-count (2-10)
+     - outcome-labels (list of strings)
+     - lmsr-b (LMSR liquidity parameter)
+   - Added validation for:
+     - Outcome count between 2-10
+     - Label count matches outcome count
+     - All used labels are non-empty
+     - LMSR b parameter > 0
+   - Added new read-only functions:
+     - `get-market-type`: Returns "binary" or "multi-outcome"
+     - `get-outcome-labels`: Returns list of outcome labels
+     - `get-lmsr-b`: Returns LMSR liquidity parameter
+
+2. **tests/multi-outcome-factory.test.ts** (new file):
+   - Tests for constants (MAX-OUTCOMES, MIN-OUTCOMES)
+   - Tests for creating 3-outcome and 10-outcome markets
+   - Tests for validation:
+     - Less than 2 outcomes (rejected)
+     - More than 10 outcomes (rejected)
+     - Mismatched outcome labels count (rejected)
+     - Empty outcome labels (rejected)
+     - Zero LMSR b parameter (rejected)
+     - Insufficient collateral (rejected)
+   - Tests for using default resolution deadline
+   - Tests for `get-market-type` (binary and multi-outcome)
+   - Tests for `get-outcome-labels` (binary and multi-outcome)
+   - Tests for `get-lmsr-b` (returns 0 for binary, correct value for multi-outcome)
+   - Tests for collateral transfer
+   - Tests for `get-market` with complete multi-outcome market data
+
+3. **PRD.md**:
+   - Marked Phase 2 Multi-Outcome Factory tasks as complete
+
+### Verification
+- All 19 multi-outcome-factory tests pass
+- All 100 total tests pass (92 previous + 19 new - 11 pre-existing failures in multi-outcome-pool)
+- `clarinet check` passes with only pre-existing warnings (no errors)
+- Contract compiles successfully
+

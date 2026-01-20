@@ -215,10 +215,10 @@ Use integer approximations:
 - [x] Write tests for LMSR math accuracy and edge cases (18/25 tests pass - core functionality verified)
 
 ### Multi-Outcome Factory
-- [ ] Extend market-factory to support multi-outcome market creation
-- [ ] Add outcome-count parameter to create-market
-- [ ] Store outcome labels in market metadata
-- [ ] Write tests for multi-outcome market lifecycle
+- [x] Extend market-factory to support multi-outcome market creation
+- [x] Add outcome-count parameter to create-market
+- [x] Store outcome labels in market metadata
+- [x] Write tests for multi-outcome market lifecycle
 
 ---
 
