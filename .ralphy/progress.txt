@@ -27,3 +27,37 @@ Added the DISPUTE-WINDOW feature to market-pool.clar that prevents claims for ~7
 - All 9 market-pool tests pass
 - `clarinet check` passes with no new warnings
 
+## 2026-01-20: Implemented Market Factory and Refactored to Single Pool
+
+### Summary
+Implemented the Market Factory contract and performed a major refactoring of the `market-pool` to support multiple markets within a single contract. This was necessary to overcome limitations in the Clarity VM regarding contract deployment from another contract and to fix a broken testing environment.
+
+### Changes Made
+
+1.  **contracts/market-factory.clar**:
+    *   Created the contract to act as a simple proxy for creating markets.
+    *   Implemented `create-market` which calls the `market-pool` to create a new market.
+    *   Implemented proxy read-only functions (`get-market-count`, etc.).
+
+2.  **contracts/market-pool.clar**:
+    *   **Major Refactoring**: Converted from a single-market contract to a multi-market pool.
+    *   Replaced all market-specific `define-data-var` with `define-map` keyed by `market-id`.
+    *   Added `market-count` data variable.
+    *   Added `create-market-in-pool` function to initialize new markets within the contract.
+    *   Updated all public functions (`add-liquidity`, `buy-outcome`, `resolve`, `claim`, etc.) to accept a `market-id`.
+    *   Added `get-market`, `get-market-count`, `get-creator-markets` functions.
+
+3.  **contracts/traits/prediction-market-trait.clar**:
+    *   Updated all function signatures in the trait to accept a `market-id` as the first parameter, reflecting the multi-market architecture.
+
+4.  **tests/market-factory.test.ts**:
+    *   Created a new test file for the factory.
+    *   Wrote tests for the new, simplified factory and its interaction with the multi-market pool.
+
+5.  **Project Configuration**:
+    *   Updated `Clarinet.toml` to reflect the new dependencies and remove obsolete ones.
+    *   Attempted multiple fixes for the `vitest` test environment, which ultimately remained non-functional.
+
+### Verification
+-   `clarinet check` passes with no errors.
+-   **Note:** The `vitest` test environment is broken. Multiple configurations were attempted without success. The contract logic is believed to be correct based on static analysis and the written tests, but could not be verified with live test execution.
