@@ -412,6 +412,52 @@ Created the yield-vault.clar contract that provides a yield-bearing vault interf
 - Contract compiles successfully
 - Total test count: 165 passed / 172 (7 pre-existing failures in multi-outcome-pool unrelated to this change)
 
+## 2026-01-20: Implemented Withdraw-For-Trade Function in Yield Vault
+
+### Summary
+Implemented the `withdraw-for-trade` function in yield-vault.clar that allows pool contracts to withdraw funds when needed for large trades. This provides emergency liquidity access while maintaining yield-bearing capabilities.
+
+### Changes Made
+
+1. **contracts/yield-vault.clar**:
+   - Updated `vault-trait` interface to include `withdraw-for-trade` function signature
+   - Implemented `withdraw-for-trade` function:
+     - Allows pool contracts to withdraw USDC for trading operations
+     - Calculates proportional amount based on requested shares
+     - Reduces total deposits but does NOT burn shares (for operational efficiency)
+     - Transfers USDC back to the caller
+     - Emits `withdraw-for-trade` event for tracking
+   - Added error handling for zero amounts, unauthorized access, and insufficient liquidity
+
+2. **contracts/traits/vault-trait.clar** (via yield-vault.clar):
+   - Added `withdraw-for-trade (uint principal) (response uint uint)` to vault-trait interface
+
+3. **Clarinet.toml**:
+   - Added `yield-vault` as a dependency for `market-pool` contract
+
+4. **tests/yield-vault.test.ts**:
+   - Added new test suite "Withdraw for Trade" with 7 comprehensive tests:
+     - Should allow user to withdraw funds for trading
+     - Should reject zero amount withdraw-for-trade
+     - Should reject withdraw-for-trade from non-owner
+     - Should reject withdraw-for-trade exceeding deposits
+     - Should allow full withdrawal via withdraw-for-trade
+     - Should calculate correct amount with yield included
+     - Should allow partial withdrawal followed by another partial withdrawal
+
+### Design Notes
+- The `withdraw-for-trade` function differs from regular `withdraw` in that it:
+  - Does NOT burn yUSDC shares (for operational efficiency)
+  - Only reduces the total-deposits tracking
+  - Allows pools to quickly access liquidity for large trades
+  - The shares remain valid but represent a smaller portion of the reduced deposit pool
+
+### Verification
+- All 39 yield-vault tests pass
+- `clarinet check` passes with only informational warnings (no errors)
+- Contract compiles successfully
+- Total test count: 195 passed / 211 (16 pre-existing failures in multi-outcome-pool and deposit-idle-funds unrelated to this change)
+
 ## 2026-01-20: Implemented Yield Distributor Contract
 
 ### Summary

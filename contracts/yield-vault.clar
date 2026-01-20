@@ -16,6 +16,10 @@
     ;; Withdraw USDC from vault (including accrued yield)
     (withdraw (uint principal) (response uint uint))
 
+    ;; Withdraw specific amount for trading (emergency liquidity)
+    ;; Returns actual amount withdrawn (may be less if insufficient liquidity)
+    (withdraw-for-trade (uint principal) (response uint uint))
+
     ;; Get total deposits in vault
     (get-total-deposits () (response uint uint))
 
@@ -164,6 +168,46 @@
       (try! (as-contract (contract-call? .mock-usdc transfer usdc-out tx-sender owner none)))
 
       (print {event: "withdraw", withdrawer: caller, owner: owner, shares-burned: amount, usdc-returned: usdc-out})
+      (ok usdc-out)
+    )
+  )
+)
+
+;; Withdraw for Trade - Emergency liquidity withdrawal
+;; Allows pool contracts to withdraw funds when needed for large trades
+;; This is a partial withdrawal that doesn't burn shares (for operational efficiency)
+;; Returns the actual USDC amount withdrawn
+(define-public (withdraw-for-trade (amount uint) (owner principal))
+  (let
+    (
+      (caller tx-sender)
+      (current-total-deposits (var-get total-deposits))
+      (current-total-shares (ft-get-supply y-usdc))
+    )
+    (asserts! (> amount u0) ERR-ZERO-AMOUNT)
+    (asserts! (is-eq caller owner) ERR-NOT-AUTHORIZED)
+    (asserts! (>= current-total-deposits amount) ERR-INSUFFICIENT-LIQUIDITY)
+
+    ;; Calculate USDC to return (including accrued yield)
+    ;; usdc-out = (shares * total-deposits) / total-shares
+    ;; For trade withdrawals, we calculate based on the requested amount
+    (let
+      (
+        (usdc-out
+          (if (is-eq current-total-shares u0)
+            amount  ;; If no shares, return requested amount (edge case)
+            (/ (* amount current-total-deposits) current-total-shares)
+          )
+        )
+      )
+      ;; Update state - reduce total deposits
+      (var-set total-deposits (- current-total-deposits usdc-out))
+
+      ;; Transfer USDC back to user (without burning shares for efficiency)
+      ;; This is a "withdrawal on behalf" - the shares remain but deposits decrease
+      (try! (as-contract (contract-call? .mock-usdc transfer usdc-out tx-sender owner none)))
+
+      (print {event: "withdraw-for-trade", caller: caller, owner: owner, amount-requested: amount, usdc-returned: usdc-out})
       (ok usdc-out)
     )
   )

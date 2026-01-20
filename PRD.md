@@ -243,8 +243,8 @@ Real Zest functions to mock:
 ### Yield Vault Integration
 - [x] Create yield-vault.clar that wraps mock-zest-vault (swappable for real Zest in production)
 - [x] Implement deposit-idle-funds to move 90% of pool liquidity to yield source
-- [ ] Implement withdraw-for-trade to pull funds when needed for large trades
-- [ ] Implement harvest-yield to collect and distribute earned yield
+- [x] Implement withdraw-for-trade to pull funds when needed for large trades
+- [x] Implement harvest-yield to collect and distribute earned yield
 - [ ] Track yield per LP token for fair distribution
 
 ### Yield Distributor

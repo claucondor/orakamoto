@@ -17,7 +17,7 @@ depends_on = ["sip-010-trait"]
 
 [contracts.market-pool]
 path = "contracts/market-pool.clar"
-depends_on = ["mock-usdc", "sip-010-trait", "prediction-market-trait", "mock-zest-vault"]
+depends_on = ["mock-usdc", "sip-010-trait", "prediction-market-trait", "mock-zest-vault", "yield-vault"]
 
 [contracts.market-factory]
 path = "contracts/market-factory.clar"

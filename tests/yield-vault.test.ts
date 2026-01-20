@@ -206,6 +206,129 @@ describe('Yield Vault', () => {
     });
   });
 
+  describe('Withdraw for Trade', () => {
+    beforeEach(() => {
+      // Setup: wallet1 supplies 100 USDC
+      simnet.callPublicFn('mock-usdc', 'transfer',
+        [Cl.uint(100000000), Cl.standardPrincipal(wallet1), Cl.contractPrincipal(deployer, 'yield-vault'), Cl.none()],
+        wallet1
+      );
+      simnet.callPublicFn('yield-vault', 'supply',
+        [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
+        wallet1
+      );
+    });
+
+    it('should allow user to withdraw funds for trading', () => {
+      const result = simnet.callPublicFn('yield-vault', 'withdraw-for-trade',
+        [Cl.uint(50000000), Cl.standardPrincipal(wallet1)],
+        wallet1
+      );
+
+      expect(result.result).toBeOk(Cl.uint(50000000));
+
+      // Check total deposits decreased (shares remain unchanged)
+      const totalDeposits = simnet.callReadOnlyFn('yield-vault', 'get-total-deposits', [], wallet1);
+      expect(totalDeposits.result).toBeOk(Cl.uint(50000000));
+
+      // Check yUSDC balance remains the same (shares not burned)
+      const balance = simnet.callReadOnlyFn('yield-vault', 'get-balance',
+        [Cl.standardPrincipal(wallet1)],
+        wallet1
+      );
+      expect(balance.result).toBeOk(Cl.uint(100000000));
+    });
+
+    it('should reject zero amount withdraw-for-trade', () => {
+      const result = simnet.callPublicFn('yield-vault', 'withdraw-for-trade',
+        [Cl.uint(0), Cl.standardPrincipal(wallet1)],
+        wallet1
+      );
+      expect(result.result).toBeErr(Cl.uint(202)); // ERR-ZERO-AMOUNT
+    });
+
+    it('should reject withdraw-for-trade from non-owner', () => {
+      const result = simnet.callPublicFn('yield-vault', 'withdraw-for-trade',
+        [Cl.uint(50000000), Cl.standardPrincipal(wallet1)],
+        wallet2
+      );
+      expect(result.result).toBeErr(Cl.uint(200)); // ERR-NOT-AUTHORIZED
+    });
+
+    it('should reject withdraw-for-trade exceeding deposits', () => {
+      const result = simnet.callPublicFn('yield-vault', 'withdraw-for-trade',
+        [Cl.uint(200000000), Cl.standardPrincipal(wallet1)],
+        wallet1
+      );
+      expect(result.result).toBeErr(Cl.uint(205)); // ERR-INSUFFICIENT-LIQUIDITY
+    });
+
+    it('should allow full withdrawal via withdraw-for-trade', () => {
+      const result = simnet.callPublicFn('yield-vault', 'withdraw-for-trade',
+        [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
+        wallet1
+      );
+
+      expect(result.result).toBeOk(Cl.uint(100000000));
+
+      // Check total deposits is now 0
+      const totalDeposits = simnet.callReadOnlyFn('yield-vault', 'get-total-deposits', [], wallet1);
+      expect(totalDeposits.result).toBeOk(Cl.uint(0));
+
+      // Note: yUSDC shares remain (100000000) - they are NOT burned
+      // This is intentional for operational efficiency
+      const balance = simnet.callReadOnlyFn('yield-vault', 'get-balance',
+        [Cl.standardPrincipal(wallet1)],
+        wallet1
+      );
+      expect(balance.result).toBeOk(Cl.uint(100000000));
+    });
+
+    it('should calculate correct amount with yield included', () => {
+      // Advance time to accrue yield
+      simnet.mineEmptyBlocks(52560); // ~1 year worth of blocks
+
+      // Harvest yield first
+      simnet.callPublicFn('yield-vault', 'harvest-yield', [], wallet1);
+
+      // Withdraw for trade - requesting 50M shares worth
+      const result = simnet.callPublicFn('yield-vault', 'withdraw-for-trade',
+        [Cl.uint(50000000), Cl.standardPrincipal(wallet1)],
+        wallet1
+      );
+
+      // Should successfully withdraw (returns USDC amount withdrawn)
+      expect(result.result).toHaveProperty('value');
+      const returnedValue = (result.result as any).value.value;
+      // The amount should be proportional to shares based on current deposits
+      // With yield harvested, total deposits increased, so 50M shares = 50M * (deposits + yield) / total-shares
+      expect(returnedValue).toBeGreaterThan(0);
+      expect(returnedValue).toBeLessThanOrEqual(100000000); // Should not exceed total deposits
+    });
+
+    it('should allow partial withdrawal followed by another partial withdrawal', () => {
+      // First partial withdrawal - 30M shares worth
+      const result1 = simnet.callPublicFn('yield-vault', 'withdraw-for-trade',
+        [Cl.uint(30000000), Cl.standardPrincipal(wallet1)],
+        wallet1
+      );
+      // Returns proportional amount (30M / 100M = 30% of 100M = 30M)
+      expect(result1.result).toBeOk(Cl.uint(30000000));
+
+      // Second partial withdrawal - 40M shares worth
+      // Remaining deposits: 70M, requesting 40M shares worth = 40M * 70M / 100M = 28M
+      const result2 = simnet.callPublicFn('yield-vault', 'withdraw-for-trade',
+        [Cl.uint(40000000), Cl.standardPrincipal(wallet1)],
+        wallet1
+      );
+      expect(result2.result).toBeOk(Cl.uint(28000000));
+
+      // Total withdrawn: 30M + 28M = 58M, remaining: 42M
+      const totalDeposits = simnet.callReadOnlyFn('yield-vault', 'get-total-deposits', [], wallet1);
+      expect(totalDeposits.result).toBeOk(Cl.uint(42000000));
+    });
+  });
+
   describe('Yield Rate', () => {
     it('should return default yield rate', () => {
       const result = simnet.callReadOnlyFn('yield-vault', 'get-yield-rate', [], wallet1);
