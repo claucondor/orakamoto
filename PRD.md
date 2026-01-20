@@ -129,7 +129,7 @@ Update this file every time you deploy or redeploy contracts.
 - [ ] Add is-disputed flag and dispute-deadline to market state
 - [ ] Implement open-dispute function (Phase 5 will add DAO voting, for now just blocks claims)
 - [ ] Implement finalize-resolution function to close dispute window and enable claims
-- [ ] Write comprehensive tests for market-pool in tests/market-pool.test.ts
+- [x] Write comprehensive tests for market-pool in tests/market-pool.test.ts
 
 ### Market Factory Contract
 - [ ] Create market-factory.clar with MINIMUM-COLLATERAL u50000000 (50 USDC) and DEFAULT-RESOLUTION-WINDOW u1008 (~7 days)
