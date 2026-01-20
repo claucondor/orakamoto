@@ -1,0 +1,102 @@
+# Ralphy Configuration - StackPredict Protocol
+# https://github.com/michaelshimeles/ralphy
+
+# Project info
+project:
+  name: "stackspredict"
+  language: "Clarity"
+  framework: "Stacks/Clarinet"
+  description: "Prediction Market Protocol on Stacks (Bitcoin L2)"
+
+# Commands
+commands:
+  test: "clarinet test"
+  lint: "clarinet check"
+  build: "clarinet check"
+
+# Rules - instructions the AI MUST follow
+rules:
+  # Environment
+  - "All development is for DEVNET - use local trait references (.trait-name.trait)"
+  - "Do NOT use mainnet contract addresses in code"
+  - "Document all deployed addresses in DEPLOYMENTS.md"
+
+  # Language & Framework
+  - "Use Clarity language for all smart contracts"
+  - "Follow SIP-010 standard for fungible tokens"
+  - "All contracts must be in contracts/ folder following the project structure"
+  - "Write tests in tests/ folder using Vitest and Clarinet SDK"
+  - "Register new contracts in Clarinet.toml with correct depends_on"
+
+  # Clarity Best Practices
+  - "Use PRECISION constant (u1000000) for 6 decimal calculations"
+  - "Always use asserts! for input validation"
+  - "Use try! and unwrap! for error handling - NEVER ignore responses"
+  - "Emit events with (print {event: ...}) for all state changes"
+  - "No floating point - use integer math with precision scaling"
+  - "Cache var-get results in let bindings to reduce gas costs"
+  - "Use fold, map, filter instead of loops - Clarity has no arbitrary loops"
+
+  # CRITICAL SECURITY - tx-sender vs contract-caller
+  - "For authentication, prefer contract-caller over tx-sender to prevent phishing attacks"
+  - "tx-sender = original transaction sender (never changes in call chain)"
+  - "contract-caller = immediate caller (changes with each contract hop)"
+  - "Use contract-caller for: ownership checks, permission validation, transfer authorization"
+  - "Only use tx-sender when you specifically need the original transaction initiator"
+  - "Example SAFE: (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)"
+  - "Example UNSAFE: (asserts! (is-eq tx-sender sender) err) - vulnerable to phishing"
+
+  # Security
+  - "Validate all inputs before processing"
+  - "Check for zero amounts: (asserts! (> amount u0) ERR-ZERO-AMOUNT)"
+  - "Verify state before operations (is-resolved, deadline, etc)"
+  - "Use (as-contract tx-sender) for contract-owned asset transfers"
+  - "Clarity has built-in overflow/underflow protection - no need for SafeMath"
+  - "Clarity prevents reentrancy by design - but still validate state properly"
+  - "All public functions MUST return (response) type - handle all responses with try!"
+
+  # Token Transfers
+  - "Transfer FROM user TO contract: (try! (contract-call? .mock-usdc transfer amount tx-sender (as-contract tx-sender) none))"
+  - "Transfer FROM contract TO user: (try! (as-contract (contract-call? .mock-usdc transfer amount tx-sender recipient none)))"
+  - "NEVER leave token transfers commented out"
+
+  # CRITICAL - Trait/Interface Consistency
+  - "When implementing a trait, ENSURE function signatures EXACTLY match the trait definition"
+  - "Response types must match exactly: if trait says (response uint uint), implementation must return (ok uint-value)"
+  - "Tuple response keys must match exactly: if trait says {yes-price: uint}, use yes-price NOT price-yes"
+  - "Optional types must match: if implementation uses (optional uint), trait must use (optional uint) not uint"
+  - "Parameter count must match: if implementation has 3 params, trait must have 3 params"
+  - "Always read the trait file BEFORE implementing functions to ensure consistency"
+  - "Run 'clarinet check' frequently to catch trait signature mismatches early"
+
+  # Code Style
+  - "Use descriptive error constants: ERR-NOT-AUTHORIZED (err u401), ERR-INSUFFICIENT-BALANCE (err u402)"
+  - "Group code sections with comments: ;; ========== Section Name =========="
+  - "Keep functions focused and single-purpose"
+  - "Use kebab-case for function names: get-market-info, add-liquidity"
+  - "Use SCREAMING-KEBAB-CASE for constants: CONTRACT-OWNER, PRECISION"
+
+  # Testing
+  - "Write tests for all public functions"
+  - "Test both success and error cases"
+  - "Use simnet.mineEmptyBlocks() to test time-based logic (block-height)"
+  - "Test edge cases: zero amounts, max amounts, unauthorized callers"
+  - "Run 'npm install' before running tests"
+  - "Run 'clarinet check' before 'clarinet test'"
+
+  # Git
+  - "NEVER add Co-Authored-By or any co-author attribution in commits"
+  - "Keep commit messages concise and descriptive"
+
+# Boundaries - files/folders the AI should not modify
+boundaries:
+  never_touch:
+    - "settings/Devnet.toml"
+    - "settings/Testnet.toml"
+    - "settings/Mainnet.toml"
+    - "*.lock"
+    - ".gitignore"
+
+# Capabilities
+capabilities:
+  browser: "false"
