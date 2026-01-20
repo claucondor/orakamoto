@@ -523,3 +523,87 @@ Created the yield-distributor.clar contract that handles yield distribution logi
 - Contract compiles successfully
 - Total test count: 179 passed / 186 (7 pre-existing failures in deposit-idle-funds tests unrelated to this change)
 
+## 2026-01-20: Implemented Oracle Integration (Phase 4)
+
+### Summary
+Created the oracle-trait.clar and mock-oracle.clar contracts for Phase 4 Oracle Integration. This enables the protocol to integrate with different oracle providers for auto-resolution of markets.
+
+### Changes Made
+
+1. **contracts/traits/oracle-trait.clar** (new file):
+   - Defined oracle-trait interface with two functions:
+     - `get-price(asset)`: Returns price with 8 decimals precision
+     - `is-price-fresh(asset, max-age)`: Checks if price is not stale
+   - Supports integration with different oracle providers:
+     - Mock Oracle (for devnet/testing)
+     - Pyth Oracle (for testnet/mainnet)
+     - RedStone Oracle (for testnet/mainnet)
+   - Price format: 8 decimals precision (standard oracle format)
+     - Example: $50,000 BTC = 5000000000 (50,000 * 10^8)
+
+2. **contracts/mocks/mock-oracle.clar** (new file):
+   - Implements oracle-trait for testing auto-resolution markets
+   - Allows admin to manually set prices for testing different scenarios
+   - Implemented `set-price(asset, price)` admin function:
+     - Only callable by contract owner
+     - Price should be provided with 8 decimals
+     - Stores price with current block height as timestamp
+   - Implemented `get-price(asset)` read-only function:
+     - Returns price with 8 decimals
+     - Returns error if asset not found
+   - Implemented `is-price-fresh(asset, max-age)`:
+     - Checks if price was updated within max-age blocks
+     - Returns true if fresh, false if stale
+   - Implemented `set-prices(list)` for bulk price updates
+   - Implemented `remove-price(asset)` for admin price removal
+   - Implemented `get-price-info(asset)` for price + timestamp
+   - Implemented `is-price-stale(asset)` using MAX-PRICE-AGE (1008 blocks)
+   - Error codes: ERR-NOT-AUTHORIZED (u400), ERR-ASSET-NOT-FOUND (u401), ERR-ZERO-PRICE (u402), ERR-PRICE-STALE (u403)
+   - Events emitted for all price updates and removals
+
+3. **tests/mocks/mock-oracle.test.ts** (new file):
+   - 19 comprehensive tests covering:
+     - Price Setting and Retrieval (5 tests):
+       - Allow admin to set price for an asset
+       - Reject price setting from non-owner
+       - Reject zero price
+       - Return error for non-existent asset
+       - Update price for existing asset
+     - Price Freshness Check (3 tests):
+       - Return true for fresh price
+       - Return false for stale price
+       - Return error for non-existent asset
+     - Price Staleness Check (3 tests):
+       - Return false for fresh price
+       - Return true for stale price
+       - Return error for non-existent asset
+     - Set Multiple Prices (2 tests):
+       - Allow admin to set multiple prices at once
+       - Reject set-prices from non-owner
+     - Remove Price (2 tests):
+       - Allow admin to remove an asset
+       - Reject remove-price from non-owner
+     - Get Price Info (2 tests):
+       - Return price and timestamp for existing asset
+       - Return error for non-existent asset
+     - Integration Tests (2 tests):
+       - Handle price updates over time
+       - Handle multiple assets independently
+
+4. **Clarinet.toml**:
+   - Added oracle-trait contract configuration
+   - Added mock-oracle contract configuration
+
+### Design Notes
+- The oracle-trait is designed to be swappable between different oracle providers
+- Mock oracle allows manual price setting for testing auto-resolution scenarios
+- Price format uses 8 decimals (standard oracle format) for precision
+- Price staleness is checked against block height (MAX-PRICE-AGE = 1008 blocks ~7 days)
+- The trait can be used by future oracle-resolver.clar for auto-resolution
+
+### Verification
+- All 19 mock-oracle tests pass
+- `clarinet check` passes with only informational warnings (no errors)
+- Contracts compile successfully
+- Total test count: 214 passed / 230 (16 pre-existing failures in multi-outcome-pool and deposit-idle-funds unrelated to this change)
+
