@@ -222,3 +222,62 @@ Extended the market-factory.clar contract to support multi-outcome market creati
 - `clarinet check` passes with only pre-existing warnings (no errors)
 - Contract compiles successfully
 
+
+## 2026-01-20: Implemented Mock Zest Vault (Phase 3 - Yield Integration)
+
+### Summary
+Created the mock-zest-vault.clar contract that simulates Zest Protocol yield farming interface for testing. This is the foundation for Phase 3 (Yield Integration) and enables yield-bearing USDC deposits and withdrawals with simulated APY.
+
+### Changes Made
+
+1. **contracts/mocks/mock-zest-vault.clar** (new file):
+   - Implemented SIP-010 fungible token interface (zUSDC - yield-bearing USDC)
+   - Added configurable yield rate (default: 5% APY in basis points)
+   - Implemented `supply` function:
+     - Accepts USDC deposits from users
+     - Mints zUSDC shares proportional to deposit
+     - Tracks total deposits in the vault
+   - Implemented `withdraw` function:
+     - Burns zUSDC shares
+     - Returns USDC amount (including accrued yield)
+     - Calculates proportional share of vault
+   - Implemented `harvest-yield` function:
+     - Calculates yield based on blocks elapsed and yield rate
+     - Formula: yield = (deposits × yield-rate × blocks-elapsed) / (10000 × 525600)
+     - Mints new zUSDC shares to distribute yield proportionally
+   - Added read-only functions:
+     - `get-total-deposits`: Total USDC in vault
+     - `get-total-yield-earned`: Cumulative yield since inception
+     - `get-yield-rate`: Current APY in basis points
+     - `get-pending-yield`: User's share of vault
+     - `get-effective-balance`: User's balance including yield
+     - `get-apy`: Current APY
+   - Added admin functions:
+     - `set-yield-rate`: Configure APY for testing
+     - `mint/burn`: Admin token management
+   - Events emitted for all actions (supply, withdraw, yield-harvest)
+
+2. **tests/mocks/mock-zest-vault.test.ts** (new file):
+   - 33 comprehensive tests covering:
+     - Token constants (name, symbol, decimals)
+     - Supply/Deposit functionality
+     - Withdraw functionality
+     - Yield rate configuration
+     - Yield harvesting
+     - Read-only helper functions
+     - Admin mint/burn
+     - SIP-010 transfer
+     - Integration test: Supply → Yield → Withdraw
+
+3. **Clarinet.toml**:
+   - Added mock-zest-vault contract configuration with mock-usdc and sip-010-trait dependencies
+
+4. **PRD.md**:
+   - Marked Phase 3 Mock Zest Vault tasks as complete
+
+### Verification
+- All 33 mock-zest-vault tests pass
+- `clarinet check` passes with only informational warnings (no errors)
+- Contract compiles successfully
+- Total test count: 133 passed / 140 (7 pre-existing failures in multi-outcome-pool unrelated to this change)
+

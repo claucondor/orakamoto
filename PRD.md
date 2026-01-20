@@ -233,12 +233,12 @@ Real Zest functions to mock:
 - repay(asset, amount-to-repay, on-behalf-of, payer)
 
 ### Mock Zest Vault
-- [ ] Create contracts/mocks/mock-zest-vault.clar implementing same interface as real Zest
-- [ ] Implement supply function that accepts USDC deposits and tracks balances
-- [ ] Implement withdraw function that returns deposited amount plus simulated yield
-- [ ] Implement get-balance and get-yield-earned read-only functions
-- [ ] Add configurable yield-rate-bp for testing different APY scenarios
-- [ ] Write tests verifying mock behaves like real Zest interface
+- [x] Create contracts/mocks/mock-zest-vault.clar implementing same interface as real Zest
+- [x] Implement supply function that accepts USDC deposits and tracks balances
+- [x] Implement withdraw function that returns deposited amount plus simulated yield
+- [x] Implement get-balance and get-yield-earned read-only functions
+- [x] Add configurable yield-rate-bp for testing different APY scenarios
+- [x] Write tests verifying mock behaves like real Zest interface
 
 ### Yield Vault Integration
 - [ ] Create yield-vault.clar that wraps mock-zest-vault (swappable for real Zest in production)

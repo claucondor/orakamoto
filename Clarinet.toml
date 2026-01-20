@@ -27,6 +27,10 @@ depends_on = ["mock-usdc"]
 path = "contracts/multi-outcome-pool.clar"
 depends_on = ["mock-usdc"]
 
+[contracts.mock-zest-vault]
+path = "contracts/mocks/mock-zest-vault.clar"
+depends_on = ["mock-usdc", "sip-010-trait"]
+
 [repl.analysis]
 passes = ["check_checker"]
 check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }
