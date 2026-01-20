@@ -528,6 +528,79 @@ Created the yield-distributor.clar contract that handles yield distribution logi
 ### Summary
 Created the oracle-trait.clar and mock-oracle.clar contracts for Phase 4 Oracle Integration. This enables the protocol to integrate with different oracle providers for auto-resolution of markets.
 
+## 2026-01-20: Implemented Governance Token (Phase 5 - Governance)
+
+### Summary
+Created the governance-token.clar contract implementing the $PRED governance token. This is the first task in Phase 5 (Governance) and provides the foundation for the governance system.
+
+### Changes Made
+
+1. **contracts/governance-token.clar** (new file):
+   - Implemented SIP-010 fungible token interface ($PRED - StackPredict Governance)
+   - Token details:
+     - Name: "StackPredict Governance"
+     - Symbol: "PRED"
+     - Decimals: 8 (for fine-grained governance power)
+   - Implemented `transfer` function with SIP-010 compliance
+   - Implemented `mint` function:
+     - Restricted to contract owner (for reward distribution)
+     - Called by LP rewards, trader rewards, or creator rewards contracts
+   - Implemented `burn` function:
+     - Allows token holders to burn their own tokens
+   - Implemented `delegate` function:
+     - Allows users to delegate voting power to another address
+     - Prevents self-delegation
+     - Emits delegation events
+   - Added read-only functions:
+     - `get-delegation`: Returns who a user has delegated to (or self if no delegation)
+     - `get-voting-power`: Returns token balance as voting power (placeholder for future vote-escrow)
+   - Error codes: ERR-NOT-AUTHORIZED (u500), ERR-NOT-TOKEN-OWNER (u501), ERR-ZERO-AMOUNT (u502), ERR-INSUFFICIENT-BALANCE (u503)
+   - Events emitted for all actions (transfer, mint, burn, delegate)
+
+2. **tests/governance-token.test.ts** (new file):
+   - 27 comprehensive tests covering:
+     - SIP-010 Metadata (name, symbol, decimals, token-uri, total-supply, balance)
+     - Mint Functionality:
+       - Allow contract owner to mint tokens
+       - Reject mint from non-owner
+       - Reject mint with zero amount
+       - Update total supply when minting
+     - Transfer Functionality:
+       - Allow token holder to transfer tokens
+       - Reject transfer from non-token-owner
+       - Reject transfer with zero amount
+       - Reject transfer exceeding balance
+       - Allow transfer with memo
+     - Burn Functionality:
+       - Allow token holder to burn their own tokens
+       - Reject burn with zero amount
+       - Reject burn exceeding balance
+       - Allow burning all tokens
+     - Delegation Functionality:
+       - Allow user to delegate voting power
+       - Reject self-delegation
+       - Return delegatee address when delegation exists
+       - Return self when no delegation exists
+     - Voting Power:
+       - Return zero voting power initially
+       - Return token balance as voting power
+     - Integration Tests:
+       - Complete token lifecycle (mint → transfer → delegate → burn)
+       - Voting power tracking after transfers
+
+3. **Clarinet.toml**:
+   - Added governance-token contract configuration with sip-010-trait dependency
+
+4. **PRD.md**:
+   - Marked governance token tasks as complete (mint, burn, delegate functions)
+
+### Verification
+- All 27 governance-token tests pass
+- `clarinet check` passes with only informational warnings (no errors)
+- Contract compiles successfully
+- Total test count: 241 passed / 257 (16 pre-existing failures in deposit-idle-funds and multi-outcome-pool unrelated to this change)
+
+
 ### Changes Made
 
 1. **contracts/traits/oracle-trait.clar** (new file):

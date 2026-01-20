@@ -314,10 +314,10 @@ Contract: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
 - Treasury spending
 
 ### Governance Token
-- [ ] Create governance-token.clar (SIP-010) named $PRED
-- [ ] Implement mint function restricted to reward contracts
-- [ ] Implement burn function for token holders
-- [ ] Add delegate function for vote delegation
+- [x] Create governance-token.clar (SIP-010) named $PRED
+- [x] Implement mint function restricted to reward contracts
+- [x] Implement burn function for token holders
+- [x] Add delegate function for vote delegation
 - [ ] Create vesting-vault.clar for team/investor vesting with cliff and linear unlock
 
 ### Reward Distribution

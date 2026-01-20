@@ -45,6 +45,10 @@ path = "contracts/traits/oracle-trait.clar"
 [contracts.mock-oracle]
 path = "contracts/mocks/mock-oracle.clar"
 
+[contracts.governance-token]
+path = "contracts/governance-token.clar"
+depends_on = ["sip-010-trait"]
+
 [repl.analysis]
 passes = ["check_checker"]
 check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }
