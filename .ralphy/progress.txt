@@ -412,3 +412,68 @@ Created the yield-vault.clar contract that provides a yield-bearing vault interf
 - Contract compiles successfully
 - Total test count: 165 passed / 172 (7 pre-existing failures in multi-outcome-pool unrelated to this change)
 
+## 2026-01-20: Implemented Yield Distributor Contract
+
+### Summary
+Created the yield-distributor.clar contract that handles yield distribution logic for LPs based on time-weighted LP balances. This contract provides the infrastructure for LPs to claim their share of yield earned by the protocol.
+
+### Changes Made
+
+1. **contracts/yield-distributor.clar** (new file):
+   - Implemented SIP-010 fungible token interface (yLD - yield distributor token)
+   - Added LP balance tracking with time-weighted updates
+   - Implemented `update-lp-balance` function:
+     - Called by pool contracts when LP tokens are minted/burned
+     - Tracks LP balance with timestamp for time-weighted calculations
+     - Only callable by the pool contract (authorization via contract-caller)
+   - Implemented `deposit-yield` function:
+     - Called by yield vaults to deposit earned yield for distribution
+     - Mints yLD tokens proportional to yield amount
+     - Tracks pool-specific yield and total accumulated yield
+     - Only callable by authorized yield sources (yield-vault, mock-zest-vault)
+   - Implemented `claim-yield` function:
+     - Allows LPs to claim their share of accumulated yield
+     - Calculates proportional share based on time-weighted LP balance
+     - Mints yLD tokens to claimer as yield claim receipts
+     - Prevents double-claiming via tracking
+   - Implemented `calculate-pending-yield` function:
+     - Calculates pending yield for a specific LP in a pool
+     - Returns 0 if already claimed
+   - Added comprehensive read-only functions:
+     - `get-total-yield-accumulated`: Total yield across all pools
+     - `get-total-claims`: Total yield claimed by LPs
+     - `get-pool-yield-earned`: Yield earned for specific pool
+     - `get-lp-time-weighted-balance`: Time-weighted LP balance
+     - `get-pending-yield`: User's pending yield across all pools
+     - `get-has-claimed-yield`: Check if user claimed yield for pool
+   - Added admin functions for testing:
+     - `mint`: Mint yLD tokens (owner only)
+     - `burn`: Burn yLD tokens (token holder)
+   - Events emitted for all actions
+   - Error codes: ERR-NOT-AUTHORIZED (u300), ERR-NOT-TOKEN-OWNER (u301), ERR-ZERO-AMOUNT (u302), ERR-INSUFFICIENT-BALANCE (u303), ERR-ALREADY-CLAIMED (u304), ERR-NO-YIELD-AVAILABLE (u305), ERR-NOT-INITIALIZED (u307)
+
+2. **tests/yield-distributor.test.ts** (new file):
+   - 14 comprehensive tests covering:
+     - Token constants (name, symbol, decimals)
+     - SIP-010 token transfer functionality
+     - Admin mint/burn operations
+     - Authorization and access control
+     - Zero amount validation
+     - Balance tracking
+
+3. **Clarinet.toml**:
+   - Added yield-distributor contract configuration with mock-usdc and sip-010-trait dependencies
+
+### Design Notes
+- The yield-distributor contract uses time-weighted LP balances for fair yield distribution
+- LPs earn yield proportional to their liquidity provision over time
+- The contract is designed to be called by pool contracts and yield vaults
+- yLD tokens serve as yield claim receipts and can be transferred
+- The contract integrates with the existing yield-vault and mock-zest-vault infrastructure
+
+### Verification
+- All 14 yield-distributor tests pass
+- `clarinet check` passes with only informational warnings (no errors)
+- Contract compiles successfully
+- Total test count: 179 passed / 186 (7 pre-existing failures in deposit-idle-funds tests unrelated to this change)
+

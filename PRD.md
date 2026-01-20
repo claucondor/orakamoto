@@ -248,10 +248,10 @@ Real Zest functions to mock:
 - [ ] Track yield per LP token for fair distribution
 
 ### Yield Distributor
-- [ ] Create yield-distributor.clar to handle yield distribution logic
-- [ ] Calculate yield share per LP based on time-weighted LP balance
-- [ ] Implement claim-yield for LPs to claim accumulated yield
-- [ ] Write tests for yield accrual and distribution math
+- [x] Create yield-distributor.clar to handle yield distribution logic
+- [x] Calculate yield share per LP based on time-weighted LP balance
+- [x] Implement claim-yield for LPs to claim accumulated yield
+- [x] Write tests for yield accrual and distribution math
 
 ---
 
