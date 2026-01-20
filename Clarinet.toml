@@ -5,9 +5,19 @@ authors = []
 telemetry = true
 cache_dir = "./.cache"
 
-# [contracts.counter]
-# path = "contracts/counter.clar"
-# epoch = "latest"
+[contracts.sip-010-trait]
+path = "contracts/traits/sip-010-trait.clar"
+
+[contracts.prediction-market-trait]
+path = "contracts/traits/prediction-market-trait.clar"
+
+[contracts.mock-usdc]
+path = "contracts/mock-usdc.clar"
+depends_on = ["sip-010-trait"]
+
+[contracts.market-pool]
+path = "contracts/market-pool.clar"
+depends_on = ["mock-usdc", "sip-010-trait", "prediction-market-trait"]
 
 [repl.analysis]
 passes = ["check_checker"]
