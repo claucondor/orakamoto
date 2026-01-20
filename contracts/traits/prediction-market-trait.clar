@@ -15,25 +15,22 @@
     ;; Returns: market info tuple with relevant market details
     (get-market-info () (response
       {
+        question: (string-utf8 256),
         creator: principal,
-        resolver: principal,
-        token: principal,
-        description: (string-utf8 256),
-        resolution-time: uint,
-        resolved: bool,
-        winning-outcome: (optional uint),
-        total-liquidity: uint,
-        created-at: uint
+        deadline: uint,
+        resolution-deadline: uint,
+        is-resolved: bool,
+        winning-outcome: (optional uint)
       }
       uint))
 
     ;; Get current prices for all outcomes
     ;; Prices are expressed in PRECISION units (1000000 = 1.0)
-    ;; Returns: tuple with prices for outcome-yes and outcome-no
+    ;; Returns: tuple with prices for yes and no outcomes
     (get-prices () (response
       {
-        price-yes: uint,
-        price-no: uint
+        yes-price: uint,
+        no-price: uint
       }
       uint))
 
@@ -41,8 +38,8 @@
     ;; Returns: tuple with reserve amounts for each outcome
     (get-reserves () (response
       {
-        reserve-yes: uint,
-        reserve-no: uint
+        yes-reserve: uint,
+        no-reserve: uint
       }
       uint))
 
@@ -57,24 +54,26 @@
 
     ;; Remove liquidity from the market pool
     ;; lp-amount: Amount of LP tokens to burn
-    ;; Returns: Amount of collateral tokens returned
-    (remove-liquidity (uint) (response uint uint))
+    ;; Returns: Tuple with USDC returned and fee share
+    (remove-liquidity (uint) (response { usdc-returned: uint, fee-share: uint } uint))
 
     ;; ============================================
     ;; TRADING FUNCTIONS
     ;; ============================================
 
     ;; Buy outcome tokens
-    ;; outcome: The outcome to buy (0 = No, 1 = Yes)
+    ;; outcome: The outcome to buy (1 = Yes, 2 = No)
     ;; amount: Amount of collateral to spend
+    ;; min-tokens-out: Minimum tokens to receive (slippage protection)
     ;; Returns: Amount of outcome tokens received
-    (buy-outcome (uint uint) (response uint uint))
+    (buy-outcome (uint uint uint) (response uint uint))
 
     ;; Sell outcome tokens
-    ;; outcome: The outcome to sell (0 = No, 1 = Yes)
+    ;; outcome: The outcome to sell (1 = Yes, 2 = No)
     ;; amount: Amount of outcome tokens to sell
+    ;; min-usdc-out: Minimum USDC to receive (slippage protection)
     ;; Returns: Amount of collateral received
-    (sell-outcome (uint uint) (response uint uint))
+    (sell-outcome (uint uint uint) (response uint uint))
 
     ;; ============================================
     ;; RESOLUTION FUNCTIONS
