@@ -19,10 +19,6 @@ depends_on = ["sip-010-trait"]
 path = "contracts/market-pool.clar"
 depends_on = ["mock-usdc", "sip-010-trait", "prediction-market-trait"]
 
-[contracts.market-factory]
-path = "contracts/market-factory.clar"
-depends_on = ["market-pool"]
-
 [repl.analysis]
 passes = ["check_checker"]
 check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }

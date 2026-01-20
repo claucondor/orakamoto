@@ -132,13 +132,13 @@ Update this file every time you deploy or redeploy contracts.
 - [x] Write comprehensive tests for market-pool in tests/market-pool.test.ts
 
 ### Market Factory Contract
-- [x] Create market-factory.clar with MINIMUM-COLLATERAL u50000000 (50 USDC) and DEFAULT-RESOLUTION-WINDOW u1008 (~7 days)
-- [x] Implement market-count variable and markets map storing pool-contract, creator, question, deadline, created-at, active
-- [x] Implement creator-markets map to track markets by creator
-- [x] Implement get-market-count, get-market, get-creator-markets read-only functions
-- [x] Implement create-market function that registers new market with collateral requirement
-- [x] Implement deactivate-market admin function
-- [x] Write tests for market-factory in tests/market-factory.test.ts
+- [ ] Create market-factory.clar with MINIMUM-COLLATERAL u50000000 (50 USDC) and DEFAULT-RESOLUTION-WINDOW u1008 (~7 days)
+- [ ] Implement market-count variable and markets map storing pool-contract, creator, question, deadline, created-at, active
+- [ ] Implement creator-markets map to track markets by creator
+- [ ] Implement get-market-count, get-market, get-creator-markets read-only functions
+- [ ] Implement create-market function that registers new market with collateral requirement
+- [ ] Implement deactivate-market admin function
+- [ ] Write tests for market-factory in tests/market-factory.test.ts
 
 ### Phase 1 Verification
 - [ ] Write end-to-end test: create market -> add liquidity -> buy YES -> buy NO -> resolve -> claim winnings
