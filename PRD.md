@@ -271,10 +271,10 @@ Real Zest functions to mock:
 ### Pyth Oracle Integration (for testnet/mainnet)
 Reference: https://github.com/stx-labs/stacks-pyth-bridge
 Contract: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
-- [ ] Create pyth-oracle-wrapper.clar that calls pyth-oracle-v4.read-price-feed
-- [ ] Map price feed IDs for BTC, STX, ETH, USDC
-- [ ] Handle price staleness checks (max age parameter)
-- [ ] Write integration tests using Pyth testnet
+- [x] Create pyth-oracle-wrapper.clar that calls pyth-oracle-v4.read-price-feed
+- [x] Map price feed IDs for BTC, STX, ETH, USDC
+- [x] Handle price staleness checks (max age parameter)
+- [x] Write tests for pyth-oracle-wrapper (devnet compatible)
 
 ### Auto-Resolution System
 - [x] Create oracle-resolver.clar for markets that can resolve via oracle

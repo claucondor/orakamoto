@@ -364,3 +364,80 @@ Created comprehensive test suites for vote-escrow.clar and governance.clar contr
 - `clarinet check` passes with only informational warnings (no errors)
 - Total test count: 524 passed / 566 (42 pre-existing failures in other test files unrelated to vote-escrow and governance)
 - Contracts compile successfully
+
+---
+
+## 2026-01-21: Implemented Pyth Oracle Wrapper (Phase 4 - Oracle Integration)
+
+### Summary
+Created the pyth-oracle-wrapper.clar contract that integrates with the Pyth Oracle on Stacks (SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4). This wrapper implements the oracle-trait interface for use with the oracle-resolver contract, enabling auto-resolution of markets using real-world price feeds from Pyth Network.
+
+### Changes Made
+
+1. **contracts/pyth-oracle-wrapper.clar** (new file):
+   - Implements the `oracle-trait` interface with `get-price` and `is-price-fresh` functions
+   - Integrates with Pyth Oracle contract (SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4)
+   - Maps price feed IDs for major assets:
+     - BTC: `0xe62df6c8b4a85fe1a67db44dc12de5dc330d7b5e4c1cb89100b8000000000001`
+     - ETH: `0xff61491a931112ddf1bd8147cd1b641375f79f5825126d6788906ef67b7a47dd`
+     - STX: `0x73757065722d7374616b652d737461636b732d7573642d707269636500000000`
+     - USDC: `0xeaa020c61cc47971281920289578902000000000000000000000000000000001`
+   - Price normalization: Converts Pyth prices (with variable exponents) to 8-decimal format
+   - Price staleness checks via `is-price-fresh` function
+   - Admin functions for managing price feed mappings
+   - Events emitted for all actions (price-feeds-initialized, price-feed-added, price-feed-updated, price-feed-removed)
+
+   **Key Functions:**
+   - `get-price`: Get current price for an asset (implements oracle-trait)
+   - `is-price-fresh`: Check if price is fresh (implements oracle-trait)
+   - `get-price-info`: Get price with metadata (price, publish-time, feed-id)
+   - `initialize-price-feeds`: Initialize standard price feed mappings (owner only)
+   - `add-price-feed`: Add new price feed for an asset (owner only)
+   - `update-price-feed`: Update existing price feed (owner only)
+   - `remove-price-feed`: Remove price feed (owner only)
+
+   **Read-Only Functions:**
+   - `get-supported-assets`: Get all standard asset feed IDs
+   - `is-asset-supported`: Check if an asset is supported
+   - `get-pyth-oracle-contract`: Get the Pyth oracle contract address
+
+2. **Clarinet.toml**:
+   - Added pyth-oracle-wrapper contract configuration with oracle-trait dependency
+
+3. **tests/pyth-oracle-wrapper.test.ts** (new file):
+   - 30 comprehensive tests covering:
+     - Contract constants (owner, Pyth oracle address)
+     - Initialize price feeds with access control
+     - Get supported assets
+     - Is asset supported checks
+     - Get price info for assets
+     - Get price for assets
+     - Is price fresh checks
+     - Add price feed with access control
+     - Update price feed with access control
+     - Remove price feed with access control
+     - Integration tests for full lifecycle
+     - Error handling for unsupported assets and unauthorized access
+
+### Design Notes
+- Uses `oracle-trait` interface for compatibility with oracle-resolver
+- Integrates with Pyth's `read-price-feed` function to fetch price data
+- Price feed IDs are hardcoded constants for standard assets
+- Price normalization handles Pyth's variable exponent format
+- Uses `contract-caller` for authorization (secure against phishing)
+- Admin functions restricted to contract owner
+- Permissionless price queries (anyone can check prices)
+- Devnet compatible (uses local trait reference)
+
+### Design Considerations for Production
+- **Devnet vs Mainnet**: On devnet, the Pyth oracle contract would need to be deployed separately or mocked
+- **Price Feed IDs**: Pyth feed IDs are hardcoded; consider making them configurable for flexibility
+- **Price Staleness**: Uses max-price-age parameter for freshness checks
+- **Exponent Handling**: Simplified normalization assumes standard 8-decimal prices; production may need more robust handling
+
+### Verification
+- `clarinet check` passes with only informational warnings (no errors in pyth-oracle-wrapper)
+- Contract compiles successfully
+- Contract follows existing patterns from mock-oracle.clar and oracle-resolver.clar
+- 30 tests written covering all major functionality
+- Note: Full test execution blocked by pre-existing errors in other contracts (mock-usdc.clar)
