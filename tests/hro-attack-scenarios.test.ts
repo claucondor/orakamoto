@@ -9,6 +9,9 @@ const wallet3 = accounts.get('wallet_3')!;
 const wallet4 = accounts.get('wallet_4')!;
 const wallet5 = accounts.get('wallet_5')!;
 
+// Contract addresses (constructed manually since getContractAddress is not available in newer SDK)
+const MOCK_USDC_CONTRACT = `${deployer}.mock-usdc`;
+
 // Constants
 const MINIMUM_DISPUTE_BOND = 50_000_000n; // 50 USDC
 const ESCALATION_THRESHOLD = 5_120_000_000n; // 51,200 USDC
@@ -299,7 +302,7 @@ describe('HRO Attack Scenario Simulation Tests', () => {
           Cl.uint(1),
           Cl.uint(0), // YES
           Cl.uint(MINIMUM_DISPUTE_BOND),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -311,7 +314,7 @@ describe('HRO Attack Scenario Simulation Tests', () => {
         [
           Cl.uint(1),
           Cl.uint(1), // NO (opposite outcome)
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -323,7 +326,7 @@ describe('HRO Attack Scenario Simulation Tests', () => {
         [
           Cl.uint(1),
           Cl.uint(0), // Back to YES
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet3
       );

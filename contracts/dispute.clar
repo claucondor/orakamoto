@@ -188,7 +188,7 @@
       (dispute-deadline (+ block-height DISPUTE-WINDOW))
     )
     ;; Validate parameters
-    (asserts! (> stake-amount MINIMUM-DISPUTE-STAKE) ERR-ZERO-AMOUNT)
+    (asserts! (>= stake-amount MINIMUM-DISPUTE-STAKE) ERR-ZERO-AMOUNT)
     (asserts! (or (is-eq claimed-outcome u0) (is-eq claimed-outcome u1)) ERR-INVALID-MARKET)
 
     ;; Check if market exists and is resolved (via market-pool)

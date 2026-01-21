@@ -7,6 +7,9 @@ const wallet1 = accounts.get('wallet_1')!;
 const wallet2 = accounts.get('wallet_2')!;
 const wallet3 = accounts.get('wallet_3')!;
 
+// Contract addresses (constructed manually since getContractAddress is not available in newer SDK)
+const MOCK_USDC_CONTRACT = `${deployer}.mock-usdc`;
+
 // Error constants
 const ERR_NOT_AUTHORIZED = 1500n;
 const ERR_ZERO_AMOUNT = 1501n;
@@ -82,7 +85,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(totalSupply),
           Cl.uint(0), // original-resolution (YES)
           Cl.uint(1), // disputed-resolution (NO)
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -103,7 +106,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(totalSupply),
           Cl.uint(0),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -124,7 +127,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(totalSupply),
           Cl.uint(2), // Invalid resolution
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -145,7 +148,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(totalSupply),
           Cl.uint(0),
           Cl.uint(2), // Invalid resolution
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -166,7 +169,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(totalSupply),
           Cl.uint(0), // Both YES
           Cl.uint(0), // Both YES
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -188,7 +191,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(totalSupply),
           Cl.uint(0),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -203,7 +206,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(totalSupply),
           Cl.uint(0),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -227,7 +230,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(totalSupply),
           Cl.uint(0),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -242,7 +245,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(0), // fork-choice (A)
           Cl.uint(100_000_000n), // yes-balance
           Cl.uint(200_000_000n), // no-balance
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -259,7 +262,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(1), // fork-choice (B)
           Cl.uint(100_000_000n),
           Cl.uint(200_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -276,7 +279,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(2), // Invalid fork choice
           Cl.uint(100_000_000n),
           Cl.uint(200_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -293,7 +296,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(0),
           Cl.uint(100_000_000n),
           Cl.uint(200_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -311,7 +314,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(0),
           Cl.uint(100_000_000n),
           Cl.uint(200_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -325,7 +328,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(1),
           Cl.uint(100_000_000n),
           Cl.uint(200_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -343,7 +346,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(0),
           Cl.uint(100_000_000n),
           Cl.uint(200_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -357,7 +360,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(0),
           Cl.uint(50_000_000n),
           Cl.uint(150_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -371,7 +374,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(1),
           Cl.uint(300_000_000n),
           Cl.uint(100_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet3
       );
@@ -420,7 +423,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(totalSupply),
           Cl.uint(0),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -447,7 +450,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(0),
           Cl.uint(1_000_000_000n),
           Cl.uint(1_000_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -461,7 +464,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(1),
           Cl.uint(100_000_000n),
           Cl.uint(100_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -489,7 +492,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(0),
           Cl.uint(100_000_000n),
           Cl.uint(100_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -503,7 +506,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(1),
           Cl.uint(1_000_000_000n),
           Cl.uint(1_000_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -531,7 +534,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(0),
           Cl.uint(500_000_000n),
           Cl.uint(500_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -544,7 +547,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(1),
           Cl.uint(500_000_000n),
           Cl.uint(500_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -580,7 +583,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(totalSupply),
           Cl.uint(0),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -594,7 +597,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(0),
           Cl.uint(100_000_000n),
           Cl.uint(200_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -608,7 +611,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(1),
           Cl.uint(100_000_000n),
           Cl.uint(200_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -629,7 +632,7 @@ describe('Market Fork Contract', () => {
         'claim-canonical',
         [
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2 // wallet2 migrated to fork B which won
       );
@@ -643,7 +646,7 @@ describe('Market Fork Contract', () => {
         'claim-canonical',
         [
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1 // wallet1 migrated to fork A which lost
       );
@@ -657,7 +660,7 @@ describe('Market Fork Contract', () => {
         'claim-non-canonical',
         [
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1 // wallet1 migrated to fork A which lost
       );
@@ -672,7 +675,7 @@ describe('Market Fork Contract', () => {
         'claim-non-canonical',
         [
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2 // wallet2 migrated to fork B which won
       );
@@ -691,7 +694,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(1_000_000_000n),
           Cl.uint(0),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -704,7 +707,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(0),
           Cl.uint(100_000_000n),
           Cl.uint(200_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -714,7 +717,7 @@ describe('Market Fork Contract', () => {
         'claim-canonical',
         [
           Cl.uint(2),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -728,7 +731,7 @@ describe('Market Fork Contract', () => {
         'claim-canonical',
         [
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet3 // wallet3 never migrated
       );
@@ -749,7 +752,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(1_000_000_000n),
           Cl.uint(0),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -799,7 +802,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(0),
           Cl.uint(100_000_000n),
           Cl.uint(200_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -833,7 +836,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(0),
           Cl.uint(100_000_000n),
           Cl.uint(200_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -908,7 +911,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(1_000_000_000n),
           Cl.uint(0),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -1022,7 +1025,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(1_000_000_000n),
           Cl.uint(0),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -1037,7 +1040,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(0),
           Cl.uint(500_000_000n),
           Cl.uint(500_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -1050,7 +1053,7 @@ describe('Market Fork Contract', () => {
           Cl.uint(1),
           Cl.uint(600_000_000n),
           Cl.uint(600_000_000n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -1071,7 +1074,7 @@ describe('Market Fork Contract', () => {
         'claim-canonical',
         [
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -1083,7 +1086,7 @@ describe('Market Fork Contract', () => {
         'claim-non-canonical',
         [
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );

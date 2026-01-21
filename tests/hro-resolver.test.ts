@@ -7,6 +7,9 @@ const wallet1 = accounts.get('wallet_1')!;
 const wallet2 = accounts.get('wallet_2')!;
 const wallet3 = accounts.get('wallet_3')!;
 
+// Contract addresses (constructed manually since getContractAddress is not available in newer SDK)
+const MOCK_USDC_CONTRACT = `${deployer}.mock-usdc`;
+
 // Error constants
 const ERR_NOT_AUTHORIZED = 1200n;
 const ERR_ZERO_AMOUNT = 1201n;
@@ -36,7 +39,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1), // market-id
           Cl.uint(0), // outcome (YES)
           Cl.uint(initialBond),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -52,7 +55,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(40_000_000n), // Below 50 USDC minimum
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -68,7 +71,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(2), // Invalid outcome (only 0 or 1 allowed)
           Cl.uint(MINIMUM_DISPUTE_BOND),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -87,7 +90,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(initialBond),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -100,7 +103,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(1),
           Cl.uint(initialBond),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -119,7 +122,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0), // YES
           Cl.uint(MINIMUM_DISPUTE_BOND),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -134,7 +137,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1), // market-id
           Cl.uint(1), // claimed-outcome (NO, opposite of current)
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -149,7 +152,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(0), // Same outcome as leading (YES)
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -164,7 +167,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(2), // Invalid outcome
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -179,7 +182,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -214,7 +217,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -226,7 +229,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(0), // Back to YES
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet3
       );
@@ -262,7 +265,7 @@ describe('HRO Resolver Contract', () => {
           [
             Cl.uint(1),
             Cl.uint(outcome),
-            Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+            Cl.principal(MOCK_USDC_CONTRACT)
           ],
           wallet2
         );
@@ -275,7 +278,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(0),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet3
       );
@@ -310,7 +313,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_BOND),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -340,7 +343,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_BOND),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -393,7 +396,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_BOND),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -417,7 +420,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(ESCALATION_THRESHOLD + 1n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -442,7 +445,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(ESCALATION_THRESHOLD + 1n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -467,7 +470,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_BOND),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -477,7 +480,7 @@ describe('HRO Resolver Contract', () => {
       const result = simnet.callPublicFn(
         'hro-resolver',
         'finalize-escalation',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))],
+        [Cl.uint(1), Cl.principal(MOCK_USDC_CONTRACT)],
         deployer
       );
 
@@ -491,7 +494,7 @@ describe('HRO Resolver Contract', () => {
       const result = simnet.callPublicFn(
         'hro-resolver',
         'finalize-escalation',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))],
+        [Cl.uint(1), Cl.principal(MOCK_USDC_CONTRACT)],
         deployer
       );
 
@@ -521,7 +524,7 @@ describe('HRO Resolver Contract', () => {
       simnet.callPublicFn(
         'hro-resolver',
         'finalize-escalation',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))],
+        [Cl.uint(1), Cl.principal(MOCK_USDC_CONTRACT)],
         deployer
       );
 
@@ -529,7 +532,7 @@ describe('HRO Resolver Contract', () => {
       const result = simnet.callPublicFn(
         'hro-resolver',
         'finalize-escalation',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))],
+        [Cl.uint(1), Cl.principal(MOCK_USDC_CONTRACT)],
         deployer
       );
 
@@ -547,7 +550,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(ESCALATION_THRESHOLD + 1n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -570,7 +573,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_BOND),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -596,7 +599,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_BOND),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -606,7 +609,7 @@ describe('HRO Resolver Contract', () => {
       simnet.callPublicFn(
         'hro-resolver',
         'finalize-escalation',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))],
+        [Cl.uint(1), Cl.principal(MOCK_USDC_CONTRACT)],
         deployer
       );
     });
@@ -619,7 +622,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0), // Winning outcome
           Cl.standardPrincipal(wallet1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         deployer
       );
@@ -635,7 +638,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.standardPrincipal(wallet1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -652,7 +655,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(2),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_BOND),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -664,7 +667,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(2),
           Cl.uint(0),
           Cl.standardPrincipal(wallet1),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         deployer
       );
@@ -682,7 +685,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_BOND),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -730,7 +733,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_BOND),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -812,7 +815,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0), // YES
           Cl.uint(MINIMUM_DISPUTE_BOND),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );
@@ -824,7 +827,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(1), // NO
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet2
       );
@@ -836,7 +839,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(0), // Back to YES
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet3
       );
@@ -870,7 +873,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(ESCALATION_THRESHOLD + 1n),
-          Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+          Cl.principal(MOCK_USDC_CONTRACT)
         ],
         wallet1
       );

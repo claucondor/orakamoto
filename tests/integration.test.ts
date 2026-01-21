@@ -7,6 +7,9 @@ const wallet1 = accounts.get('wallet_1')!;
 const wallet2 = accounts.get('wallet_2')!;
 const wallet3 = accounts.get('wallet_3')!;
 
+// Contract addresses (constructed manually since getContractAddress is not available in newer SDK)
+const MOCK_USDC_CONTRACT = `${deployer}.mock-usdc`;
+
 // Constants
 const MINIMUM_COLLATERAL = 50_000_000n; // 50 USDC with 6 decimals
 const DISPUTE_WINDOW = 1008n; // ~7 days in blocks
@@ -377,7 +380,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1), // market-id
         Cl.uint(0), // outcome (YES)
         Cl.uint(initialBond),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet1
     );
@@ -406,7 +409,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1), // market-id
         Cl.uint(1), // outcome (NO - opposite of creator's claim)
         Cl.uint(challengeBond),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet2
     );
@@ -435,7 +438,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1), // market-id
         Cl.uint(0), // outcome (YES - back to original)
         Cl.uint(counterBond),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet1
     );
@@ -464,7 +467,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1), // market-id
         Cl.uint(1), // outcome (NO)
         Cl.uint(escalateBond),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet2
     );
@@ -554,7 +557,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1),
         Cl.uint(0),
         Cl.uint(50_000_000n),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet1
     );
@@ -568,7 +571,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1),
         Cl.uint(1),
         Cl.uint(100_000_000n),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet2
     );
@@ -582,7 +585,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1),
         Cl.uint(0),
         Cl.uint(200_000_000n),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet1
     );
@@ -596,7 +599,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1),
         Cl.uint(1),
         Cl.uint(400_000_000n),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet2
     );
@@ -610,7 +613,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1),
         Cl.uint(0),
         Cl.uint(800_000_000n),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet1
     );
@@ -624,7 +627,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1),
         Cl.uint(1),
         Cl.uint(1_600_000_000n),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet2
     );
@@ -638,7 +641,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1),
         Cl.uint(0),
         Cl.uint(3_200_000_000n),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet1
     );
@@ -656,7 +659,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1),
         Cl.uint(0),
         Cl.uint(12_800_000_000n),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet1
     );
@@ -671,7 +674,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1),
         Cl.uint(1),
         Cl.uint(25_600_000_000n),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet2
     );
@@ -699,7 +702,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1),
         Cl.uint(0),
         Cl.uint(51_200_000_000n),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet1
     );
@@ -924,7 +927,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1),
         Cl.uint(0),
         Cl.uint(100_000_000n),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet1
     );
@@ -940,7 +943,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1),
         Cl.uint(1),
         Cl.uint(200_000_000n),
-        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+        Cl.principal(MOCK_USDC_CONTRACT)
       ],
       wallet2
     );

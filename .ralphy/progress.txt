@@ -46,6 +46,54 @@ Fixed test failures caused by SDK API changes (`simnet.getContractAddress` not a
 
 ---
 
+## 2026-01-21: Phase 7 - Fix simnet.getContractAddress API Changes
+
+### Summary
+Fixed remaining test failures caused by `simnet.getContractAddress()` API changes in the Clarinet SDK. This method is not available in the current SDK version (v3.13.1), so contract addresses must be constructed manually.
+
+### Changes Made
+
+1. **tests/dispute.test.ts**:
+   - Added contract address constants: `GOVERNANCE_CONTRACT`, `DISPUTE_CONTRACT`, `VOTE_ESCROW_CONTRACT`
+   - Replaced `simnet.getContractAddress('governance')` with `Cl.principal(GOVERNANCE_CONTRACT)`
+   - Replaced `simnet.getContractAddress('dispute')` with `Cl.principal(DISPUTE_CONTRACT)`
+   - Replaced `simnet.getContractAddress('vote-escrow')` with `Cl.principal(VOTE_ESCROW_CONTRACT)`
+   - Tests improved from 1/27 passing to 21/27 passing
+
+2. **tests/integration.test.ts**:
+   - Added contract address constant: `MOCK_USDC_CONTRACT`
+   - Replaced all `simnet.getContractAddress('mock-usdc')` with `Cl.principal(MOCK_USDC_CONTRACT)`
+
+3. **tests/market-fork.test.ts**:
+   - Added contract address constant: `MOCK_USDC_CONTRACT`
+   - Replaced all `simnet.getContractAddress('mock-usdc')` with `Cl.principal(MOCK_USDC_CONTRACT)`
+
+4. **tests/hro-resolver.test.ts**:
+   - Added contract address constant: `MOCK_USDC_CONTRACT`
+   - Replaced all `simnet.getContractAddress('mock-usdc')` with `Cl.principal(MOCK_USDC_CONTRACT)`
+
+5. **tests/hro-attack-scenarios.test.ts**:
+   - Added contract address constant: `MOCK_USDC_CONTRACT`
+   - Replaced all `simnet.getContractAddress('mock-usdc')` with `Cl.principal(MOCK_USDC_CONTRACT)`
+
+6. **contracts/dispute.clar**:
+   - Fixed validation: Changed `> stake-amount MINIMUM-DISPUTE-STAKE` to `>= stake-amount MINIMUM-DISPUTE-STAKE`
+   - This allows disputes with exactly the minimum stake (100,000,000 PRED)
+
+### Design Notes
+- Contract addresses are constructed manually as `${deployer}.${contract-name}`
+- Use `Cl.principal()` for contract references, not `Cl.standardPrincipal()`
+- The current Clarinet SDK doesn't expose `simnet.getContractAddress()` method
+- Contract validation was too strict - minimum stake should allow equality
+
+### Verification
+- dispute.test.ts: 21/27 tests pass (improved from 1/27)
+- simnet.getContractAddress API changes fixed in 5 test files
+- Overall: 703/845 tests pass (142 failures, down from 172)
+- 30 additional tests now passing due to API fixes
+
+---
+
 ## 2026-01-21: Phase 7 - Fix Flaky Tests (Exact Value Assertions)
 
 ### Summary

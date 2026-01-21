@@ -7,6 +7,11 @@ const wallet1 = accounts.get('wallet_1')!;
 const wallet2 = accounts.get('wallet_2')!;
 const wallet3 = accounts.get('wallet_3')!;
 
+// Contract addresses (constructed manually since getContractAddress is not available in newer SDK)
+const GOVERNANCE_CONTRACT = `${deployer}.governance`;
+const DISPUTE_CONTRACT = `${deployer}.dispute`;
+const VOTE_ESCROW_CONTRACT = `${deployer}.vote-escrow`;
+
 // Constants matching the contract
 const ERR_NOT_AUTHORIZED = 1100n;
 const ERR_ZERO_AMOUNT = 1101n;
@@ -41,7 +46,7 @@ describe('Dispute Contract', () => {
       simnet.callPublicFn(
         'governance',
         'transfer',
-        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet1), Cl.standardPrincipal(simnet.getContractAddress('dispute')), Cl.none()],
+        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet1), Cl.principal(DISPUTE_CONTRACT), Cl.none()],
         wallet1
       );
 
@@ -52,7 +57,7 @@ describe('Dispute Contract', () => {
           Cl.uint(1), // market-id
           Cl.uint(0), // claimed-outcome (YES)
           Cl.uint(MINIMUM_DISPUTE_STAKE), // stake amount
-          Cl.standardPrincipal(simnet.getContractAddress('governance')) // token contract
+          Cl.principal(GOVERNANCE_CONTRACT) // token contract
         ],
         wallet1
       );
@@ -68,7 +73,7 @@ describe('Dispute Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(50_000_000n), // Below 1 PRED minimum
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet1
       );
@@ -84,7 +89,7 @@ describe('Dispute Contract', () => {
           Cl.uint(1),
           Cl.uint(2), // Invalid outcome (only 0 or 1 allowed)
           Cl.uint(MINIMUM_DISPUTE_STAKE),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet1
       );
@@ -105,7 +110,7 @@ describe('Dispute Contract', () => {
       simnet.callPublicFn(
         'governance',
         'transfer',
-        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet1), Cl.standardPrincipal(simnet.getContractAddress('dispute')), Cl.none()],
+        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet1), Cl.principal(DISPUTE_CONTRACT), Cl.none()],
         wallet1
       );
 
@@ -117,7 +122,7 @@ describe('Dispute Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_STAKE),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet1
       );
@@ -126,7 +131,7 @@ describe('Dispute Contract', () => {
       simnet.callPublicFn(
         'governance',
         'transfer',
-        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet2), Cl.standardPrincipal(simnet.getContractAddress('dispute')), Cl.none()],
+        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet2), Cl.principal(DISPUTE_CONTRACT), Cl.none()],
         wallet2
       );
 
@@ -137,7 +142,7 @@ describe('Dispute Contract', () => {
           Cl.uint(1), // Same market-id
           Cl.uint(1), // Different outcome
           Cl.uint(MINIMUM_DISPUTE_STAKE),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet2
       );
@@ -160,7 +165,7 @@ describe('Dispute Contract', () => {
       simnet.callPublicFn(
         'governance',
         'transfer',
-        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet1), Cl.standardPrincipal(simnet.getContractAddress('dispute')), Cl.none()],
+        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet1), Cl.principal(DISPUTE_CONTRACT), Cl.none()],
         wallet1
       );
 
@@ -171,7 +176,7 @@ describe('Dispute Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_STAKE),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet1
       );
@@ -299,7 +304,7 @@ describe('Dispute Contract', () => {
       simnet.callPublicFn(
         'governance',
         'transfer',
-        [Cl.uint(100_000_000_000n), Cl.standardPrincipal(wallet2), Cl.standardPrincipal(simnet.getContractAddress('vote-escrow')), Cl.none()],
+        [Cl.uint(100_000_000_000n), Cl.standardPrincipal(wallet2), Cl.principal(VOTE_ESCROW_CONTRACT), Cl.none()],
         wallet2
       );
 
@@ -309,7 +314,7 @@ describe('Dispute Contract', () => {
         [
           Cl.uint(100_000_000_000n), // 1000 PRED
           Cl.uint(1008), // 1 week
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet2
       );
@@ -318,7 +323,7 @@ describe('Dispute Contract', () => {
       simnet.callPublicFn(
         'governance',
         'transfer',
-        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet1), Cl.standardPrincipal(simnet.getContractAddress('dispute')), Cl.none()],
+        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet1), Cl.principal(DISPUTE_CONTRACT), Cl.none()],
         wallet1
       );
 
@@ -329,7 +334,7 @@ describe('Dispute Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_STAKE),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet1
       );
@@ -342,7 +347,7 @@ describe('Dispute Contract', () => {
         [
           Cl.uint(1), // dispute-id
           Cl.uint(1), // vote-type: 1 = for disputer
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet2
       );
@@ -357,7 +362,7 @@ describe('Dispute Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(2), // Invalid vote type
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet2
       );
@@ -375,7 +380,7 @@ describe('Dispute Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet2
       );
@@ -391,7 +396,7 @@ describe('Dispute Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet2
       );
@@ -403,7 +408,7 @@ describe('Dispute Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(0),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet2
       );
@@ -418,7 +423,7 @@ describe('Dispute Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet3 // wallet3 has no locked tokens
       );
@@ -434,7 +439,7 @@ describe('Dispute Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet2
       );
@@ -456,7 +461,7 @@ describe('Dispute Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet2
       );
@@ -501,7 +506,7 @@ describe('Dispute Contract', () => {
       simnet.callPublicFn(
         'governance',
         'transfer',
-        [Cl.uint(100_000_000_000n), Cl.standardPrincipal(wallet2), Cl.standardPrincipal(simnet.getContractAddress('vote-escrow')), Cl.none()],
+        [Cl.uint(100_000_000_000n), Cl.standardPrincipal(wallet2), Cl.principal(VOTE_ESCROW_CONTRACT), Cl.none()],
         wallet2
       );
 
@@ -511,7 +516,7 @@ describe('Dispute Contract', () => {
         [
           Cl.uint(100_000_000_000n),
           Cl.uint(1008),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet2
       );
@@ -520,7 +525,7 @@ describe('Dispute Contract', () => {
       simnet.callPublicFn(
         'governance',
         'transfer',
-        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet1), Cl.standardPrincipal(simnet.getContractAddress('dispute')), Cl.none()],
+        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet1), Cl.principal(DISPUTE_CONTRACT), Cl.none()],
         wallet1
       );
 
@@ -531,7 +536,7 @@ describe('Dispute Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_STAKE),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet1
       );
@@ -541,7 +546,7 @@ describe('Dispute Contract', () => {
       const result = simnet.callPublicFn(
         'dispute',
         'finalize-dispute',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('governance'))],
+        [Cl.uint(1), Cl.principal(GOVERNANCE_CONTRACT)],
         deployer
       );
 
@@ -556,7 +561,7 @@ describe('Dispute Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(1), // For disputer
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet2
       );
@@ -567,7 +572,7 @@ describe('Dispute Contract', () => {
       const result = simnet.callPublicFn(
         'dispute',
         'finalize-dispute',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('governance'))],
+        [Cl.uint(1), Cl.principal(GOVERNANCE_CONTRACT)],
         deployer
       );
 
@@ -599,7 +604,7 @@ describe('Dispute Contract', () => {
       const result = simnet.callPublicFn(
         'dispute',
         'finalize-dispute',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('governance'))],
+        [Cl.uint(1), Cl.principal(GOVERNANCE_CONTRACT)],
         deployer
       );
 
@@ -629,7 +634,7 @@ describe('Dispute Contract', () => {
       simnet.callPublicFn(
         'dispute',
         'finalize-dispute',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('governance'))],
+        [Cl.uint(1), Cl.principal(GOVERNANCE_CONTRACT)],
         deployer
       );
 
@@ -637,7 +642,7 @@ describe('Dispute Contract', () => {
       const result = simnet.callPublicFn(
         'dispute',
         'finalize-dispute',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('governance'))],
+        [Cl.uint(1), Cl.principal(GOVERNANCE_CONTRACT)],
         deployer
       );
 
@@ -659,7 +664,7 @@ describe('Dispute Contract', () => {
       simnet.callPublicFn(
         'governance',
         'transfer',
-        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet1), Cl.standardPrincipal(simnet.getContractAddress('dispute')), Cl.none()],
+        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet1), Cl.principal(DISPUTE_CONTRACT), Cl.none()],
         wallet1
       );
 
@@ -670,7 +675,7 @@ describe('Dispute Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_STAKE),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet1
       );
@@ -680,7 +685,7 @@ describe('Dispute Contract', () => {
       const result = simnet.callPublicFn(
         'dispute',
         'cancel-dispute',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('governance'))],
+        [Cl.uint(1), Cl.principal(GOVERNANCE_CONTRACT)],
         wallet1
       );
 
@@ -691,7 +696,7 @@ describe('Dispute Contract', () => {
       const result = simnet.callPublicFn(
         'dispute',
         'cancel-dispute',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('governance'))],
+        [Cl.uint(1), Cl.principal(GOVERNANCE_CONTRACT)],
         wallet2
       );
 
@@ -705,7 +710,7 @@ describe('Dispute Contract', () => {
       const result = simnet.callPublicFn(
         'dispute',
         'cancel-dispute',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('governance'))],
+        [Cl.uint(1), Cl.principal(GOVERNANCE_CONTRACT)],
         wallet1
       );
 
@@ -718,7 +723,7 @@ describe('Dispute Contract', () => {
       simnet.callPublicFn(
         'dispute',
         'finalize-dispute',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('governance'))],
+        [Cl.uint(1), Cl.principal(GOVERNANCE_CONTRACT)],
         deployer
       );
 
@@ -726,7 +731,7 @@ describe('Dispute Contract', () => {
       const result = simnet.callPublicFn(
         'dispute',
         'cancel-dispute',
-        [Cl.uint(1), Cl.standardPrincipal(simnet.getContractAddress('governance'))],
+        [Cl.uint(1), Cl.principal(GOVERNANCE_CONTRACT)],
         wallet1
       );
 
@@ -767,7 +772,7 @@ describe('Dispute Contract', () => {
       simnet.callPublicFn(
         'governance',
         'transfer',
-        [Cl.uint(100_000_000_000n), Cl.standardPrincipal(wallet2), Cl.standardPrincipal(simnet.getContractAddress('vote-escrow')), Cl.none()],
+        [Cl.uint(100_000_000_000n), Cl.standardPrincipal(wallet2), Cl.principal(VOTE_ESCROW_CONTRACT), Cl.none()],
         wallet2
       );
 
@@ -777,7 +782,7 @@ describe('Dispute Contract', () => {
         [
           Cl.uint(100_000_000_000n),
           Cl.uint(1008),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet2
       );
@@ -786,7 +791,7 @@ describe('Dispute Contract', () => {
       simnet.callPublicFn(
         'governance',
         'transfer',
-        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet1), Cl.standardPrincipal(simnet.getContractAddress('dispute')), Cl.none()],
+        [Cl.uint(MINIMUM_DISPUTE_STAKE), Cl.standardPrincipal(wallet1), Cl.principal(DISPUTE_CONTRACT), Cl.none()],
         wallet1
       );
 
@@ -797,7 +802,7 @@ describe('Dispute Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(MINIMUM_DISPUTE_STAKE),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet1
       );
@@ -809,7 +814,7 @@ describe('Dispute Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(1),
-          Cl.standardPrincipal(simnet.getContractAddress('governance'))
+          Cl.principal(GOVERNANCE_CONTRACT)
         ],
         wallet2
       );
