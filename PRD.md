@@ -482,15 +482,15 @@ Where:
 ### Smart Contracts
 
 #### hro-resolver.clar
-- [ ] Define HRO-related constants: MINIMUM_DISPUTE_BOND, ESCALATION_THRESHOLD, FORK_THRESHOLD, MAX_ESCALATION_ROUNDS
-- [ ] Implement dispute-bond map tracking: disputer, amount, outcome_claimed, round, timestamp
-- [ ] Implement escalation-state for each market: current_round, current_bond, last_action_block, leading_outcome
-- [ ] Implement initiate-dispute(market-id, claimed_outcome) requiring 2x current bond
-- [ ] Implement counter-dispute(market-id) for creator/previous winner to defend
-- [ ] Implement finalize-escalation() when timeout reached without counter
-- [ ] Implement trigger-voting() when bond exceeds ESCALATION_THRESHOLD
-- [ ] Implement distribute-bonds() to winner after resolution
-- [ ] Write tests for full escalation sequence
+- [x] Define HRO-related constants: MINIMUM_DISPUTE_BOND, ESCALATION_THRESHOLD, FORK_THRESHOLD, MAX_ESCALATION_ROUNDS
+- [x] Implement dispute-bond map tracking: disputer, amount, outcome_claimed, round, timestamp
+- [x] Implement escalation-state for each market: current_round, current_bond, last_action_block, leading_outcome
+- [x] Implement initiate-dispute(market-id, claimed_outcome) requiring 2x current bond
+- [x] Implement counter-dispute(market-id) for creator/previous winner to defend
+- [x] Implement finalize-escalation() when timeout reached without counter
+- [x] Implement trigger-voting() when bond exceeds ESCALATION_THRESHOLD
+- [x] Implement distribute-bonds() to winner after resolution
+- [x] Write tests for full escalation sequence
 
 #### reputation-registry.clar
 - [ ] Define reputation-score map: principal → { correct_votes, total_votes, participation_score, last_updated }

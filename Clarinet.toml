@@ -85,6 +85,10 @@ depends_on = ["sip-010-trait"]
 path = "contracts/dispute.clar"
 depends_on = ["sip-010-trait", "vote-escrow"]
 
+[contracts.hro-resolver]
+path = "contracts/hro-resolver.clar"
+depends_on = ["sip-010-trait"]
+
 [repl.analysis]
 passes = ["check_checker"]
 check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }

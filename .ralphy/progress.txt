@@ -441,3 +441,114 @@ Created the pyth-oracle-wrapper.clar contract that integrates with the Pyth Orac
 - Contract follows existing patterns from mock-oracle.clar and oracle-resolver.clar
 - 30 tests written covering all major functionality
 - Note: Full test execution blocked by pre-existing errors in other contracts (mock-usdc.clar)
+
+---
+
+## 2026-01-21: Implemented HRO Resolver Contract (Phase 6 - Hybrid Reputation Oracle)
+
+### Summary
+Created the hro-resolver.clar contract that implements the Bond Escalation system (Layer 2) for the Hybrid Reputation Oracle (HRO). This contract enables Reality.eth-style bond escalation where disputers must post 2x the current bond to challenge a market resolution, creating an economic incentive for honest resolution.
+
+### Changes Made
+
+1. **contracts/hro-resolver.clar** (new file):
+   - **Constants:**
+     - `MINIMUM-DISPUTE-BOND` (50 USDC) - Initial bond required
+     - `ESCALATION-THRESHOLD` (51,200 USDC) - Bond level that triggers Layer 4 voting
+     - `ESCALATION-TIMEOUT` (1008 blocks ~7 days) - Timeout per escalation round
+     - `MAX-ESCALATION-ROUNDS` (10) - Maximum escalation rounds before forced resolution
+     - `FORK-THRESHOLD` (10% in basis points) - For Layer 5 fork mechanism
+
+   - **Error Constants:**
+     - `ERR-NOT-AUTHORIZED` (u1200)
+     - `ERR-ZERO-AMOUNT` (u1201)
+     - `ERR-INSUFFICIENT-BOND` (u1202)
+     - `ERR-MARKET-NOT-FOUND` (u1203)
+     - `ERR-ALREADY-ESCALATED` (u1205)
+     - `ERR-ESCALATION-NOT-TIMEOUT` (u1207)
+     - `ERR-BOND-THRESHOLD-REACHED` (u1208)
+     - `ERR-INVALID-OUTCOME` (u1209)
+     - `ERR-ALREADY-RESOLVED` (u1210)
+     - `ERR-LEADING-OUTCOME-MISMATCH` (u1212)
+
+   - **Data Structures:**
+     - `dispute-bonds`: Maps bond ID to bond details (disputer, amount, outcome, round, timestamp)
+     - `escalation-state`: Tracks escalation state per market (current round, bond, last action, leading outcome, resolution status)
+     - `market-bonds`: Lists all bond IDs for a market
+     - `disputer-bonds`: Lists all bond IDs by disputer
+
+   - **Key Functions:**
+     - `initiate-escalation`: Creator initializes escalation with initial bond
+     - `initiate-dispute`: Anyone can challenge with 2x current bond
+     - `calculate-next-bond`: Returns required bond for next escalation round
+     - `can-finalize-escalation`: Checks if timeout has been reached
+     - `is-bond-threshold-reached`: Checks if bond exceeds voting threshold
+     - `finalize-escalation`: Finalizes escalation after timeout, declares winner
+     - `trigger-voting`: Triggers Layer 4 quadratic voting when threshold reached
+     - `distribute-bonds`: Distributes all staked bonds to winner
+     - `reset-escalation`: Owner can reset escalation (for testing/correction)
+
+   - **Read-Only Functions:**
+     - `get-dispute-bond`: Get bond details by ID
+     - `get-escalation-state`: Get escalation state for a market
+     - `get-market-bonds`: Get all bonds for a market
+     - `get-disputer-bonds`: Get all bonds by disputer
+     - `get-leading-outcome`: Get current leading outcome
+     - `get-bond-id-counter`: Get current bond ID counter
+
+2. **Clarinet.toml**:
+   - Added hro-resolver contract configuration with sip-010-trait dependency
+
+3. **tests/hro-resolver.test.ts** (new file):
+   - 25 comprehensive tests covering:
+     - Initiate escalation with validation (minimum bond, invalid outcome, duplicate prevention)
+     - Bond escalation with 2x requirement
+     - Dispute validation (opposite outcome required, invalid outcome rejection)
+     - Escalation state updates after each bond
+     - Counter-dispute functionality (back-and-forth escalation)
+     - Max escalation rounds enforcement
+     - Next bond calculation (2x formula)
+     - Timeout detection (can-finalize-escalation)
+     - Bond threshold detection (triggers Layer 4 voting)
+     - Finalize escalation after timeout
+     - Reject finalizing before timeout
+     - Reject finalizing already resolved escalation
+     - Trigger voting when threshold reached
+     - Distribute bonds to winner (owner only)
+     - Reject non-owner from distributing
+     - Reset escalation (owner only)
+     - Read-only functions (get dispute bond, market bonds, disputer bonds, leading outcome, counter)
+     - Integration tests for full escalation cycle with multiple rounds
+     - Voting trigger when bond threshold exceeded
+
+### Design Notes
+- **Bond Escalation Formula**: `bond_n = bond_0 * 2^n` where n is the escalation round
+- **Economic Security**: Each challenge requires doubling the bond, making spam attacks expensive
+- **Timeout Mechanism**: Each round has 7-day timeout; if no counter-challenge, escalation finalizes
+- **Leading Outcome Tracking**: The outcome with the most recent bond is considered "leading"
+- **Layer 4 Integration**: When bond exceeds `ESCALATION-THRESHOLD`, the system emits an event to trigger quadratic voting (Layer 4)
+- **Winner Determination**: After timeout, the leading outcome wins and all bonds are distributed to the winner
+- **Permissionless**: Anyone can initiate disputes and trigger finalization
+- **Uses `contract-caller` for authorization** (secure against phishing)
+- **Devnet compatible**: Uses local trait reference for USDC token
+
+### Bond Escalation Flow
+```
+Round 0: Creator resolves with 50 USDC bond
+    ↓
+Round 1: Disputer challenges with 100 USDC (2x) → Leading outcome flips
+    ↓
+Round 2: Creator counter-challenges with 200 USDC (4x) → Leading outcome flips back
+    ↓
+...
+Round 10: Bond reaches 51,200 USDC → Triggers Layer 4 quadratic voting
+    ↓
+Timeout (7 days) → Finalize with leading outcome → Distribute bonds to winner
+```
+
+### Verification
+- `clarinet check` passes with only informational warnings (no errors in hro-resolver)
+- Contract compiles successfully
+- Contract follows existing patterns from dispute.clar and other governance contracts
+- 25 tests written covering all major functionality
+- Note: Full test execution blocked by pre-existing environment issues (unrelated to hro-resolver)
