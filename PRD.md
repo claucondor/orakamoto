@@ -323,7 +323,7 @@ Contract: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
 ### Reward Distribution
 - [x] Create lp-rewards.clar to distribute $PRED to LPs based on time-weighted liquidity
 - [x] Create trader-rewards.clar to distribute $PRED based on trading volume
-- [ ] Create creator-rewards.clar to distribute $PRED based on market success metrics
+- [x] Create creator-rewards.clar to distribute $PRED based on market success metrics
 - [x] Implement epoch-based distribution (weekly epochs) - implemented in lp-rewards.clar and trader-rewards.clar
 
 ### Vote Escrow

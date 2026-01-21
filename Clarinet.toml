@@ -65,6 +65,10 @@ depends_on = ["sip-010-trait", "governance-token"]
 path = "contracts/trader-rewards.clar"
 depends_on = ["sip-010-trait", "governance-token"]
 
+[contracts.creator-rewards]
+path = "contracts/creator-rewards.clar"
+depends_on = ["sip-010-trait", "governance-token"]
+
 [repl.analysis]
 passes = ["check_checker"]
 check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }
