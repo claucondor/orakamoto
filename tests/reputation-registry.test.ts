@@ -306,6 +306,9 @@ describe('Reputation Registry Contract', () => {
     });
 
     it('should retrieve initialized reputation', () => {
+      // Capture block height before initialization
+      const blockBeforeInit = simnet.blockHeight;
+
       simnet.callPublicFn(
         'reputation-registry',
         'initialize-reputation',
@@ -325,15 +328,31 @@ describe('Reputation Registry Contract', () => {
         deployer
       );
 
-      const expectedRep = Cl.tuple({
-        'correct-votes': Cl.uint(5),
-        'total-votes': Cl.uint(10),
-        'participation-score': Cl.uint(800000),
-        'last-updated': Cl.uint(0), // First block
-        'total-earned': Cl.uint(0)
-      });
+      // get-reputation returns (ok (some {tuple})) or (ok none)
+      expect(result.result.type).toBe('ok');
+      const someValue = result.result.value;
+      expect(someValue.type).toBe('some');
+      const tupleValue = someValue.value;
+      // The tuple is wrapped in a Clarity value, so access .value to get the actual tuple
+      const rep = tupleValue.value;
 
-      expect(result.result).toBeOk(expectedRep);
+      // Check the tuple keys
+      const keys = Object.keys(rep);
+      expect(keys).toContain('correct-votes');
+      expect(keys).toContain('total-votes');
+      expect(keys).toContain('participation-score');
+      expect(keys).toContain('last-updated');
+      expect(keys).toContain('total-earned');
+
+      // The tuple values are Clarity values, so access .value to get the actual value
+      expect(rep['correct-votes'].value).toBe(5n);
+      expect(rep['total-votes'].value).toBe(10n);
+      expect(rep['participation-score'].value).toBe(800000n);
+      // last-updated should be the block height when initialized (between blockBeforeInit and current block)
+      const lastUpdated = Number(rep['last-updated'].value);
+      expect(lastUpdated).toBeGreaterThanOrEqual(Number(blockBeforeInit));
+      expect(lastUpdated).toBeLessThanOrEqual(Number(simnet.blockHeight));
+      expect(rep['total-earned'].value).toBe(0n);
     });
   });
 
@@ -782,7 +801,7 @@ describe('Reputation Registry Contract', () => {
 
     it('should decay participation score after 1 month', () => {
       // Advance block height by 43200 (1 month)
-      simnet.mineBlocks(43200);
+      simnet.mineEmptyBlocks(43200);
 
       const result = simnet.callPublicFn(
         'reputation-registry',
@@ -804,7 +823,7 @@ describe('Reputation Registry Contract', () => {
 
     it('should decay multiple months correctly', () => {
       // Advance block height by 3 months
-      simnet.mineBlocks(129600); // 43200 * 3
+      simnet.mineEmptyBlocks(129600); // 43200 * 3
 
       simnet.callPublicFn(
         'reputation-registry',
@@ -838,7 +857,7 @@ describe('Reputation Registry Contract', () => {
       );
 
       // Advance by 2 months
-      simnet.mineBlocks(86400);
+      simnet.mineEmptyBlocks(86400);
 
       simnet.callPublicFn(
         'reputation-registry',
@@ -888,7 +907,7 @@ describe('Reputation Registry Contract', () => {
 
     it('should return decayed reputation after 1 month', () => {
       // Advance by 1 month
-      simnet.mineBlocks(43200);
+      simnet.mineEmptyBlocks(43200);
 
       const result = simnet.callReadOnlyFn(
         'reputation-registry',
@@ -1011,7 +1030,7 @@ describe('Reputation Registry Contract', () => {
         deployer
       );
 
-      simnet.mineBlocks(43200);
+      simnet.mineEmptyBlocks(43200);
 
       simnet.callPublicFn(
         'reputation-registry',

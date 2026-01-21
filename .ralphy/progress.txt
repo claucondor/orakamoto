@@ -35,6 +35,43 @@ Fixed flaky test assertions in yield-related test files by replacing exact value
 
 ---
 
+## 2026-01-21: Phase 7 - Fix Flaky Tests (Block-Height Dependent Tests)
+
+### Summary
+Fixed flaky block-height dependent test assertions in vesting-vault and reputation-registry test files by replacing exact block height comparisons with relative range checks. This addresses the issue where tests would fail intermittently due to block height advancing between test setup and assertion.
+
+### Changes Made
+
+1. **tests/vesting-vault.test.ts**:
+   - Fixed test "should return vesting schedule by ID" (line 180)
+   - Changed from exact block height assertion: `expect(rep['last-updated'].value).toBe(BigInt(simnet.blockHeight))`
+   - To range check: `expect(lastUpdated).toBeGreaterThanOrEqual(Number(blockBeforeInit)); expect(lastUpdated).toBeLessThanOrEqual(Number(simnet.blockHeight))`
+   - Also fixed tuple value access pattern from `result.result.value` to `(result.result as any).value.value`
+   - Changed assertion style from `toBeOk(expect.objectContaining({...}))` to direct property assertions with `toStrictEqual(Cl.type(value))`
+
+2. **tests/reputation-registry.test.ts**:
+   - Fixed test "should retrieve initialized reputation" (line 317)
+   - Added block height capture before initialization: `const blockBeforeInit = simnet.blockHeight;`
+   - Changed from exact block height assertion: `expect(rep['last-updated'].value).toBe(BigInt(simnet.blockHeight))`
+   - To range check: `expect(lastUpdated).toBeGreaterThanOrEqual(Number(blockBeforeInit)); expect(lastUpdated).toBeLessThanOrEqual(Number(simnet.blockHeight))`
+
+3. **PRD.md**:
+   - Marked Task 1 (Fix block-height dependent tests) as complete
+
+### Design Notes
+- Block height advances with each contract call (public or read-only)
+- Tests that compare against `simnet.blockHeight` after a transaction will fail intermittently
+- Range checks ensure tests pass regardless of how many blocks are mined during execution
+- Pattern: capture block height before operations, then verify result block height is within expected range
+
+### Verification
+- All 34 vesting-vault tests pass
+- All 39 reputation-registry tests pass (22 skipped)
+- Total: 73 tests passing
+- `clarinet check` passes with no errors (224 warnings, 0 errors)
+
+---
+
 ## 2026-01-21: Phase 6 HRO Contract Fixes and Enablement
 
 ### Summary

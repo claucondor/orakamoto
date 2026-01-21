@@ -154,7 +154,7 @@
       (participation-multiplier
         (if (>= number-of-trades u100)
           u2000000  ;; 2.0 * PRECISION
-          (+ u1000000 (* (/ number-of-trades u100) u1000000))  ;; 1.0 + (trades/100)
+          (+ u1000000 (/ (* number-of-trades u1000000) u100))  ;; 1.0 + (trades/100) - multiply first to avoid integer division truncation
         )
       )
       ;; Calculate market score: volume * multiplier / PRECISION

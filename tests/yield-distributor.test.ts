@@ -244,7 +244,7 @@ describe('Yield Distributor Contract', () => {
         wallet1
       );
       // Result is (ok (tuple (balance u1000000) (last-update u4)))
-      expect(result.result.type).toBe('response_ok');
+      expect(result.result.type).toBe('ok');
     });
 
     it('should get pool total LP supply after update', () => {
