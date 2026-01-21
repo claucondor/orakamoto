@@ -53,6 +53,10 @@ depends_on = ["oracle-trait"]
 path = "contracts/governance-token.clar"
 depends_on = ["sip-010-trait"]
 
+[contracts.governance]
+path = "contracts/governance.clar"
+depends_on = ["sip-010-trait", "vote-escrow"]
+
 [contracts.vesting-vault]
 path = "contracts/vesting-vault.clar"
 depends_on = ["sip-010-trait"]
@@ -68,6 +72,10 @@ depends_on = ["sip-010-trait", "governance-token"]
 [contracts.creator-rewards]
 path = "contracts/creator-rewards.clar"
 depends_on = ["sip-010-trait", "governance-token"]
+
+[contracts.vote-escrow]
+path = "contracts/vote-escrow.clar"
+depends_on = ["sip-010-trait"]
 
 [repl.analysis]
 passes = ["check_checker"]

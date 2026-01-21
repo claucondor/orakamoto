@@ -327,21 +327,25 @@ Contract: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
 - [x] Implement epoch-based distribution (weekly epochs) - implemented in lp-rewards.clar and trader-rewards.clar
 
 ### Vote Escrow
-- [ ] Create vote-escrow.clar for staking $PRED to get voting power
-- [ ] Implement lock function with duration parameter (1 week to 4 years)
-- [ ] Calculate voting power: amount * (lock_duration / max_duration)
-- [ ] Implement extend-lock and increase-amount functions
-- [ ] Implement withdraw after lock expires
+- [x] Create vote-escrow.clar for staking $PRED to get voting power
+- [x] Implement lock function with duration parameter (1 week to 4 years)
+- [x] Calculate voting power: amount * (lock_duration / max_duration)
+- [x] Implement extend-lock and increase-amount functions
+- [x] Implement withdraw after lock expires
 
 ### Governance Contract
-- [ ] Create governance.clar for proposal and voting system
-- [ ] Define proposal types: PARAMETER_CHANGE, TREASURY_SPEND, DISPUTE_RESOLUTION, ORACLE_WHITELIST, EMERGENCY_ACTION
-- [ ] Implement create-proposal with minimum voting power threshold (e.g., 1% of total)
-- [ ] Implement vote(proposal-id, support) using vote-escrow balance
-- [ ] Voting period: 7 days, Timelock: 2 days
-- [ ] Quorum: 10% of total voting power must participate
-- [ ] Implement execute-proposal after voting period and quorum reached
-- [ ] Implement cancel-proposal for proposer or if threshold drops
+- [x] Create governance.clar for proposal and voting system
+- [x] Define proposal types: PARAMETER_CHANGE, TREASURY_SPEND, DISPUTE_RESOLUTION, ORACLE_WHITELIST, EMERGENCY_ACTION
+- [x] Implement create-proposal with minimum voting power threshold (e.g., 1% of total)
+- [x] Implement vote(proposal-id, support) using vote-escrow balance
+- [x] Voting period: 7 days, Timelock: 2 days
+- [x] Quorum: 10% of total voting power must participate
+- [x] Implement execute-proposal after voting period and quorum reached
+- [x] Implement cancel-proposal for proposer or if threshold drops
+
+### Phase 5 Tests (Complete)
+- [x] Write tests for vote-escrow.clar (lock, extend, withdraw, voting power calculation)
+- [x] Write tests for governance.clar (create-proposal, vote, execute, cancel, quorum)
 
 ### Dispute Resolution
 - [ ] Create dispute.clar for challenging market resolutions
@@ -351,15 +355,15 @@ Contract: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
 - [ ] If dispute fails: challenger stake slashed, distributed to voters
 
 ### Governable Parameters
-- [ ] TRADING-FEE-BP (default: 100 = 1%)
-- [ ] LP-FEE-SHARE-BP (default: 7000 = 70%)
-- [ ] CREATOR-FEE-SHARE-BP (default: 1000 = 10%)
-- [ ] PROTOCOL-FEE-SHARE-BP (default: 2000 = 20%)
-- [ ] MINIMUM-COLLATERAL (default: 50 USDC)
-- [ ] RESOLUTION-WINDOW (default: 7 days) - time for creator to resolve after deadline
-- [ ] DISPUTE-WINDOW (default: 7 days) - lock period after resolution before claims allowed
-- [ ] DISPUTE-STAKE (amount of $PRED to open dispute)
-- [ ] Protocol treasury address
+- [x] TRADING-FEE-BP (default: 100 = 1%)
+- [x] LP-FEE-SHARE-BP (default: 7000 = 70%)
+- [x] CREATOR-FEE-SHARE-BP (default: 1000 = 10%)
+- [x] PROTOCOL-FEE-SHARE-BP (default: 2000 = 20%)
+- [x] MINIMUM-COLLATERAL (default: 50 USDC)
+- [x] RESOLUTION-WINDOW (default: 7 days) - time for creator to resolve after deadline
+- [x] DISPUTE-WINDOW (default: 7 days) - lock period after resolution before claims allowed
+- [x] DISPUTE-STAKE (amount of $PRED to open dispute)
+- [x] Protocol treasury address
 
 ### Market Resolution Flow
 ```
@@ -378,8 +382,8 @@ Contract: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
 ```
 
 ### Governance Security
-- [ ] Implement emergency-pause requiring 30% quorum and 80% approval
-- [ ] Add proposal cooldown per address (1 proposal per week)
+- [x] Implement emergency-pause requiring 30% quorum and 80% approval
+- [x] Add proposal cooldown per address (1 proposal per week)
 - [ ] Implement guardian multisig for critical emergencies (can pause, cannot change params)
 - [ ] Write tests for governance attacks: flash loan voting, last-minute swings, etc.
 

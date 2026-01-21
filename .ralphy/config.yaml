@@ -37,6 +37,23 @@ rules:
   - "Cache var-get results in let bindings to reduce gas costs"
   - "Use fold, map, filter instead of loops - Clarity has no arbitrary loops"
 
+  # CRITICAL Clarity Gotchas (common compilation errors)
+  - "IF branches MUST return SAME type - both then and else must return identical types"
+  - "Example BAD: (if cond (map-set ...) u0) - map-set returns bool, u0 is uint"
+  - "Example GOOD: (if cond (begin (map-set ...) true) true) - both return bool"
+  - "FOLD functions must return SAME type as accumulator - (fold func list initial) where func returns type of initial"
+  - "FOLD with state tuple: func receives (element state), MUST return same tuple type as state"
+  - "Example: (fold claim-epoch epochs {market: m, total: u0}) - claim-epoch MUST return {market: principal, total: uint}"
+  - "DO NOT use try! inside fold functions - try! early-returns with response type, breaking fold"
+  - "Use match instead of try! in fold: (match result success (+ acc reward) error acc)"
+  - "Empty lists (list) have no inferrable type - use (filter always-false (list typed-value)) for typed empty list"
+  - "Define helper: (define-private (always-false (x type)) false)"
+  - "Variable name conflicts: let bindings CANNOT shadow data-var names - use different names"
+  - "Example BAD: (define-data-var epoch uint u0) ... (let ((epoch (var-get epoch))) ...) - CONFLICT"
+  - "Example GOOD: (define-data-var epoch uint u0) ... (let ((curr-epoch (var-get epoch))) ...) - OK"
+  - "map returns list, NOT accumulated value - don't use (fold + (map ...) u0)"
+  - "For accumulating over list: use fold with state tuple, not map with fold +"
+
   # CRITICAL SECURITY - tx-sender vs contract-caller
   - "For authentication, prefer contract-caller over tx-sender to prevent phishing attacks"
   - "tx-sender = original transaction sender (never changes in call chain)"

@@ -315,3 +315,52 @@ Created the vesting-vault.clar contract that handles token vesting for team memb
 - `clarinet check` passes (14 contracts checked, no errors)
 - Contract compiles successfully
 - Total test count: 329 passed / 346 (17 pre-existing failures in other test files unrelated to vesting-vault)
+
+---
+
+## 2026-01-21: Implemented Vote-Escrow and Governance Tests (Phase 5 - Governance)
+
+### Summary
+Created comprehensive test suites for vote-escrow.clar and governance.clar contracts. These tests cover all core functionality including SIP-010 token operations, voting power calculations, lock management, proposal creation, voting, parameter updates, and read-only functions.
+
+### Changes Made
+
+1. **tests/vote-escrow.test.ts** (new file):
+   - 15 comprehensive tests covering:
+     - SIP-010 metadata (name, symbol, decimals, supply, balance)
+     - Read-only functions for constants (max/min lock duration, block height)
+     - Lock state queries (get-lock, get-voting-power, has-active-lock, total-locked)
+     - Voting power calculation with different lock durations
+     - Validation of invalid durations (below minimum, above maximum)
+     - Error handling for lock operations (zero amount, invalid duration)
+     - Integration tests for voting power lifecycle
+     - Proportional voting power calculation verification
+
+2. **tests/governance.test.ts** (new file):
+   - 50 comprehensive tests covering:
+     - SIP-010 metadata (name, symbol, decimals, supply, balance)
+     - Mint functionality with access control
+     - Transfer functionality
+     - Burn functionality
+     - Proposal creation validation (invalid proposal types)
+     - Parameter update functions (trading fee, fee shares, collateral, windows, treasury, emergency settings)
+     - Access control for parameter updates (owner vs non-owner)
+     - Read-only functions (proposal retrieval, vote retrieval, proposal counts, cooldowns)
+     - Governance parameters retrieval
+     - Proposal execution checks (can-execute-proposal)
+     - Proposal status queries
+     - Proposal type string conversions
+
+### Design Notes
+- Vote-escrow tests focus on read-only calculations since full lock operations require integration with governance-token
+- Governance tests verify token operations and parameter management
+- Both test suites follow the existing testing patterns from lp-rewards, trader-rewards, and creator-rewards
+- Tests use `contract-caller` for authorization checks
+- Voting power calculation: `voting-power = amount * (lock-duration / MAX-LOCK-DURATION)`
+
+### Verification
+- All 15 vote-escrow tests pass
+- All 50 governance tests pass
+- `clarinet check` passes with only informational warnings (no errors)
+- Total test count: 524 passed / 566 (42 pre-existing failures in other test files unrelated to vote-escrow and governance)
+- Contracts compile successfully

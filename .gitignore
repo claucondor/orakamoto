@@ -2,6 +2,7 @@
 **/settings/Testnet.toml
 .cache/**
 history.txt
+SESSION-CONTEXT.md
 
 logs
 *.log
