@@ -1,6 +1,7 @@
 ;; Reputation Registry Contract for StackPredict Protocol
 ;; Implements Layer 4: Quadratic Reputation Voting
 ;; Tracks voter reputation based on historical accuracy and participation
+;; Also implements SIP-010 fungible token ($PRED) for governance
 ;;
 ;; Reputation Formula:
 ;; reputation_score = (correct_votes / total_votes) * participation_rate * PRECISION
@@ -9,10 +10,13 @@
 ;; Decay: 1% reputation decay per month of inactivity (432 blocks)
 
 ;; Traits
-(use-trait sip-010-trait .sip-010-trait.sip-010-trait)
+(impl-trait .sip-010-trait.sip-010-trait)
 
 ;; Constants
 (define-constant CONTRACT-OWNER tx-sender)
+(define-constant TOKEN-NAME "StackPredict Governance")
+(define-constant TOKEN-SYMBOL "PRED")
+(define-constant TOKEN-DECIMALS u8)
 (define-constant PRECISION u1000000)           ;; For precise calculations (1.0 = 1000000)
 (define-constant DECAY-PER-MONTH u10000)       ;; 1% decay per month (10000 = 1%)
 (define-constant MONTH-IN-BLOCKS u43200)       ;; ~30 days in blocks (144 blocks/day * 30)
@@ -28,6 +32,11 @@
 (define-constant ERR-NO-REPUTATION-FOUND (err u1303))
 (define-constant ERR-ALREADY-VOTED (err u1304))
 (define-constant ERR-REPUTATION-CALCULATION-FAILED (err u1305))
+(define-constant ERR-NOT-TOKEN-OWNER (err u1306))
+(define-constant ERR-INSUFFICIENT-BALANCE (err u1307))
+
+;; Define the fungible token
+(define-fungible-token pred)
 
 ;; ============================================
 ;; DATA STRUCTURES
@@ -81,6 +90,66 @@
 
 ;; Sequential history ID counter
 (define-data-var history-id-counter uint u0)
+
+;; ============================================
+;; SIP-010 TOKEN FUNCTIONS
+;; ============================================
+
+;; SIP-010 Transfer
+(define-public (transfer (amount uint) (sender principal) (recipient principal) (memo (optional (buff 34))))
+  (begin
+    (asserts! (is-eq tx-sender sender) ERR-NOT-TOKEN-OWNER)
+    (asserts! (> amount u0) ERR-ZERO-AMOUNT)
+    (try! (ft-transfer? pred amount sender recipient))
+    (match memo to-print (print to-print) 0x)
+    (print {event: "transfer", sender: sender, recipient: recipient, amount: amount})
+    (ok true)))
+
+;; SIP-010 Get Name
+(define-read-only (get-name)
+  (ok TOKEN-NAME))
+
+;; SIP-010 Get Symbol
+(define-read-only (get-symbol)
+  (ok TOKEN-SYMBOL))
+
+;; SIP-010 Get Decimals
+(define-read-only (get-decimals)
+  (ok TOKEN-DECIMALS))
+
+;; SIP-010 Get Balance
+(define-read-only (get-balance (who principal))
+  (ok (ft-get-balance pred who)))
+
+;; SIP-010 Get Total Supply
+(define-read-only (get-total-supply)
+  (ok (ft-get-supply pred)))
+
+;; SIP-010 Get Token URI
+(define-read-only (get-token-uri)
+  (ok none))
+
+;; Mint - Restricted to contract owner (for reward distribution)
+(define-public (mint (amount uint) (recipient principal))
+  (begin
+    (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
+    (asserts! (> amount u0) ERR-ZERO-AMOUNT)
+    (try! (ft-mint? pred amount recipient))
+    (print {event: "mint", recipient: recipient, amount: amount})
+    (ok true)))
+
+;; Burn - Allows token holders to burn their own tokens
+(define-public (burn (amount uint))
+  (let
+    (
+      (caller tx-sender)
+      (balance (ft-get-balance pred caller))
+    )
+    (asserts! (> amount u0) ERR-ZERO-AMOUNT)
+    (asserts! (>= balance amount) ERR-INSUFFICIENT-BALANCE)
+    (try! (ft-burn? pred amount caller))
+    (print {event: "burn", burner: caller, amount: amount})
+    (ok true)))
 
 ;; ============================================
 ;; READ-ONLY FUNCTIONS

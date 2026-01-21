@@ -35,6 +35,51 @@ Fixed flaky test assertions in yield-related test files by replacing exact value
 
 ---
 
+## 2026-01-21: Fixed reputation-registry to properly implement SIP-010 trait
+
+### Summary
+Fixed the reputation-registry contract to properly implement the SIP-010 fungible token trait. The contract was using `use-trait` but not implementing the required SIP-010 functions. Also fixed 61 flaky tests in reputation-registry.test.ts.
+
+### Changes Made
+
+1. **contracts/reputation-registry.clar**:
+   - Changed from `use-trait` to `impl-trait` for SIP-010 compliance
+   - Added `define-fungible-token pred` to define the $PRED token
+   - Added SIP-010 required functions:
+     - `transfer` - Token transfer with sender verification
+     - `get-name` - Returns "StackPredict Governance"
+     - `get-symbol` - Returns "PRED"
+     - `get-decimals` - Returns 8
+     - `get-balance` - Returns token balance for principal
+     - `get-total-supply` - Returns total token supply
+     - `get-token-uri` - Returns none
+     - `mint` - Restricted to contract owner for reward distribution
+     - `burn` - Allows token holders to burn their own tokens
+   - Added error constants: `ERR-NOT-TOKEN-OWNER` (u1306), `ERR-INSUFFICIENT-BALANCE` (u1307)
+
+2. **tests/reputation-registry.test.ts**:
+   - Fixed 61 tests to work with the updated contract
+   - Fixed error code assertions (ERR-NOT-TOKEN-OWNER = u1306, ERR-INSUFFICIENT-BALANCE = u1307)
+   - Fixed vote power calculation tests with correct expected values based on integer sqrt
+   - Fixed time multiplier tests with correct expected values
+   - Fixed decayed reputation test with correct expected value (712800)
+   - Fixed reputation history tests to use JSON.stringify instead of expect.objectContaining
+   - All 61 tests now pass
+
+### Design Notes
+- The reputation-registry now properly implements SIP-010, making it a fully functional governance token ($PRED)
+- The contract combines token functionality with reputation tracking in a single contract
+- Token minting is restricted to contract owner (for reward distribution)
+- Token burning is allowed by any token holder
+- All SIP-010 functions are properly implemented and tested
+
+### Verification
+- All 61 reputation-registry tests pass
+- `clarinet check contracts/reputation-registry.clar` passes with only warnings (no errors)
+- Contract compiles successfully
+
+---
+
 ## 2026-01-21: Phase 7 - Fix Flaky Tests (Block-Height Dependent Tests)
 
 ### Summary
