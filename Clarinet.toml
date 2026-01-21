@@ -81,6 +81,10 @@ depends_on = ["sip-010-trait", "governance-token"]
 path = "contracts/vote-escrow.clar"
 depends_on = ["sip-010-trait"]
 
+[contracts.dispute]
+path = "contracts/dispute.clar"
+depends_on = ["sip-010-trait", "vote-escrow"]
+
 [repl.analysis]
 passes = ["check_checker"]
 check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }

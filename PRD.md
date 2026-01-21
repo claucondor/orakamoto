@@ -348,11 +348,12 @@ Contract: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
 - [x] Write tests for governance.clar (create-proposal, vote, execute, cancel, quorum)
 
 ### Dispute Resolution
-- [ ] Create dispute.clar for challenging market resolutions
-- [ ] Allow anyone to open dispute by staking $PRED (slashed if frivolous)
-- [ ] Disputed markets enter 7-day voting period
-- [ ] If dispute succeeds: challenger gets reward, creator loses collateral
-- [ ] If dispute fails: challenger stake slashed, distributed to voters
+- [x] Create dispute.clar for challenging market resolutions
+- [x] Allow anyone to open dispute by staking $PRED (slashed if frivolous)
+- [x] Disputed markets enter 7-day voting period
+- [x] If dispute succeeds: challenger gets reward, creator loses collateral
+- [x] If dispute fails: challenger stake slashed, distributed to voters
+- [x] Write comprehensive tests for dispute.clar
 
 ### Governable Parameters
 - [x] TRADING-FEE-BP (default: 100 = 1%)
