@@ -1,5 +1,87 @@
 # Ralphy Progress Log
 
+## 2026-01-21: Implemented AI Oracle Council Contract (Phase 6 - Hybrid Reputation Oracle)
+
+### Summary
+Created the ai-oracle-council.clar contract that implements Layer 3 (AI Pre-Verification) for the Hybrid Reputation Oracle (HRO). This contract provides AI-powered advisory recommendations for disputed markets, helping voters make informed decisions without influencing voting outcomes.
+
+### Changes Made
+
+1. **contracts/ai-oracle-council.clar** (new file):
+   - Implements AI_RECOMMENDATION_WEIGHT = 0 (advisory only, no voting power)
+   - AI Model registry for tracking multiple AI models (GPT-4, Claude, Llama-3, etc.)
+   - AI model accuracy tracking for future calibration
+   - Market evaluation request system
+   - AI recommendation recording from authorized AI bridge
+   - Aggregated recommendation calculation with majority outcome
+   - Accuracy tracking after market resolution
+
+   **Key Features:**
+   - **Advisory Only**: AI recommendations have 0 voting weight - they cannot override human votes
+   - **Multiple AI Models**: Supports up to 5 AI models in the council
+   - **Confidence Scoring**: Each recommendation includes confidence score (0-100%)
+   - **Evidence Tracking**: Links to supporting evidence for transparency
+   - **Accuracy Tracking**: Tracks model prediction accuracy over time
+   - **Majority Aggregation**: Aggregates recommendations from multiple models
+
+   **Key Functions:**
+   - `request-ai-evaluation`: Anyone can request AI analysis for a disputed market
+   - `record-ai-recommendation`: Authorized AI bridge submits recommendations
+   - `get-ai-recommendation`: Get aggregated recommendation (outcome, confidence, model count)
+   - `update-ai-accuracy`: Update model accuracy after market resolution
+   - `register-ai-model`: Owner can register new AI models
+   - `deactivate-ai-model` / `reactivate-ai-model`: Manage model status
+
+   **Read-Only Functions:**
+   - `get-ai-weight`: Returns 0 (advisory only)
+   - `get-ai-model`: Get model info
+   - `get-active-models`: Get all active models
+   - `get-model-recommendation`: Get recommendation from specific model
+   - `get-market-recommendations`: Get all recommendations for a market
+   - `get-market-evaluation`: Get evaluation request info
+   - `get-model-accuracy`: Get model accuracy stats
+
+2. **Clarinet.toml**:
+   - Added ai-oracle-council contract configuration with sip-010-trait dependency
+
+3. **tests/ai-oracle-council.test.ts** (new file):
+   - 50+ comprehensive tests covering:
+     - AI model registration with access control
+     - Model activation/deactivation
+     - Evaluation request system
+     - AI recommendation recording with validation
+     - Recommendation aggregation (majority, tie, no recommendations)
+     - AI accuracy tracking after resolution
+     - Reset functionality
+     - Edge cases (invalid outcomes, confidence bounds, duplicate requests)
+
+### Design Notes
+- **Advisory Only**: AI_RECOMMENDATION_WEIGHT = 0 ensures AI cannot influence voting outcomes
+- **Multiple Models**: Supports up to 5 AI models for consensus-based recommendations
+- **Evidence-Based**: Each recommendation includes evidence links for transparency
+- **Accuracy Tracking**: Models are tracked over time for calibration and improvement
+- **Permissionless Requests**: Anyone can request AI evaluation for any disputed market
+- **Authorized Submissions**: Only authorized AI bridge can submit recommendations
+- **Integration Ready**: Works with hro-resolver and quadratic-voting contracts
+
+### HRO Layer 3 Architecture
+```
+Layer 3: AI PRE-VERIFICATION (Advisory)
+  └── Multi-LLM council evaluates evidence
+  └── Provides recommendation + confidence + sources
+  └── Advisory only (0 voting weight)
+  └── Voters can reference but AI cannot override human vote
+```
+
+### Verification
+- `clarinet check` passes with no errors for ai-oracle-council
+- Contract compiles successfully
+- Contract follows existing patterns from other governance contracts
+- 50+ tests written covering all major functionality
+- Note: Full test execution blocked by pre-existing environment issues in vitest configuration
+
+---
+
 ## 2026-01-21: Implemented Reputation Registry Contract (Phase 6 - Hybrid Reputation Oracle)
 
 ### Summary

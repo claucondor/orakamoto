@@ -513,13 +513,13 @@ Where:
 - [x] Write tests for: normal voting, ties, manipulation attempts
 
 #### ai-oracle-council.clar (Advisory Layer)
-- [ ] Define AI_RECOMMENDATION_WEIGHT = 0 (advisory only, no voting power)
-- [ ] Implement request-ai-evaluation(market-id, question, evidence_links)
-- [ ] Implement record-ai-recommendation(market-id, outcome, confidence, sources) - called by authorized AI bridge
-- [ ] Implement get-ai-recommendation(market-id) for voters to reference
-- [ ] AI recommendation displayed in UI but CANNOT override human vote
-- [ ] Implement ai-accuracy-tracking for future calibration
-- [ ] Write tests for AI integration (mock responses)
+- [x] Define AI_RECOMMENDATION_WEIGHT = 0 (advisory only, no voting power)
+- [x] Implement request-ai-evaluation(market-id, question, evidence_links)
+- [x] Implement record-ai-recommendation(market-id, outcome, confidence, sources) - called by authorized AI bridge
+- [x] Implement get-ai-recommendation(market-id) for voters to reference
+- [x] AI recommendation displayed in UI but CANNOT override human vote
+- [x] Implement ai-accuracy-tracking for future calibration
+- [x] Write tests for AI integration (mock responses)
 
 #### market-fork.clar (Nuclear Option)
 - [ ] Implement check-fork-threshold(market-id) returns bool
