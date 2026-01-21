@@ -9,8 +9,8 @@ const wallet3 = accounts.get('wallet_3')!;
 
 // Constants matching the contract
 const ERR_NOT_AUTHORIZED = 700n;
-const ERR_ZERO_AMOUNT = 701n;
-const ERR_INSUFFICIENT_BALANCE = 702n;
+const ERR_ZERO_AMOUNT = 702n;
+const ERR_INSUFFICIENT_BALANCE = 701n;
 const ERR_ALREADY_CLAIMED = 703n;
 const ERR_NO_REWARDS = 704n;
 const ERR_INVALID_EPOCH = 705n;

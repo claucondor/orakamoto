@@ -20,7 +20,7 @@
 (define-constant PRECISION u1000000)
 
 ;; Fork parameters
-(define-constant FORK-THRESHOLD u100000)           ;; 10% (in basis points: 100000 = 10%)
+(define-constant FORK-THRESHOLD u1000)           ;; 10% (in basis points: 1000 = 10%)
 (define-constant FORK-SETTLEMENT-PERIOD u43200)    ;; 30 days in blocks (144 blocks/day * 30)
 (define-constant FORK-DISCOUNT u500000)            ;; 50% discount for non-canonical fork redemption
 
@@ -235,6 +235,9 @@
 
       ;; Link original market to fork
       (map-set market-forks original-market-id new-fork-id)
+
+      ;; Update fork ID counter
+      (var-set fork-id-counter new-fork-id)
 
       (print
         {
