@@ -277,11 +277,11 @@ Contract: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
 - [ ] Write integration tests using Pyth testnet
 
 ### Auto-Resolution System
-- [ ] Create oracle-resolver.clar for markets that can resolve via oracle
-- [ ] Define market types: MANUAL (creator resolves), PRICE_TARGET (oracle resolves when price hits target), TIME_BASED (oracle price at deadline)
-- [ ] Implement check-resolution that anyone can call to trigger auto-resolution
-- [ ] Add oracle-market-config map storing oracle address, price-feed-id, target-price, resolution-type
-- [ ] Write tests for each resolution type
+- [x] Create oracle-resolver.clar for markets that can resolve via oracle
+- [x] Define market types: MANUAL (creator resolves), PRICE_TARGET (oracle resolves when price hits target), TIME_BASED (oracle price at deadline)
+- [x] Implement check-resolution that anyone can call to trigger auto-resolution
+- [x] Add oracle-market-config map storing oracle address, price-feed-id, target-price, resolution-type
+- [x] Write tests for each resolution type (33 tests, all passing)
 
 ---
 

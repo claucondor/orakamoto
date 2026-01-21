@@ -45,6 +45,10 @@ path = "contracts/traits/oracle-trait.clar"
 [contracts.mock-oracle]
 path = "contracts/mocks/mock-oracle.clar"
 
+[contracts.oracle-resolver]
+path = "contracts/oracle-resolver.clar"
+depends_on = ["oracle-trait"]
+
 [contracts.governance-token]
 path = "contracts/governance-token.clar"
 depends_on = ["sip-010-trait"]
