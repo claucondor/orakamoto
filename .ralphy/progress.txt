@@ -1,5 +1,94 @@
 # Ralphy Progress Log
 
+## 2026-01-21: Implemented Reputation Registry Contract (Phase 6 - Hybrid Reputation Oracle)
+
+### Summary
+Created the reputation-registry.clar contract that implements Layer 4 (Quadratic Reputation Voting) for the Hybrid Reputation Oracle (HRO). This contract tracks voter reputation based on historical accuracy and participation, enabling quadratic voting power calculation to limit whale influence.
+
+### Changes Made
+
+1. **contracts/reputation-registry.clar** (new file):
+   - Implements SIP-010 fungible token ($PRED) with 8 decimals
+   - Reputation score tracking per voter:
+     - `correct-votes`: Number of votes that matched final outcome
+     - `total-votes`: Total number of votes cast
+     - `participation-score`: Participation rate (0-1000000 = 0-100%)
+     - `last-updated`: Block height when reputation was last updated
+     - `total-earned`: Total $PRED tokens earned
+   - Reputation score calculation: `(correct_votes / total_votes) × participation_rate × PRECISION`
+   - Quadratic vote power calculation: `√(tokens_staked) × reputation_score × time_multiplier`
+   - Time multiplier: 1.0x to 4.0x based on lock duration (1 week to 4 years)
+   - Decay function: 1% reputation decay per month of inactivity (43200 blocks)
+   - Reputation history tracking for transparency/auditing
+   - Vote tracking to prevent double voting on same market
+   - Integer square root approximation using Babylonian method
+
+   **Key Functions:**
+   - `get-reputation-score`: Calculate current reputation score (0-1000000)
+   - `calculate-vote-power`: Calculate quadratic voting power
+   - `record-vote-cast`: Track when a voter casts a vote (called by quadratic-voting)
+   - `update-reputation`: Update reputation after vote resolution (called by quadratic-voting)
+   - `apply-decay`: Apply reputation decay for inactivity
+   - `get-decayed-reputation`: Get reputation with decay applied
+   - `has-voted-on-market`: Check if voter already voted on a market
+
+   **Read-Only Functions:**
+   - `get-reputation`: Get full reputation record
+   - `get-participation-rate`: Get participation rate for voter
+   - `get-total-votes`: Get total votes cast by voter
+   - `get-correct-votes`: Get correct votes by voter
+   - `get-total-earned`: Get total $PRED earned
+   - `get-reputation-history`: Get reputation history by ID
+   - `get-history-count`: Get total history count
+
+   **Admin Functions:**
+   - `initialize-reputation`: Initialize reputation for a voter (owner only)
+   - `reset-reputation`: Reset reputation for a voter (owner only)
+
+2. **Clarinet.toml**:
+   - Added reputation-registry contract configuration with sip-010-trait dependency
+
+3. **tests/reputation-registry.test.ts** (new file):
+   - 50+ comprehensive tests covering:
+     - SIP-010 metadata (name, symbol, decimals, supply, balance)
+     - Mint functionality with access control
+     - Transfer functionality
+     - Burn functionality
+     - Reputation initialization with validation
+     - Reputation score calculation (perfect accuracy, zero accuracy, new voters)
+     - Vote power calculation with quadratic formula
+     - Time multiplier calculation (1 week to 4 years, capped at 4.0x)
+     - Vote recording with authorization checks
+     - Double voting prevention
+     - Reputation update after vote resolution
+     - Reputation decay (1 month, multiple months, minimum bounds)
+     - Decayed reputation calculation
+     - Reputation history tracking
+     - Market vote tracking
+     - Reset reputation functionality
+     - Edge cases (perfect accuracy, zero accuracy, large token amounts)
+
+### Design Notes
+- Follows the same patterns as existing governance contracts (vote-escrow, governance-token)
+- Uses `contract-caller` for authorization (secure against phishing)
+- Reputation score is calculated dynamically from correct_votes / total_votes
+- Participation score decays over time (1% per month of inactivity)
+- Quadratic voting formula limits whale influence: √(tokens) × reputation × time_multiplier
+- Time multiplier rewards long-term commitment (1x to 4x)
+- Integer square root approximation avoids floating-point math
+- All reputation updates are recorded in history for transparency
+- Minimum reputation score of 0.1 (100000) for new voters
+- Maximum reputation score of 1.0 (1000000) for perfect accuracy
+
+### Verification
+- `clarinet check` passes with no errors for reputation-registry
+- Contract compiles successfully
+- Contract follows existing patterns from vote-escrow.clar and governance-token.clar
+- 50+ tests written covering all major functionality
+- Note: Full test execution blocked by pre-existing environment issues in vitest configuration
+
+---
+
 ## 2026-01-20: Implemented Creator Rewards Contract (Phase 5 - Governance)
 
 ### Summary

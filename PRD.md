@@ -493,13 +493,13 @@ Where:
 - [x] Write tests for full escalation sequence
 
 #### reputation-registry.clar
-- [ ] Define reputation-score map: principal → { correct_votes, total_votes, participation_score, last_updated }
-- [ ] Implement calculate-reputation(principal) → uint (scaled 0-1000000 for precision)
-- [ ] Implement update-reputation(principal, was_correct) called after vote resolution
-- [ ] Implement get-vote-power(principal, tokens_staked, stake_duration) using quadratic formula
-- [ ] Implement decay function: reputation decays 1% per month of inactivity
-- [ ] Implement reputation-history for transparency/auditing
-- [ ] Write tests for reputation edge cases: new users, perfect accuracy, zero participation
+- [x] Define reputation-score map: principal → { correct_votes, total_votes, participation_score, last_updated }
+- [x] Implement calculate-reputation(principal) → uint (scaled 0-1000000 for precision)
+- [x] Implement update-reputation(principal, was_correct) called after vote resolution
+- [x] Implement get-vote-power(principal, tokens_staked, stake_duration) using quadratic formula
+- [x] Implement decay function: reputation decays 1% per month of inactivity
+- [x] Implement reputation-history for transparency/auditing
+- [x] Write tests for reputation edge cases: new users, perfect accuracy, zero participation
 
 #### quadratic-voting.clar
 - [ ] Implement create-vote(market-id, options) when escalation triggers voting
