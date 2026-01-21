@@ -655,7 +655,8 @@
 
       ;; Transfer USDC to yield source (mock-zest-vault)
       ;; The vault will mint zUSDC shares to this contract
-      (try! (contract-call? .mock-zest-vault supply amount-to-deposit (as-contract tx-sender)))
+      ;; Use as-contract so multi-outcome-pool becomes tx-sender for USDC transfer
+      (try! (as-contract (contract-call? .mock-zest-vault supply amount-to-deposit tx-sender)))
 
       ;; Update total liquidity - reduce by 90%
       (var-set total-liquidity remaining-liquidity)
@@ -695,8 +696,8 @@
       (
         ;; Get the contract's zUSDC balance from the vault
         (contract-shares (unwrap! (contract-call? .mock-zest-vault get-balance (as-contract tx-sender)) ERR-INSUFFICIENT-LIQUIDITY))
-        ;; Withdraw all shares
-        (usdc-returned (try! (contract-call? .mock-zest-vault withdraw contract-shares (as-contract tx-sender))))
+        ;; Withdraw all shares - use as-contract so multi-outcome-pool becomes tx-sender
+        (usdc-returned (try! (as-contract (contract-call? .mock-zest-vault withdraw contract-shares tx-sender))))
       )
       ;; Update total liquidity - add back the returned amount
       (var-set total-liquidity (+ current-liquidity usdc-returned))
@@ -722,7 +723,9 @@
   (ok (var-get deposited-to-yield))
 )
 
-;; Read-only: Get available liquidity (total liquidity minus deposited)
+;; Read-only: Get available liquidity
+;; Note: total-liquidity is already reduced when funds are deposited to yield
+;; so available-liquidity equals total-liquidity
 (define-read-only (get-available-liquidity)
   (let
     (
@@ -732,7 +735,7 @@
     (ok {
       total-liquidity: total-liq,
       deposited-to-yield: deposited,
-      available-liquidity: (- total-liq deposited)
+      available-liquidity: total-liq
     })
   )
 )

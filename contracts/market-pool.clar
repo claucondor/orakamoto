@@ -636,7 +636,8 @@
 
       ;; Transfer USDC to yield source (mock-zest-vault)
       ;; The vault will mint zUSDC shares to this contract
-      (try! (contract-call? .mock-zest-vault supply amount-to-deposit (as-contract tx-sender)))
+      ;; Use as-contract so market-pool becomes tx-sender for USDC transfer
+      (try! (as-contract (contract-call? .mock-zest-vault supply amount-to-deposit tx-sender)))
 
       ;; Update reserves - reduce by 90%
       (var-set yes-reserve remaining-yes)
@@ -679,8 +680,8 @@
       (
         ;; Get the contract's zUSDC balance from the vault
         (contract-shares (unwrap! (contract-call? .mock-zest-vault get-balance (as-contract tx-sender)) ERR-INSUFFICIENT-LIQUIDITY))
-        ;; Withdraw all shares
-        (usdc-returned (try! (contract-call? .mock-zest-vault withdraw contract-shares (as-contract tx-sender))))
+        ;; Withdraw all shares - use as-contract so market-pool becomes tx-sender
+        (usdc-returned (try! (as-contract (contract-call? .mock-zest-vault withdraw contract-shares tx-sender))))
         ;; Split returned amount proportionally between yes and no reserves
         (half-return (/ usdc-returned u2))
       )
