@@ -93,6 +93,10 @@ depends_on = ["sip-010-trait"]
 path = "contracts/reputation-registry.clar"
 depends_on = ["sip-010-trait"]
 
+[contracts.quadratic-voting]
+path = "contracts/quadratic-voting.clar"
+depends_on = ["sip-010-trait", "reputation-registry"]
+
 [repl.analysis]
 passes = ["check_checker"]
 check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }

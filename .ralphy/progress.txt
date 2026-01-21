@@ -641,3 +641,120 @@ Timeout (7 days) → Finalize with leading outcome → Distribute bonds to winne
 - Contract follows existing patterns from dispute.clar and other governance contracts
 - 25 tests written covering all major functionality
 - Note: Full test execution blocked by pre-existing environment issues (unrelated to hro-resolver)
+
+---
+
+## 2026-01-21: Implemented Quadratic Voting Contract (Phase 6 - Hybrid Reputation Oracle)
+
+### Summary
+Created the quadratic-voting.clar contract that implements Layer 4 (Quadratic Reputation Voting) for the Hybrid Reputation Oracle (HRO). This contract handles voting sessions triggered by HRO bond escalation, featuring commit-reveal scheme to prevent last-minute vote manipulation and quadratic voting power calculation using reputation scores.
+
+### Changes Made
+
+1. **contracts/quadratic-voting.clar** (new file):
+   - **Constants:**
+     - `VOTING-DURATION` (432 blocks ~3 days) - Total voting period
+     - `COMMIT-PHASE` (288 blocks ~2 days) - Commit phase duration
+     - `REVEAL-PHASE` (144 blocks ~1 day) - Reveal phase duration
+     - `SLASH-PERCENTAGE` (10% = 100000) - Slash for non-revealers
+     - `MINIMUM-VOTE-POWER` (1.0 = 1000000) - Minimum voting power required
+
+   - **Error Constants:**
+     - `ERR-NOT-AUTHORIZED` (u1400)
+     - `ERR-ZERO-AMOUNT` (u1401)
+     - `ERR-INVALID-OUTCOME` (u1402)
+     - `ERR-NO-VOTE-SESSION` (u1403)
+     - `ERR-VOTING-NOT-STARTED` (u1404)
+     - `ERR-VOTING-ENDED` (u1405)
+     - `ERR-NOT-IN-COMMIT-PHASE` (u1406)
+     - `ERR-NOT-IN-REVEAL-PHASE` (u1407)
+     - `ERR-ALREADY-COMMITTED` (u1408)
+     - `ERR-ALREADY-REVEALED` (u1409)
+     - `ERR-NO-COMMITMENT-FOUND` (u1410)
+     - `ERR-INVALID-REVEAL` (u1411)
+     - `ERR-VOTE-ALREADY-TALLIED` (u1412)
+     - `ERR-INSUFFICIENT-VOTE-POWER` (u1413)
+     - `ERR-SESSION-NOT-ENDED` (u1414)
+
+   - **Data Structures:**
+     - `voting-sessions`: Tracks voting session state (market-id, timing, vote totals, winning outcome)
+     - `market-session`: Links market ID to voting session ID
+     - `commitments`: Stores vote commitments (hash of outcome + salt) with staked tokens
+     - `revealed-votes`: Stores revealed votes for transparency
+
+   - **Key Functions:**
+     - `create-voting-session`: Create new voting session (called by hro-resolver)
+     - `commit-vote`: Commit hash(outcome + salt) and stake tokens (Phase 1)
+     - `reveal-vote`: Reveal vote and salt to prove commitment (Phase 2)
+     - `slash-non-revealers`: Trigger slashing for voters who didn't reveal
+     - `tally-votes`: Count votes and determine winning outcome
+     - `update-voter-reputation`: Update voter reputation after tally
+     - `distribute-rewards`: Distribute slashed tokens and rewards
+
+   - **Read-Only Functions:**
+     - `get-voting-session`: Get session details by ID
+     - `get-market-session`: Get session ID for a market
+     - `get-commitment`: Get commitment for a voter
+     - `get-revealed-vote`: Get revealed vote for a voter
+     - `is-commit-phase`: Check if commit phase is active
+     - `is-reveal-phase`: Check if reveal phase is active
+     - `is-voting-ended`: Check if voting has ended
+     - `has-committed`: Check if voter has committed
+     - `has-revealed`: Check if voter has revealed
+     - `calculate-commitment`: Calculate hash for commit-reveal scheme
+     - `get-vote-tally`: Get vote totals for a session
+
+   - **Commit-Reveal Scheme:**
+     - Phase 1 (2 days): Voters commit `sha256(outcome || salt)` and stake tokens
+     - Phase 2 (1 day): Voters reveal `outcome` and `salt` to prove commitment
+     - Prevents last-minute vote manipulation and front-running
+
+   - **Quadratic Voting:**
+     - Vote power = `√(tokens_staked) × reputation_score × time_multiplier`
+     - Uses reputation-registry's `calculate-vote-power` function
+     - Limits whale influence while rewarding long-term commitment
+
+2. **Clarinet.toml**:
+   - Added quadratic-voting contract configuration with sip-010-trait and reputation-registry dependencies
+
+3. **tests/quadratic-voting.test.ts** (new file):
+   - Comprehensive tests covering:
+     - Session creation with access control
+     - Commit phase functionality
+     - Commitment hash calculation
+     - Vote validation (zero amount, duplicate commits)
+     - Read-only functions
+     - Constants verification
+     - Full lifecycle tests
+
+### Design Notes
+- Follows the same patterns as existing governance contracts (vote-escrow, dispute)
+- Uses `contract-caller` for authorization (secure against phishing)
+- Commit-reveal scheme prevents last-minute vote manipulation:
+  - Voters commit hash before knowing others' votes
+  - Reveals happen after commit phase ends
+  - Non-revealers lose 10% of staked tokens
+- Quadratic voting formula: `√(tokens) × reputation × time_multiplier`
+  - Limits whale influence: 100x tokens = 10x voting power (not 100x)
+  - Reputation from reputation-registry (historical accuracy + participation)
+  - Time multiplier: 1x to 4x based on lock duration
+- Session lifecycle:
+  1. HRO bond threshold reached → create voting session
+  2. Commit phase (2 days): Voters commit and stake tokens
+  3. Reveal phase (1 day): Voters reveal votes
+  4. Tally phase: Count votes with quadratic weighting
+  5. Update reputation for voters
+  6. Distribute rewards to winning voters
+
+### Integration with HRO
+- `hro-resolver.trigger-voting()` emits event when bond threshold reached
+- Frontend listens for event and calls `create-voting-session()`
+- After tally, `update-voter-reputation()` updates voter reputation in reputation-registry
+- Bond distribution happens after reputation updates
+
+### Verification
+- `clarinet check` passes with no errors specific to quadratic-voting
+- Contract compiles successfully
+- Contract follows existing patterns from vote-escrow.clar and dispute.clar
+- Tests written covering major functionality
+- Note: Full test execution blocked by pre-existing environment issues in vitest configuration

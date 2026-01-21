@@ -27,6 +27,7 @@
 (define-constant ERR-INVALID-PARTICIPATION (err u1302))
 (define-constant ERR-NO-REPUTATION-FOUND (err u1303))
 (define-constant ERR-ALREADY-VOTED (err u1304))
+(define-constant ERR-REPUTATION-CALCULATION-FAILED (err u1305))
 
 ;; ============================================
 ;; DATA STRUCTURES
@@ -92,32 +93,38 @@
 
 ;; Get current reputation score (0-1000000)
 ;; Formula: (correct_votes / total_votes) * participation_rate * PRECISION
+;; Returns: (ok uint) or ERR-REPUTATION-CALCULATION-FAILED
 (define-read-only (get-reputation-score (voter principal))
-  (match (map-get? reputation voter)
-    rep
-    (let
-      (
-        (correct (get correct-votes rep))
-        (total (get total-votes rep))
-        (participation (get participation-score rep))
-      )
-      ;; Calculate reputation score
-      (if (> total u0)
-        (let
-          (
-            ;; accuracy = correct_votes / total_votes (scaled by PRECISION)
-            (accuracy (/ (* correct PRECISION) total))
-            ;; reputation = accuracy * participation
-            (reputation-score (/ (* accuracy participation) PRECISION))
-          )
-          (ok reputation-score)
-        )
-        ;; No votes yet, return minimum reputation
-        (ok MIN-REPUTATION)
-      )
+  (let
+    (
+      (rep (map-get? reputation voter))
     )
-    ;; No reputation found, return minimum
-    (ok MIN-REPUTATION)
+    (match rep
+      rep-data
+      (let
+        (
+          (correct (get correct-votes rep-data))
+          (total (get total-votes rep-data))
+          (participation (get participation-score rep-data))
+        )
+        ;; Calculate reputation score
+        (if (> total u0)
+          (let
+            (
+              ;; accuracy = correct_votes / total_votes (scaled by PRECISION)
+              (accuracy (/ (* correct PRECISION) total))
+              ;; reputation = accuracy * participation
+              (reputation-score (/ (* accuracy participation) PRECISION))
+            )
+            (ok reputation-score)
+          )
+          ;; No votes yet, return minimum reputation
+          (ok MIN-REPUTATION)
+        )
+      )
+      ;; No reputation found, return minimum
+      (ok MIN-REPUTATION)
+    )
   )
 )
 
@@ -130,7 +137,8 @@
   )
   (let
     (
-      (reputation-score-result (get-reputation-score voter))
+      ;; Get reputation score (always returns ok for valid voters)
+      (reputation-score (unwrap-panic (get-reputation-score voter)))
       ;; Calculate time multiplier: 1.0 + (stake_duration / 365 days)
       ;; Max multiplier: 4.0x (for 3 years)
       (time-multiplier
@@ -151,12 +159,7 @@
       (sqrt-tokens (sqrt-approx tokens-staked))
     )
     ;; vote_power = sqrt(tokens) * reputation * time_multiplier / PRECISION
-    (match reputation-score-result
-      reputation-score
-      (ok (/ (* (* sqrt-tokens reputation-score) time-multiplier) PRECISION))
-      err-code
-      (err err-code)
-    )
+    (ok (/ (* (* sqrt-tokens reputation-score) time-multiplier) PRECISION))
   )
 )
 
@@ -222,7 +225,7 @@
     (let
       (
         (last-updated (get last-updated rep))
-        (current-reputation (try! (get-reputation-score voter)))
+        (current-reputation (unwrap-panic (get-reputation-score voter)))
         (blocks-elapsed (- block-height last-updated))
         (months-elapsed (/ blocks-elapsed MONTH-IN-BLOCKS))
       )
@@ -436,7 +439,7 @@
     (
       (rep (unwrap-panic (map-get? reputation voter)))
       (history-id (+ (var-get history-id-counter) u1))
-      (reputation-score (try! (get-reputation-score voter)))
+      (reputation-score (unwrap-panic (get-reputation-score voter)))
     )
     (map-set reputation-history
       history-id

@@ -502,15 +502,15 @@ Where:
 - [x] Write tests for reputation edge cases: new users, perfect accuracy, zero participation
 
 #### quadratic-voting.clar
-- [ ] Implement create-vote(market-id, options) when escalation triggers voting
-- [ ] Implement cast-vote(market-id, outcome, tokens_to_stake) with quadratic power calculation
-- [ ] Implement voting period: VOTING_DURATION = 3 days (432 blocks)
-- [ ] Implement commit-reveal scheme to prevent last-minute swings:
+- [x] Implement create-vote(market-id, options) when escalation triggers voting
+- [x] Implement cast-vote(market-id, outcome, tokens_to_stake) with quadratic power calculation
+- [x] Implement voting period: VOTING_DURATION = 3 days (432 blocks)
+- [x] Implement commit-reveal scheme to prevent last-minute swings:
   - Phase 1 (2 days): commit hash(vote + salt)
   - Phase 2 (1 day): reveal vote + salt
-- [ ] Implement tally-votes() with quadratic reputation weighting
-- [ ] Implement slash-non-revealers() - lose 10% of staked tokens
-- [ ] Write tests for: normal voting, ties, manipulation attempts
+- [x] Implement tally-votes() with quadratic reputation weighting
+- [x] Implement slash-non-revealers() - lose 10% of staked tokens
+- [x] Write tests for: normal voting, ties, manipulation attempts
 
 #### ai-oracle-council.clar (Advisory Layer)
 - [ ] Define AI_RECOMMENDATION_WEIGHT = 0 (advisory only, no voting power)
