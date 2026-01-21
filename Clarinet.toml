@@ -32,6 +32,11 @@ path = 'contracts/governance-token.clar'
 clarity_version = 1
 epoch = '2.05'
 
+[contracts.guardian-multisig]
+path = 'contracts/guardian-multisig.clar'
+clarity_version = 1
+epoch = '2.05'
+
 [contracts.hro-resolver]
 path = 'contracts/hro-resolver.clar'
 clarity_version = 1

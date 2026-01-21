@@ -1,5 +1,91 @@
 # Ralphy Progress Log
 
+## 2026-01-21: Guardian Multisig Contract (Phase 5 - Governance Security)
+
+### Summary
+Created the guardian-multisig.clar contract implementing emergency pause mechanism controlled by a multisig of trusted guardians. The contract can pause contracts for critical emergencies but CANNOT change parameters, as specified in the PRD.
+
+### Changes Made
+
+1. **contracts/guardian-multisig.clar** (new file):
+   - Implements emergency pause mechanism with multisig governance
+   - Maximum 5 guardians with 3-of-5 approval threshold for emergency actions
+   - Pause duration: 7 days (1008 blocks) before auto-expiration
+   - Guardian management (add/remove) restricted to contract owner
+   - Pause actions require minimum 3 guardian approvals to execute
+
+   **Key Features:**
+   - **Guardian Management**: Owner can add/remove up to 5 guardians
+   - **Pause Initiation**: Any guardian can initiate a pause on all contracts or specific contract
+   - **Pause Approval**: Guardians approve pauses with 3-of-5 threshold
+   - **Auto-Expiration**: Pauses automatically expire after 7 days
+   - **Permissionless Unpause**: Anyone can unpause after expiration
+   - **Cancel Pending**: Initiator can cancel pending (unexecuted) pauses
+   - **No Parameter Changes**: Guardians can ONLY pause, cannot change governance parameters
+
+   **Key Functions:**
+   - `add-guardian`: Add a guardian to multisig (owner only)
+   - `remove-guardian`: Remove a guardian from multisig (owner only)
+   - `initiate-pause`: Guardian initiates emergency pause
+   - `approve-pause`: Guardian approves pending pause
+   - `unpause-contract`: Anyone can unpause after expiration
+   - `cancel-pause`: Initiator cancels pending pause
+
+   **Read-Only Functions:**
+   - `is-guardian`: Check if principal is a guardian
+   - `get-guardians`: Get all guardian IDs
+   - `get-guardian-by-id`: Get guardian principal by ID
+   - `is-contract-paused`: Check if contract is currently paused
+   - `get-pause-status`: Get detailed pause status
+   - `get-pause-action`: Get pause action details
+
+   **Security Features:**
+   - Uses `contract-caller` for authorization (secure against phishing)
+   - 3-of-5 multisig prevents single point of failure
+   - 7-day pause duration limits emergency action window
+   - Pause expiration prevents indefinite freezing
+   - Permissionless unpause ensures contracts can resume
+   - Cannot change parameters - only pause functionality
+
+2. **Clarinet.toml**:
+   - Added guardian-multisig contract configuration
+
+3. **tests/guardian-multisig.test.ts** (new file):
+   - 50+ comprehensive tests covering:
+     - Guardian management (add/remove with access control)
+     - Pause initiation by guardians only
+     - Multi-guardian approval process (3-of-5 threshold)
+     - Pause execution when threshold reached
+     - Pause expiration and unpause functionality
+     - Pause cancellation by initiator
+     - Contract pause status checks
+     - Read-only functions
+     - Integration tests for full pause lifecycle
+     - Multiple pauses on different contracts
+
+### Design Notes
+- **No Parameter Changes**: Guardians can ONLY pause contracts, cannot change any governance parameters as specified in PRD
+- **Multisig Threshold**: 3-of-5 provides security while maintaining usability
+- **Auto-Expiration**: 7-day pause duration prevents indefinite freezing
+- **Permissionless Unpause**: Anyone can unpause after expiration, preventing permanent denial of service
+- **Emergency Only**: This is a nuclear option for critical emergencies, not for regular governance
+
+### Security Considerations
+- Guardian list is managed by contract owner (can be decentralized via governance in future)
+- No flash loan protection needed (Clarity doesn't support flash loans in same way as Ethereum)
+- Pause expiration ensures contracts can always resume
+- Cannot change parameters - only pause functionality
+- Uses `contract-caller` for authorization (secure against phishing)
+
+### Verification
+- `clarinet check` passes with no errors
+- Contract compiles successfully
+- Contract follows existing patterns from other governance contracts
+- 50+ tests written covering all major functionality
+- Note: Full test execution blocked by pre-existing vitest environment issues (same as previous commits)
+
+---
+
 ## 2026-01-21: Governance Attack Scenario Tests (Phase 5 - Governance)
 
 ### Summary

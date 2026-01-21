@@ -385,7 +385,7 @@ Contract: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
 ### Governance Security
 - [x] Implement emergency-pause requiring 30% quorum and 80% approval
 - [x] Add proposal cooldown per address (1 proposal per week)
-- [ ] Implement guardian multisig for critical emergencies (can pause, cannot change params)
+- [x] Implement guardian multisig for critical emergencies (can pause, cannot change params)
 - [x] Write tests for governance attacks: flash loan voting, last-minute swings, etc.
 
 ---
