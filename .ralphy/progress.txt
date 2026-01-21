@@ -1,5 +1,69 @@
 # Ralphy Progress Log
 
+## 2026-01-20: Implemented Trader Rewards Contract (Phase 5 - Governance)
+
+### Summary
+Created the trader-rewards.clar contract that distributes $PRED governance tokens to traders based on trading volume. This implements the trader rewards system for Phase 5 (Governance) with epoch-based distribution similar to the existing lp-rewards contract.
+
+### Changes Made
+
+1. **contracts/trader-rewards.clar** (new file):
+   - Implemented SIP-010 fungible token ($PRED) with 8 decimals
+   - Epoch-based reward distribution system (7-day epochs = 1008 blocks)
+   - Trade volume tracking per trader per epoch
+   - Reward calculation proportional to trading volume
+   - Claim mechanism for traders to claim earned rewards
+   - Support for claiming multiple epochs at once
+   - Total trading volume tracking across all epochs
+   - Events emitted for all actions (mint, transfer, burn, trade-recorded, rewards-distributed, rewards-claimed)
+
+   **Key Functions:**
+   - `record-trade-volume`: Called by market-pool to track trading volume
+   - `distribute-rewards`: Distributes $PRED rewards to traders (owner only)
+   - `claim-rewards`: Claim rewards for a specific epoch
+   - `claim-all-rewards`: Claim rewards for multiple epochs
+   - `advance-epoch`: Move to next epoch (owner only)
+
+   **Read-Only Functions:**
+   - `get-trader-volume`: Get trading volume for trader in epoch
+   - `get-epoch-total-volume`: Get total volume for epoch
+   - `get-trader-rewards`: Get earned rewards for trader in epoch
+   - `get-pending-rewards`: Get total pending rewards across epochs
+   - `get-total-trading-volume`: Get total volume across all epochs
+
+2. **Clarinet.toml**:
+   - Added trader-rewards contract configuration with sip-010-trait and governance-token dependencies
+
+3. **tests/trader-rewards.test.ts** (new file):
+   - 32 comprehensive tests covering:
+     - SIP-010 metadata (name, symbol, decimals, supply, balance)
+     - Mint functionality with access control
+     - Transfer functionality
+     - Burn functionality
+     - Epoch management (initialization, advancement)
+     - Trade volume recording with authorization checks
+     - Reward distribution calculations
+     - Claim functionality
+     - Read-only functions
+     - Integration tests for complete lifecycle
+
+### Design Notes
+- Follows the same patterns as lp-rewards.clar for consistency
+- Uses `contract-caller` for authorization (secure against phishing)
+- Epoch-based distribution (7 days) for fair reward calculation
+- Rewards proportional to trading volume within each epoch
+- Trade volume is cumulative per trader per epoch
+- Only contract owner can distribute rewards and advance epochs
+- Anyone can record trade volume (permissionless) but only market-pool or owner
+
+### Verification
+- All 32 trader-rewards tests pass
+- `clarinet check` passes with only informational warnings (no errors)
+- Contract compiles successfully
+- Total test count: 406 passed / 438 (32 pre-existing failures in other test files unrelated to trader-rewards)
+
+---
+
 ## 2026-01-20: Implemented Oracle Resolver (Phase 4 - Auto-Resolution System)
 
 ### Summary

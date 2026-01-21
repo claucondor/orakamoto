@@ -321,10 +321,10 @@ Contract: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
 - [x] Create vesting-vault.clar for team/investor vesting with cliff and linear unlock
 
 ### Reward Distribution
-- [ ] Create lp-rewards.clar to distribute $PRED to LPs based on time-weighted liquidity
-- [ ] Create trader-rewards.clar to distribute $PRED based on trading volume
+- [x] Create lp-rewards.clar to distribute $PRED to LPs based on time-weighted liquidity
+- [x] Create trader-rewards.clar to distribute $PRED based on trading volume
 - [ ] Create creator-rewards.clar to distribute $PRED based on market success metrics
-- [ ] Implement epoch-based distribution (weekly epochs)
+- [x] Implement epoch-based distribution (weekly epochs) - implemented in lp-rewards.clar and trader-rewards.clar
 
 ### Vote Escrow
 - [ ] Create vote-escrow.clar for staking $PRED to get voting power

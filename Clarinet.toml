@@ -57,6 +57,14 @@ depends_on = ["sip-010-trait"]
 path = "contracts/vesting-vault.clar"
 depends_on = ["sip-010-trait"]
 
+[contracts.lp-rewards]
+path = "contracts/lp-rewards.clar"
+depends_on = ["sip-010-trait", "governance-token"]
+
+[contracts.trader-rewards]
+path = "contracts/trader-rewards.clar"
+depends_on = ["sip-010-trait", "governance-token"]
+
 [repl.analysis]
 passes = ["check_checker"]
 check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }
