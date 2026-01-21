@@ -646,14 +646,14 @@ Clarity provides these protections by design:
 **Rule**: Use `contract-caller` for authentication. Only use `tx-sender` when you need the original initiator.
 
 ### Security Checklist
-- [ ] All admin functions check `contract-caller` not `tx-sender`
-- [ ] All public functions return `(response)` type
-- [ ] All `contract-call?` results handled with `try!` or `unwrap!`
-- [ ] All inputs validated with `asserts!`
-- [ ] Zero amounts rejected: `(asserts! (> amount u0) ERR-ZERO-AMOUNT)`
-- [ ] State validated before mutations (is-resolved, deadline, etc)
-- [ ] Events emitted for all state changes: `(print {event: "name", ...})`
-- [ ] No hardcoded mainnet addresses in devnet code
+- [x] All admin functions check `contract-caller` not `tx-sender`
+- [x] All public functions return `(response)` type
+- [x] All `contract-call?` results handled with `try!` or `unwrap!`
+- [x] All inputs validated with `asserts!`
+- [x] Zero amounts rejected: `(asserts! (> amount u0) ERR-ZERO-AMOUNT)`
+- [x] State validated before mutations (is-resolved, deadline, etc)
+- [x] Events emitted for all state changes: `(print {event: "name", ...})`
+- [x] No hardcoded mainnet addresses in devnet code
 
 ### Common Vulnerabilities to Avoid
 1. **Phishing via tx-sender**: Use contract-caller for auth
