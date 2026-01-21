@@ -68,14 +68,14 @@
 (define-public (supply (amount uint) (owner principal))
   (let
     (
-      (caller tx-sender)
+      (caller contract-caller) ;; Use contract-caller so market-pool can supply its own funds
       (current-total-deposits (var-get total-deposits))
       (current-total-shares (ft-get-supply z-usdc))
     )
     (asserts! (> amount u0) ERR-ZERO-AMOUNT)
 
-    ;; Transfer USDC from caller to this vault contract
-    ;; Note: caller must have USDC to deposit
+    ;; Transfer USDC from caller (contract-caller) to this vault contract
+    ;; When market-pool calls supply, it transfers its own USDC
     (try! (contract-call? .mock-usdc transfer amount caller (as-contract tx-sender) none))
 
     ;; Calculate shares to mint
@@ -109,7 +109,7 @@
 (define-public (withdraw (amount uint) (owner principal))
   (let
     (
-      (caller tx-sender)
+      (caller contract-caller) ;; Use contract-caller so market-pool can withdraw its own funds
       (current-total-deposits (var-get total-deposits))
       (current-total-shares (ft-get-supply z-usdc))
       (owner-shares (ft-get-balance z-usdc owner))
