@@ -1,118 +1,157 @@
 [project]
-name = "stackspredict"
-description = ""
+name = 'stackspredict'
+description = ''
 authors = []
 telemetry = true
-cache_dir = "./.cache"
+cache_dir = './.cache'
 
-[contracts.sip-010-trait]
-path = "contracts/traits/sip-010-trait.clar"
-
-[contracts.prediction-market-trait]
-path = "contracts/traits/prediction-market-trait.clar"
-
-[contracts.mock-usdc]
-path = "contracts/mock-usdc.clar"
-depends_on = ["sip-010-trait"]
-
-[contracts.market-pool]
-path = "contracts/market-pool.clar"
-depends_on = ["mock-usdc", "sip-010-trait", "prediction-market-trait", "mock-zest-vault", "yield-vault", "yield-distributor"]
-
-[contracts.market-factory]
-path = "contracts/market-factory.clar"
-depends_on = ["mock-usdc"]
-
-[contracts.multi-outcome-pool]
-path = "contracts/multi-outcome-pool.clar"
-depends_on = ["mock-usdc", "mock-zest-vault"]
-
-[contracts.mock-zest-vault]
-path = "contracts/mocks/mock-zest-vault.clar"
-depends_on = ["mock-usdc", "sip-010-trait"]
-
-[contracts.yield-vault]
-path = "contracts/yield-vault.clar"
-depends_on = ["mock-usdc", "sip-010-trait"]
-
-[contracts.yield-distributor]
-path = "contracts/yield-distributor.clar"
-depends_on = ["mock-usdc", "sip-010-trait"]
-
-[contracts.oracle-trait]
-path = "contracts/traits/oracle-trait.clar"
-
-[contracts.mock-oracle]
-path = "contracts/mocks/mock-oracle.clar"
-
-[contracts.oracle-resolver]
-path = "contracts/oracle-resolver.clar"
-depends_on = ["oracle-trait"]
-
-[contracts.pyth-oracle-wrapper]
-path = "contracts/pyth-oracle-wrapper.clar"
-depends_on = ["oracle-trait"]
-
-[contracts.governance-token]
-path = "contracts/governance-token.clar"
-depends_on = ["sip-010-trait"]
-
-[contracts.governance]
-path = "contracts/governance.clar"
-depends_on = ["sip-010-trait", "vote-escrow"]
-
-[contracts.vesting-vault]
-path = "contracts/vesting-vault.clar"
-depends_on = ["sip-010-trait"]
-
-[contracts.lp-rewards]
-path = "contracts/lp-rewards.clar"
-depends_on = ["sip-010-trait", "governance-token"]
-
-[contracts.trader-rewards]
-path = "contracts/trader-rewards.clar"
-depends_on = ["sip-010-trait", "governance-token"]
+[[project.requirements]]
+contract_id = 'SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4'
+[contracts.ai-oracle-council]
+path = 'contracts/ai-oracle-council.clar'
+clarity_version = 1
+epoch = '2.05'
 
 [contracts.creator-rewards]
-path = "contracts/creator-rewards.clar"
-depends_on = ["sip-010-trait", "governance-token"]
-
-[contracts.vote-escrow]
-path = "contracts/vote-escrow.clar"
-depends_on = ["sip-010-trait"]
+path = 'contracts/creator-rewards.clar'
+clarity_version = 1
+epoch = '2.05'
 
 [contracts.dispute]
-path = "contracts/dispute.clar"
-depends_on = ["sip-010-trait", "vote-escrow"]
+path = 'contracts/dispute.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.governance]
+path = 'contracts/governance.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.governance-token]
+path = 'contracts/governance-token.clar'
+clarity_version = 1
+epoch = '2.05'
 
 [contracts.hro-resolver]
-path = "contracts/hro-resolver.clar"
-depends_on = ["sip-010-trait"]
+path = 'contracts/hro-resolver.clar'
+clarity_version = 1
+epoch = '2.05'
 
-[contracts.reputation-registry]
-path = "contracts/reputation-registry.clar"
-depends_on = ["sip-010-trait"]
+[contracts.lp-rewards]
+path = 'contracts/lp-rewards.clar'
+clarity_version = 1
+epoch = '2.05'
 
-[contracts.quadratic-voting]
-path = "contracts/quadratic-voting.clar"
-depends_on = ["sip-010-trait", "reputation-registry"]
-
-[contracts.ai-oracle-council]
-path = "contracts/ai-oracle-council.clar"
-depends_on = ["sip-010-trait"]
+[contracts.market-factory]
+path = 'contracts/market-factory.clar'
+clarity_version = 1
+epoch = '2.05'
 
 [contracts.market-fork]
-path = "contracts/market-fork.clar"
-depends_on = ["sip-010-trait"]
+path = 'contracts/market-fork.clar'
+clarity_version = 1
+epoch = '2.05'
 
+[contracts.market-pool]
+path = 'contracts/market-pool.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.mock-oracle]
+path = 'contracts/mocks/mock-oracle.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.mock-usdc]
+path = 'contracts/mock-usdc.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.mock-zest-vault]
+path = 'contracts/mocks/mock-zest-vault.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.multi-outcome-pool]
+path = 'contracts/multi-outcome-pool.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.oracle-resolver]
+path = 'contracts/oracle-resolver.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.oracle-trait]
+path = 'contracts/traits/oracle-trait.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.prediction-market-trait]
+path = 'contracts/traits/prediction-market-trait.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.pyth-oracle-wrapper]
+path = 'contracts/pyth-oracle-wrapper.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.quadratic-voting]
+path = 'contracts/quadratic-voting.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.reputation-registry]
+path = 'contracts/reputation-registry.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.sip-010-trait]
+path = 'contracts/traits/sip-010-trait.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.trader-rewards]
+path = 'contracts/trader-rewards.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.vesting-vault]
+path = 'contracts/vesting-vault.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.vote-escrow]
+path = 'contracts/vote-escrow.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.yield-distributor]
+path = 'contracts/yield-distributor.clar'
+clarity_version = 1
+epoch = '2.05'
+
+[contracts.yield-vault]
+path = 'contracts/yield-vault.clar'
+clarity_version = 1
+epoch = '2.05'
 [repl.analysis]
-passes = ["check_checker"]
-check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }
+passes = [
+    'call_checker',
+    'check_checker',
+]
 
-# Check-checker settings:
-# trusted_sender: if true, inputs are trusted after tx_sender has been checked.
-# trusted_caller: if true, inputs are trusted after contract-caller has been checked.
-# callee_filter: if true, untrusted data may be passed into a private function without a
-# warning, if it gets checked inside. This check will also propagate up to the
-# caller.
-# More informations: https://www.hiro.so/blog/new-safety-checks-in-clarinet
+[repl.analysis.lint_groups]
+
+[repl.analysis.lints]
+
+[repl.analysis.check_checker]
+strict = false
+trusted_sender = false
+trusted_caller = false
+callee_filter = false
+
+[repl.remote_data]
+enabled = false
+api_url = 'https://api.hiro.so'

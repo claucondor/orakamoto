@@ -172,11 +172,11 @@
 (define-read-only (get-ai-recommendation (market-id uint))
   (let
     (
-      (recommendations (get-market-recommendations market-id))
+      (recommendations-result (get-market-recommendations market-id))
       (model-ids (default-to (list) (map-get? market-models market-id)))
       (model-count (len model-ids))
     )
-    (match recommendations
+    (match recommendations-result
       recs
       (let
         (
@@ -203,6 +203,7 @@
           model-count: (to-uint (len valid-recs))
         })
       )
+      err-val
       (ok { outcome: none, avg-confidence: u0, model-count: u0 })
     )
   )

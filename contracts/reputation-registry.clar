@@ -279,47 +279,57 @@
       (
         (new-list (unwrap-panic (as-max-len? (append voted-list market-id) u100)))
       )
-      (map-set voter-votes voter new-list)
-    )
-
-    ;; Update reputation (increment total votes)
-    (match current-rep
-      rep
-      ;; Existing voter
-      (let
-        (
-          (new-total (+ (get total-votes rep) u1))
-          (new-participation (/ (* new-total PRECISION) u100)) ;; Simplified: 1% per vote, capped at 100 votes
-          (capped-participation (if (> new-participation PRECISION) PRECISION new-participation))
-        )
-        (map-set reputation
-          voter
-          (merge rep
-            {
-              total-votes: new-total,
-              participation-score: capped-participation,
-              last-updated: block-height
-            }
+      (begin
+        (map-set voter-votes voter new-list)
+        ;; Update reputation (increment total votes)
+        (if (is-some current-rep)
+          ;; Existing voter
+          (let
+            (
+              (rep (unwrap-panic current-rep))
+              (new-total (+ (get total-votes (unwrap-panic current-rep)) u1))
+              (new-participation (/ (* new-total PRECISION) u100)) ;; Simplified: 1% per vote, capped at 100 votes
+              (capped-participation (if (> new-participation PRECISION) PRECISION new-participation))
+            )
+            (begin
+              (map-set reputation
+                voter
+                (merge rep
+                  {
+                    total-votes: new-total,
+                    participation-score: capped-participation,
+                    last-updated: block-height
+                  }
+                )
+              )
+              true
+            )
+          )
+          ;; New voter
+          (let
+            (
+              (new-participation (/ (* u1 PRECISION) u100)) ;; 1% for first vote
+            )
+            (begin
+              (map-set reputation
+                voter
+                {
+                  correct-votes: u0,
+                  total-votes: u1,
+                  participation-score: new-participation,
+                  last-updated: block-height,
+                  total-earned: u0
+                }
+              )
+              true
+            )
           )
         )
-      )
-      ;; New voter
-      (map-set reputation
-        voter
-        {
-          correct-votes: u0,
-          total-votes: u1,
-          participation-score: u10000, ;; 1% participation for first vote
-          last-updated: block-height,
-          total-earned: u0
-        }
+        ;; Record history
+        (record-history voter "vote-cast")
+        (ok true)
       )
     )
-
-    ;; Record history
-    (record-history voter "vote-cast")
-
-    (ok true)
   )
 )
 
