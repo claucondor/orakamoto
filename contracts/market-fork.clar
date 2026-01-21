@@ -124,6 +124,11 @@
   )
 )
 
+;; Get fork threshold (10% = 1000 basis points)
+(define-read-only (get-fork-threshold)
+  (ok FORK-THRESHOLD)
+)
+
 ;; Get fork state by ID
 (define-read-only (get-fork-state (fork-id uint))
   (ok (map-get? fork-states fork-id))
