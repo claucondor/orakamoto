@@ -291,18 +291,15 @@
               (new-participation (/ (* new-total PRECISION) u100)) ;; Simplified: 1% per vote, capped at 100 votes
               (capped-participation (if (> new-participation PRECISION) PRECISION new-participation))
             )
-            (begin
-              (map-set reputation
-                voter
-                (merge rep
-                  {
-                    total-votes: new-total,
-                    participation-score: capped-participation,
-                    last-updated: block-height
-                  }
-                )
+            (map-set reputation
+              voter
+              (merge rep
+                {
+                  total-votes: new-total,
+                  participation-score: capped-participation,
+                  last-updated: block-height
+                }
               )
-              true
             )
           )
           ;; New voter
@@ -310,18 +307,15 @@
             (
               (new-participation (/ (* u1 PRECISION) u100)) ;; 1% for first vote
             )
-            (begin
-              (map-set reputation
-                voter
-                {
-                  correct-votes: u0,
-                  total-votes: u1,
-                  participation-score: new-participation,
-                  last-updated: block-height,
-                  total-earned: u0
-                }
-              )
-              true
+            (map-set reputation
+              voter
+              {
+                correct-votes: u0,
+                total-votes: u1,
+                participation-score: new-participation,
+                last-updated: block-height,
+                total-earned: u0
+              }
             )
           )
         )
@@ -464,7 +458,7 @@
       }
     )
     (var-set history-id-counter history-id)
-    (ok history-id)
+    history-id
   )
 )
 

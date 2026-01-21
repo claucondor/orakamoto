@@ -135,7 +135,7 @@
       (new-pause-id (+ (var-get pause-id-counter) u1))
     )
     ;; Validate caller is a guardian
-    (asserts! (is-guardian caller) ERR-NOT-AUTHORIZED)
+    (asserts! (is-guardian-internal caller) ERR-NOT-AUTHORIZED)
 
     ;; Create pause action
     (map-set pause-actions
@@ -194,7 +194,7 @@
       (current-approvals (get approvals pause-action))
     )
     ;; Validate caller is a guardian
-    (asserts! (is-guardian caller) ERR-NOT-AUTHORIZED)
+    (asserts! (is-guardian-internal caller) ERR-NOT-AUTHORIZED)
 
     ;; Check if pause already executed
     (asserts! (not (get is-executed pause-action)) ERR-ALREADY-PAUSED)
@@ -343,17 +343,19 @@
 ;; READ-ONLY FUNCTIONS
 ;; ============================================
 
-;; Check if a principal is a guardian
-;; Note: This checks if the caller is ANY guardian (not a specific one)
-;; For specific guardian checks, use get-guardian-by-id
-(define-read-only (is-guardian (who principal))
+;; Check if a principal is a guardian (returns bool for internal use)
+(define-private (is-guardian-internal (who principal))
   (let
     (
       (guardian-count (var-get guardian-id-counter))
     )
-    ;; Check if who is one of the guardians by iterating through IDs
-    (ok (check-guardian-1 who guardian-count))
+    (check-guardian-1 who guardian-count)
   )
+)
+
+;; Check if a principal is a guardian (read-only wrapper for external calls)
+(define-read-only (is-guardian (who principal))
+  (ok (is-guardian-internal who))
 )
 
 ;; Check guardian by ID (unrolled for Clarity compatibility)
@@ -456,281 +458,27 @@
   )
 )
 
-;; Check if any pause in the list is active (unrolled for Clarity compatibility)
+;; Check if any pause in the list is active (using fold)
 (define-private (check-pause-active (pause-ids (list 10 uint)))
-  (match pause-ids
-    id1
-    (let
-      (
-        (pause-action (map-get? pause-actions id1))
-      )
-      (match pause-action
-        action
-        (if (and (get is-active action) (is-some (get expires-at action)))
-          (let
-            (
-              (expires-at (unwrap-panic (get expires-at action)))
-            )
-            (if (< block-height expires-at)
-              true
-              (check-pause-active-2 (cdr pause-ids))
-            )
-          )
-          (check-pause-active-2 (cdr pause-ids))
-        )
-        (check-pause-active-2 (cdr pause-ids))
-      )
-    )
-    false
-  )
+  (fold check-single-pause-active pause-ids false)
 )
 
-(define-private (check-pause-active-2 (pause-ids (list 10 uint)))
-  (match pause-ids
-    id2
-    (let
-      (
-        (pause-action (map-get? pause-actions id2))
-      )
-      (match pause-action
-        action
-        (if (and (get is-active action) (is-some (get expires-at action)))
-          (let
-            (
-              (expires-at (unwrap-panic (get expires-at action)))
-            )
-            (if (< block-height expires-at)
-              true
-              (check-pause-active-3 (cdr pause-ids))
-            )
-          )
-          (check-pause-active-3 (cdr pause-ids))
-        )
-        (check-pause-active-3 (cdr pause-ids))
-      )
-    )
-    false
-  )
-)
-
-(define-private (check-pause-active-3 (pause-ids (list 10 uint)))
-  (match pause-ids
-    id3
-    (let
-      (
-        (pause-action (map-get? pause-actions id3))
-      )
-      (match pause-action
-        action
-        (if (and (get is-active action) (is-some (get expires-at action)))
-          (let
-            (
-              (expires-at (unwrap-panic (get expires-at action)))
-            )
-            (if (< block-height expires-at)
-              true
-              (check-pause-active-4 (cdr pause-ids))
-            )
-          )
-          (check-pause-active-4 (cdr pause-ids))
-        )
-        (check-pause-active-4 (cdr pause-ids))
-      )
-    )
-    false
-  )
-)
-
-(define-private (check-pause-active-4 (pause-ids (list 10 uint)))
-  (match pause-ids
-    id4
-    (let
-      (
-        (pause-action (map-get? pause-actions id4))
-      )
-      (match pause-action
-        action
-        (if (and (get is-active action) (is-some (get expires-at action)))
-          (let
-            (
-              (expires-at (unwrap-panic (get expires-at action)))
-            )
-            (if (< block-height expires-at)
-              true
-              (check-pause-active-5 (cdr pause-ids))
-            )
-          )
-          (check-pause-active-5 (cdr pause-ids))
-        )
-        (check-pause-active-5 (cdr pause-ids))
-      )
-    )
-    false
-  )
-)
-
-(define-private (check-pause-active-5 (pause-ids (list 10 uint)))
-  (match pause-ids
-    id5
-    (let
-      (
-        (pause-action (map-get? pause-actions id5))
-      )
-      (match pause-action
-        action
-        (if (and (get is-active action) (is-some (get expires-at action)))
-          (let
-            (
-              (expires-at (unwrap-panic (get expires-at action)))
-            )
-            (if (< block-height expires-at)
-              true
-              (check-pause-active-6 (cdr pause-ids))
-            )
-          )
-          (check-pause-active-6 (cdr pause-ids))
-        )
-        (check-pause-active-6 (cdr pause-ids))
-      )
-    )
-    false
-  )
-)
-
-(define-private (check-pause-active-6 (pause-ids (list 10 uint)))
-  (match pause-ids
-    id6
-    (let
-      (
-        (pause-action (map-get? pause-actions id6))
-      )
-      (match pause-action
-        action
-        (if (and (get is-active action) (is-some (get expires-at action)))
-          (let
-            (
-              (expires-at (unwrap-panic (get expires-at action)))
-            )
-            (if (< block-height expires-at)
-              true
-              (check-pause-active-7 (cdr pause-ids))
-            )
-          )
-          (check-pause-active-7 (cdr pause-ids))
-        )
-        (check-pause-active-7 (cdr pause-ids))
-      )
-    )
-    false
-  )
-)
-
-(define-private (check-pause-active-7 (pause-ids (list 10 uint)))
-  (match pause-ids
-    id7
-    (let
-      (
-        (pause-action (map-get? pause-actions id7))
-      )
-      (match pause-action
-        action
-        (if (and (get is-active action) (is-some (get expires-at action)))
-          (let
-            (
-              (expires-at (unwrap-panic (get expires-at action)))
-            )
-            (if (< block-height expires-at)
-              true
-              (check-pause-active-8 (cdr pause-ids))
-            )
-          )
-          (check-pause-active-8 (cdr pause-ids))
-        )
-        (check-pause-active-8 (cdr pause-ids))
-      )
-    )
-    false
-  )
-)
-
-(define-private (check-pause-active-8 (pause-ids (list 10 uint)))
-  (match pause-ids
-    id8
-    (let
-      (
-        (pause-action (map-get? pause-actions id8))
-      )
-      (match pause-action
-        action
-        (if (and (get is-active action) (is-some (get expires-at action)))
-          (let
-            (
-              (expires-at (unwrap-panic (get expires-at action)))
-            )
-            (if (< block-height expires-at)
-              true
-              (check-pause-active-9 (cdr pause-ids))
-            )
-          )
-          (check-pause-active-9 (cdr pause-ids))
-        )
-        (check-pause-active-9 (cdr pause-ids))
-      )
-    )
-    false
-  )
-)
-
-(define-private (check-pause-active-9 (pause-ids (list 10 uint)))
-  (match pause-ids
-    id9
-    (let
-      (
-        (pause-action (map-get? pause-actions id9))
-      )
-      (match pause-action
-        action
-        (if (and (get is-active action) (is-some (get expires-at action)))
-          (let
-            (
-              (expires-at (unwrap-panic (get expires-at action)))
-            )
-            (if (< block-height expires-at)
-              true
-              (check-pause-active-10 (cdr pause-ids))
-            )
-          )
-          (check-pause-active-10 (cdr pause-ids))
-        )
-        (check-pause-active-10 (cdr pause-ids))
-      )
-    )
-    false
-  )
-)
-
-(define-private (check-pause-active-10 (pause-ids (list 10 uint)))
-  (match pause-ids
-    id10
-    (let
-      (
-        (pause-action (map-get? pause-actions id10))
-      )
-      (match pause-action
-        action
-        (if (and (get is-active action) (is-some (get expires-at action)))
-          (let
-            (
-              (expires-at (unwrap-panic (get expires-at action)))
-            )
-            (< block-height expires-at)
-          )
-          false
+;; Helper: Check if a single pause ID is active, accumulate with OR
+(define-private (check-single-pause-active (pause-id uint) (acc bool))
+  (if acc
+    true  ;; Short-circuit: already found an active pause
+    (match (map-get? pause-actions pause-id)
+      pause-action
+      (if (get is-active pause-action)
+        (match (get expires-at pause-action)
+          expires
+          (< block-height expires)  ;; Active if not expired
+          true  ;; No expiry = always active
         )
         false
       )
+      false  ;; Pause ID not found
     )
-    false
   )
 )
 
@@ -746,7 +494,7 @@
           false
         ))
       )
-      (ok {
+      (ok (some {
         pause-id: pause-id,
         target-contract: (get target-contract pause-action),
         is-active: (get is-active pause-action),
@@ -755,7 +503,7 @@
         expires-at: (get expires-at pause-action),
         is-expired: is-expired,
         can-unpause: (and (get is-active pause-action) is-expired)
-      })
+      }))
     )
     (ok none)
   )

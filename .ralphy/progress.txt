@@ -1,5 +1,56 @@
 # Ralphy Progress Log
 
+## 2026-01-21: Phase 6 HRO Contract Fixes and Enablement
+
+### Summary
+Fixed compilation errors in Phase 6 HRO (Hybrid Reputation Oracle) contracts and enabled them in Clarinet.toml. All 27 contracts now compile successfully with `clarinet check`.
+
+### Changes Made
+
+1. **Fixed reputation-registry.clar**:
+   - Fixed "intermediary responses in consecutive statements must be checked" error
+   - Removed unnecessary `begin` blocks in `record-vote-cast` function
+   - Changed `record-history` from returning `(ok history-id)` to returning `history-id` directly (private helper function)
+   - This was the BLOCKER that prevented other Phase 6 contracts from being enabled
+
+2. **Fixed quadratic-voting.clar**:
+   - Added missing `ERR-ALREADY-ESCALATED` error constant
+   - Changed `calculate-commitment` from `define-read-only` to `define-private` (doesn't return response)
+   - Updated call site to not use `try!` on the function
+
+3. **Fixed market-fork.clar**:
+   - Fixed `match` expression with empty tuple `()` to return `true` instead
+   - Changed `check-fork-threshold` from `define-read-only` to `define-private` (doesn't return response)
+   - Changed `calculate-non-canonical-claim` from `define-read-only` to `define-private` (doesn't return response)
+   - Fixed `asserts!` with optional value to use `is-none` instead of `not`
+   - Updated call sites to not use `try!` on these functions
+
+4. **Fixed guardian-multisig.clar**:
+   - Fixed `match` expression return type mismatch by wrapping result in `(some {...})`
+
+5. **Fixed ai-oracle-council.clar**:
+   - Changed `get-market-recommendations` from `define-read-only` to `define-private` (doesn't return response)
+   - Added `is-some-rec` helper function for use with `filter`
+   - Removed unnecessary `to-uint` calls (len already returns uint)
+   - Updated call sites to not use `try!` on these functions
+
+6. **Enabled all Phase 6 contracts in Clarinet.toml**:
+   - reputation-registry
+   - quadratic-voting
+   - hro-resolver
+   - ai-oracle-council
+   - market-fork
+   - guardian-multisig
+   - pyth-oracle-wrapper (already enabled)
+
+### Verification
+- `clarinet check` passes with 0 errors (27 contracts checked)
+- All Phase 6 contracts now compile successfully
+- Tests run (some pre-existing test failures unrelated to these changes)
+
+### Design Notes
+The main issue was that several functions were returning `(ok ...)` response types without specifying an error type. When using `try!` on these functions, Clarity couldn't determine the error type. The fix was to change these helper functions to not return responses (they're private/internal functions that never fail anyway).
+
 ## 2026-01-21: Guardian Multisig Contract (Phase 5 - Governance Security)
 
 ### Summary

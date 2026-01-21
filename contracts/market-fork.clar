@@ -108,7 +108,7 @@
 
 ;; Check if fork threshold is reached
 ;; disputed_stake / total_supply > FORK_THRESHOLD
-(define-read-only (check-fork-threshold (market-id uint) (dispute-stake uint) (total-supply uint))
+(define-private (check-fork-threshold (market-id uint) (dispute-stake uint) (total-supply uint))
   (let
     (
       ;; Calculate disputed percentage (basis points)
@@ -120,7 +120,7 @@
         )
       )
     )
-    (ok (>= disputed-percentage FORK-THRESHOLD))
+    (>= disputed-percentage FORK-THRESHOLD)
   )
 )
 
@@ -168,8 +168,8 @@
 
 ;; Calculate claimable amount for non-canonical fork
 ;; Returns: amount * FORK-DISCOUNT
-(define-read-only (calculate-non-canonical-claim (amount uint))
-  (ok (/ (* amount FORK-DISCOUNT) PRECISION))
+(define-private (calculate-non-canonical-claim (amount uint))
+  (/ (* amount FORK-DISCOUNT) PRECISION)
 )
 
 ;; Get current fork ID counter
@@ -196,7 +196,7 @@
     (
       (caller tx-sender)
       (new-fork-id (+ (var-get fork-id-counter) u1))
-      (threshold-reached (try! (check-fork-threshold original-market-id dispute-stake total-supply)))
+      (threshold-reached (check-fork-threshold original-market-id dispute-stake total-supply))
     )
     ;; Validate parameters
     (asserts! threshold-reached ERR-THRESHOLD-NOT-REACHED)
@@ -273,18 +273,18 @@
       (fork-id (unwrap! (map-get? market-forks original-market-id) ERR-FORK-NOT-INITIATED))
       (fork-state (unwrap! (map-get? fork-states fork-id) ERR-FORK-NOT-INITIATED))
       (position-key { market-id: original-market-id, user: caller })
-      (existing-position (map-get? position-key))
+      (existing-position (map-get? user-positions position-key))
     )
     (begin
       ;; Validate parameters
       (asserts! (or (is-eq fork-choice u0) (is-eq fork-choice u1)) ERR-INVALID-FORK-CHOICE)
-      (asserts! (not (get settled-at fork-state)) ERR-FORK-NOT-SETTLED)
+      (asserts! (is-none (get settled-at fork-state)) ERR-FORK-NOT-SETTLED)
 
       ;; Check if user already migrated
       (match existing-position
         pos
         (asserts! (is-none (get migrated-to pos)) ERR-ALREADY-MIGRATED)
-        ()
+        true
       )
 
       ;; Record user position
@@ -469,7 +469,7 @@
       (let
         (
           (total-value (+ (get yes-balance position) (get no-balance position)))
-          (discounted-amount (try! (calculate-non-canonical-claim total-value)))
+          (discounted-amount (calculate-non-canonical-claim total-value))
         )
         ;; Note: In production, this would transfer discounted tokens
         ;; For now, we just emit an event

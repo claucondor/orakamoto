@@ -5,8 +5,10 @@ authors = []
 telemetry = true
 cache_dir = './.cache'
 
+# Phase 6 HRO contracts - now enabled
 [[project.requirements]]
 contract_id = 'SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4'
+
 [contracts.ai-oracle-council]
 path = 'contracts/ai-oracle-council.clar'
 clarity_version = 1

@@ -151,14 +151,12 @@
 )
 
 ;; Get all AI recommendations for a market
-(define-read-only (get-market-recommendations (market-id uint))
+(define-private (get-market-recommendations (market-id uint))
   (let
     (
       (model-ids (default-to (list) (map-get? market-models market-id)))
     )
-    (ok
-      (map get-model-recommendation-helper model-ids (list market-id market-id market-id market-id market-id))
-    )
+    (map get-model-recommendation-helper model-ids (list market-id market-id market-id market-id market-id))
   )
 )
 
@@ -167,44 +165,44 @@
   (map-get? ai-recommendations { market-id: market-id, model-id: model-id })
 )
 
+;; Helper: Check if recommendation is some
+(define-private (is-some-rec (rec (optional { outcome: uint, confidence: uint, evidence-links: (list 10 (string-ascii 200)), timestamp: uint, is-correct: (optional bool) })))
+  (is-some rec)
+)
+
 ;; Get aggregated AI recommendation for a market
 ;; Returns: { outcome: optional uint, avg-confidence: uint, model-count: uint }
 (define-read-only (get-ai-recommendation (market-id uint))
   (let
     (
-      (recommendations-result (get-market-recommendations market-id))
+      (recommendations (get-market-recommendations market-id))
       (model-ids (default-to (list) (map-get? market-models market-id)))
       (model-count (len model-ids))
     )
-    (match recommendations-result
-      recs
-      (let
-        (
-          ;; Filter out none values and extract data
-          (valid-recs (filter is-some recs))
-          (confidence-sum (fold + (map get-confidence-from-optional valid-recs) u0))
-          (outcome-0-count (fold + (map count-outcome-0 valid-recs) u0))
-          (outcome-1-count (fold + (map count-outcome-1 valid-recs) u0))
-          (avg-confidence (if (> (len valid-recs) u0)
-                            (/ confidence-sum (to-uint (len valid-recs)))
-                            u0
+    (let
+      (
+        ;; Filter out none values and extract data
+        (valid-recs (filter is-some-rec recommendations))
+        (confidence-sum (fold + (map get-confidence-from-optional valid-recs) u0))
+        (outcome-0-count (fold + (map count-outcome-0 valid-recs) u0))
+        (outcome-1-count (fold + (map count-outcome-1 valid-recs) u0))
+        (avg-confidence (if (> (len valid-recs) u0)
+                          (/ confidence-sum (len valid-recs))
+                          u0
+                        ))
+        (majority-outcome (if (> outcome-1-count outcome-0-count)
+                            (some u1)
+                            (if (> outcome-0-count outcome-1-count)
+                              (some u0)
+                              none
+                            )
                           ))
-          (majority-outcome (if (> outcome-1-count outcome-0-count)
-                              (some u1)
-                              (if (> outcome-0-count outcome-1-count)
-                                (some u0)
-                                none
-                              )
-                            ))
-        )
-        (ok {
-          outcome: majority-outcome,
-          avg-confidence: avg-confidence,
-          model-count: (to-uint (len valid-recs))
-        })
       )
-      err-val
-      (ok { outcome: none, avg-confidence: u0, model-count: u0 })
+      (ok {
+        outcome: majority-outcome,
+        avg-confidence: avg-confidence,
+        model-count: (len valid-recs)
+      })
     )
   )
 )

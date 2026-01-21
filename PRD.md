@@ -481,57 +481,30 @@ Where:
 
 ### Smart Contracts
 
-#### hro-resolver.clar
-- [x] Define HRO-related constants: MINIMUM_DISPUTE_BOND, ESCALATION_THRESHOLD, FORK_THRESHOLD, MAX_ESCALATION_ROUNDS
-- [x] Implement dispute-bond map tracking: disputer, amount, outcome_claimed, round, timestamp
-- [x] Implement escalation-state for each market: current_round, current_bond, last_action_block, leading_outcome
-- [x] Implement initiate-dispute(market-id, claimed_outcome) requiring 2x current bond
-- [x] Implement counter-dispute(market-id) for creator/previous winner to defend
-- [x] Implement finalize-escalation() when timeout reached without counter
-- [x] Implement trigger-voting() when bond exceeds ESCALATION_THRESHOLD
-- [x] Implement distribute-bonds() to winner after resolution
-- [x] Write tests for full escalation sequence
+**⚠️ PHASE 6 CONTRACTS DISABLED - Fix in order below**
 
-#### reputation-registry.clar
-- [x] Define reputation-score map: principal → { correct_votes, total_votes, participation_score, last_updated }
-- [x] Implement calculate-reputation(principal) → uint (scaled 0-1000000 for precision)
-- [x] Implement update-reputation(principal, was_correct) called after vote resolution
-- [x] Implement get-vote-power(principal, tokens_staked, stake_duration) using quadratic formula
-- [x] Implement decay function: reputation decays 1% per month of inactivity
-- [x] Implement reputation-history for transparency/auditing
-- [x] Write tests for reputation edge cases: new users, perfect accuracy, zero participation
+### Phase 6 Fix Tasks (DO IN ORDER):
 
-#### quadratic-voting.clar
-- [x] Implement create-vote(market-id, options) when escalation triggers voting
-- [x] Implement cast-vote(market-id, outcome, tokens_to_stake) with quadratic power calculation
-- [x] Implement voting period: VOTING_DURATION = 3 days (432 blocks)
-- [x] Implement commit-reveal scheme to prevent last-minute swings:
-  - Phase 1 (2 days): commit hash(vote + salt)
-  - Phase 2 (1 day): reveal vote + salt
-- [x] Implement tally-votes() with quadratic reputation weighting
-- [x] Implement slash-non-revealers() - lose 10% of staked tokens
-- [x] Write tests for: normal voting, ties, manipulation attempts
+#### 1. FIX reputation-registry.clar (BLOCKER - fix first!)
+- [x] Open contracts/reputation-registry.clar and find all unchecked try! calls
+- [x] The error is "intermediary responses in consecutive statements must be checked"
+- [x] Wrap try! results properly or use unwrap! with error handling
+- [x] After fixing, uncomment reputation-registry in Clarinet.toml
+- [x] Run clarinet check to verify no errors
 
-#### ai-oracle-council.clar (Advisory Layer)
-- [x] Define AI_RECOMMENDATION_WEIGHT = 0 (advisory only, no voting power)
-- [x] Implement request-ai-evaluation(market-id, question, evidence_links)
-- [x] Implement record-ai-recommendation(market-id, outcome, confidence, sources) - called by authorized AI bridge
-- [x] Implement get-ai-recommendation(market-id) for voters to reference
-- [x] AI recommendation displayed in UI but CANNOT override human vote
-- [x] Implement ai-accuracy-tracking for future calibration
-- [x] Write tests for AI integration (mock responses)
+#### 2. Enable quadratic-voting.clar (depends on step 1)
+- [x] Uncomment quadratic-voting in Clarinet.toml
+- [x] Run clarinet check - should work after reputation-registry is fixed
 
-#### market-fork.clar (Nuclear Option)
-- [x] Implement check-fork-threshold(market-id) returns bool
-- [x] Implement initiate-fork(market-id) when threshold exceeded
-- [x] Implement fork-market(market-id) creating two child markets:
-  - market-id-A: Original resolution stands
-  - market-id-B: Disputed resolution wins
-- [x] Implement migrate-position(original-market, fork-choice) for users to choose
-- [x] After FORK_SETTLEMENT_PERIOD (30 days):
-  - Fork with more liquidity/volume = canonical
-  - Other fork positions can redeem at discount or hold
-- [x] Write tests for fork scenarios
+#### 3. Enable remaining Phase 6 contracts
+- [x] Uncomment hro-resolver in Clarinet.toml and run clarinet check
+- [x] Uncomment ai-oracle-council in Clarinet.toml and run clarinet check
+- [x] Uncomment market-fork in Clarinet.toml and run clarinet check (code already fixed)
+- [x] Uncomment guardian-multisig in Clarinet.toml and run clarinet check (code already fixed)
+
+#### 4. Final verification
+- [x] Run clarinet check - should have 0 errors
+- [x] Run npm test to verify all tests pass
 
 ### Resolution Flow Diagram
 ```

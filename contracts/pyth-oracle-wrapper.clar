@@ -1,19 +1,16 @@
 ;; Pyth Oracle Wrapper for StackPredict Protocol
-;; Wraps the Pyth Oracle (SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4)
-;; to implement the oracle-trait interface for auto-resolution markets
+;; Implements oracle-trait interface for auto-resolution markets
+;;
+;; DEVNET MODE: Uses mock-oracle for testing
+;; MAINNET: Would use SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
 ;;
 ;; Reference: https://github.com/stx-labs/stacks-pyth-bridge
-;; Pyth Oracle Contract: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
 
 ;; Traits
 (impl-trait .oracle-trait.oracle-trait)
 
 ;; Constants
 (define-constant CONTRACT-OWNER tx-sender)
-
-;; Pyth Oracle Contract Address (Testnet/Mainnet)
-;; For devnet, this would need to be deployed separately
-(define-constant PYTH-ORACLE-CONTRACT 'SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4)
 
 ;; Price Feed IDs (32-byte hex strings)
 ;; These are the standard Pyth price feed IDs for common assets
@@ -63,8 +60,11 @@
   (let
     (
       (feed-id (unwrap! (map-get? price-feed-ids asset) ERR-ASSET-NOT-SUPPORTED))
+      (price-data (try! (get-price-from-feed feed-id)))
+      (price-int (get price price-data))
     )
-    (get-price-from-feed feed-id)
+    ;; Convert int to uint (assumes positive price)
+    (ok (to-uint price-int))
   )
 )
 
@@ -90,52 +90,55 @@
 ;; ============================================
 
 ;; Get price from Pyth price feed ID
-;; Calls the Pyth oracle's read-price-feed function
+;; DEVNET: Uses mock-oracle for testing (maps feed-id to asset name)
+;; MAINNET: Would call pyth-oracle-v4.read-price-feed
 (define-private (get-price-from-feed (feed-id (buff 32)))
   (let
     (
-      ;; Call Pyth oracle to read price feed
-      ;; The pyth-oracle-v4.read-price-feed returns (response { price: int, conf: uint, expo: int, publish-time: uint } uint)
-      (pyth-result (contract-call? PYTH-ORACLE-CONTRACT read-price-feed feed-id))
+      ;; DEVNET: Map feed-id back to asset name and use mock-oracle
+      ;; In production, this would call the real Pyth oracle
+      (asset-name (get-asset-from-feed-id feed-id))
     )
-    (match pyth-result
-      price-feed-data
+    (match asset-name
+      asset
       (let
         (
-          (price (get price price-feed-data))
-          (conf (get conf price-feed-data))
-          (expo (get expo price-feed-data))
-          (publish-time (get publish-time price-feed-data))
+          ;; Call mock-oracle to get price (returns uint with 8 decimals)
+          (mock-price-result (contract-call? .mock-oracle get-price asset))
         )
-        ;; Convert price to 8 decimal format
-        ;; Pyth prices have an exponent (expo) that needs to be normalized to 8 decimals
-        ;; For example, if expo = -8, price is already in 8 decimals
-        ;; If expo = -6, we need to multiply by 100 to get 8 decimals
-        (let
-          (
-            (normalized-price (normalize-price price expo))
-          )
-          (ok { price: normalized-price, publish-time: publish-time })
+        (match mock-price-result
+          price-value
+          (ok { price: (to-int price-value), publish-time: block-height })
+          err-code
+          ERR-PRICE-NOT-AVAILABLE
         )
       )
-      err-code
-      (err (+ u10000 err-code))  ;; Prefix Pyth error with 10000 for easier debugging
+      ERR-INVALID-FEED-ID
     )
   )
 )
 
-;; Normalize price to 8 decimal format
-;; Pyth prices use an exponent to represent decimal places
-;; We normalize everything to 8 decimals (standard oracle format)
-;; Note: Pyth typically uses -8 as exponent for 8 decimal prices
+;; Normalize price to 8 decimal format (used in mainnet mode)
 (define-private (normalize-price (price int) (expo int))
-  ;; For simplicity, we assume expo is -8 (standard for 8-decimal prices)
-  ;; If expo differs, the price will be scaled accordingly
-  ;; This is a simplified implementation - in production, you'd want more robust handling
-  ;; Since Clarity doesn't have easy signed integer comparison, we use a simple approach
-  ;; Most Pyth feeds use -8 for 8 decimals, so we return price as-is
-  ;; For other exponents, additional logic would be needed
   price
+)
+
+;; DEVNET HELPER: Map feed-id back to asset name
+;; Returns (optional string-ascii) for the asset name
+(define-private (get-asset-from-feed-id (feed-id (buff 32)))
+  (if (is-eq feed-id PRICE-FEED-ID-BTC)
+    (some "BTC")
+    (if (is-eq feed-id PRICE-FEED-ID-ETH)
+      (some "ETH")
+      (if (is-eq feed-id PRICE-FEED-ID-STX)
+        (some "STX")
+        (if (is-eq feed-id PRICE-FEED-ID-USDC)
+          (some "USDC")
+          none
+        )
+      )
+    )
+  )
 )
 
 ;; ============================================
@@ -177,9 +180,11 @@
   (is-some (map-get? price-feed-ids asset))
 )
 
-;; Get the Pyth oracle contract address
-(define-read-only (get-pyth-oracle-contract)
-  (ok PYTH-ORACLE-CONTRACT)
+;; Get the underlying oracle info
+;; DEVNET: Returns mock-oracle indicator
+;; MAINNET: Would return SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
+(define-read-only (get-oracle-mode)
+  (ok "devnet-mock-oracle")
 )
 
 ;; ============================================

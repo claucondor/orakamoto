@@ -54,6 +54,22 @@ rules:
   - "map returns list, NOT accumulated value - don't use (fold + (map ...) u0)"
   - "For accumulating over list: use fold with state tuple, not map with fold +"
 
+  # MORE Clarity Gotchas (from Ralphy bugs)
+  - "NO cdr/car functions in Clarity - these are Lisp functions that DON'T exist in Clarity"
+  - "NO recursion with list slicing - Clarity doesn't support this pattern"
+  - "Use FOLD for list iteration: (fold helper-func my-list initial-value)"
+  - "match is for OPTIONAL and RESPONSE types ONLY - NOT for lists"
+  - "Example BAD: (match my-list first-elem ...) - WRONG, match doesn't work on lists"
+  - "Example GOOD: (fold check-item my-list false) - iterate list with fold"
+  - "Read-only functions returning (ok value) can't be used directly in asserts!"
+  - "For internal checks, create private helper that returns plain bool"
+  - "Example: (define-private (is-valid-internal ...) bool) then (define-read-only (is-valid ...) (ok (is-valid-internal ...)))"
+  - "map-get? needs map name as first arg: (map-get? my-map key) NOT (map-get? key)"
+  - "DEVNET can't reference mainnet contracts - use local mocks or .contract-name references"
+  - "When implementing trait, return type must match EXACTLY - (response uint uint) means uint for both ok and err"
+  - "to-uint converts int to uint (for positive values only)"
+  - "unwrap! with custom error: (unwrap! optional-value ERR-CUSTOM) propagates error if none"
+
   # CRITICAL SECURITY - tx-sender vs contract-caller
   - "For authentication, prefer contract-caller over tx-sender to prevent phishing attacks"
   - "tx-sender = original transaction sender (never changes in call chain)"
@@ -92,6 +108,14 @@ rules:
   - "Keep functions focused and single-purpose"
   - "Use kebab-case for function names: get-market-info, add-liquidity"
   - "Use SCREAMING-KEBAB-CASE for constants: CONTRACT-OWNER, PRECISION"
+
+  # Avoiding Warnings (clean code)
+  - "DELETE unused constants, variables, and parameters - don't leave dead code"
+  - "If a function param is required by trait but not used, prefix with underscore: (_unused-param uint)"
+  - "'potentially unchecked data' warning: validate inputs with asserts! BEFORE using them"
+  - "Example: (asserts! (> amount u0) ERR-ZERO) before (ft-transfer? token amount ...)"
+  - "Use all let bindings you declare - remove or use them"
+  - "Run 'clarinet check' and fix warnings before committing"
 
   # Testing
   - "Write tests for all public functions"

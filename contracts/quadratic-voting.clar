@@ -37,6 +37,7 @@
 (define-constant ERR-VOTE-ALREADY-TALLIED (err u1412))
 (define-constant ERR-INSUFFICIENT-VOTE-POWER (err u1413))
 (define-constant ERR-SESSION-NOT-ENDED (err u1414))
+(define-constant ERR-ALREADY-ESCALATED (err u1415))
 
 ;; ============================================
 ;; DATA STRUCTURES
@@ -187,7 +188,7 @@
 ;; Calculate hash for commit-reveal scheme
 ;; Hash = sha256(concat(outcome-as-buff, salt))
 ;; outcome is converted to buff using uint-to-buff-be
-(define-read-only (calculate-commitment (outcome uint) (salt (buff 32)))
+(define-private (calculate-commitment (outcome uint) (salt (buff 32)))
   (let
     (
       ;; Convert outcome (0 or 1) to a 1-byte buffer
@@ -196,7 +197,7 @@
                         0x01
                       ))
     )
-    (ok (sha256 (concat outcome-buff salt)))
+    (sha256 (concat outcome-buff salt))
   )
 )
 
@@ -377,7 +378,7 @@
       (session (unwrap! (map-get? voting-sessions session-id) ERR-NO-VOTE-SESSION))
       (current-height block-height)
       (commitment-record (unwrap! (map-get? commitments { session-id: session-id, voter: caller }) ERR-NO-COMMITMENT-FOUND))
-      (expected-commitment (try! (calculate-commitment outcome salt)))
+      (expected-commitment (calculate-commitment outcome salt))
     )
     ;; Validate parameters
     (asserts! (or (is-eq outcome u0) (is-eq outcome u1)) ERR-INVALID-OUTCOME)
