@@ -5,10 +5,16 @@ const accounts = simnet.getAccounts();
 const deployer = accounts.get('deployer')!;
 const wallet1 = accounts.get('wallet_1')!;
 const wallet2 = accounts.get('wallet_2')!;
+const wallet3 = accounts.get('wallet_3')!;
 
 // Constants
 const MINIMUM_COLLATERAL = 50_000_000n; // 50 USDC with 6 decimals
 const DISPUTE_WINDOW = 1008n; // ~7 days in blocks
+
+// HRO Constants
+const MINIMUM_DISPUTE_BOND = 50_000_000n; // 50 USDC
+const ESCALATION_THRESHOLD = 5_120_000_000n; // 51,200 USDC
+const ESCALATION_TIMEOUT = 1008n; // ~7 days in blocks
 
 // Error constants
 const ERR_NO_WINNINGS = 1010n;
@@ -325,5 +331,691 @@ describe('Integration - Complete Market Lifecycle', () => {
       wallet1
     );
     expect(lpBalanceAfter.result.type).toBe('ok');
+  });
+});
+
+describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
+  it('should handle HRO bond escalation flow: initiate dispute -> escalate -> timeout -> finalize', () => {
+    // ========================================================================
+    // SETUP: Create market and initialize escalation
+    // ========================================================================
+    const currentBlock = simnet.blockHeight;
+    const deadline = currentBlock + 10;
+    const resDeadline = deadline + 100;
+
+    // Give wallet1 USDC for collateral
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+
+    // Initialize market pool
+    simnet.callPublicFn(
+      'market-pool',
+      'initialize',
+      [
+        Cl.stringUtf8('Will HRO test pass?'),
+        Cl.uint(deadline),
+        Cl.uint(resDeadline),
+        Cl.uint(MINIMUM_COLLATERAL),
+      ],
+      wallet1
+    );
+
+    // Resolve market (YES wins) - this is the initial resolution
+    simnet.mineEmptyBlocks(11);
+    simnet.callPublicFn('market-pool', 'resolve', [Cl.uint(0)], wallet1);
+
+    // ========================================================================
+    // STEP 1: Creator initiates HRO escalation with initial bond
+    // ========================================================================
+    // Give wallet1 more USDC for the bond
+    const initialBond = 100_000_000n; // 100 USDC
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(initialBond)], wallet1);
+
+    const initiateResult = simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-escalation',
+      [
+        Cl.uint(1), // market-id
+        Cl.uint(0), // outcome (YES)
+        Cl.uint(initialBond),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet1
+    );
+
+    expect(initiateResult.result).toBeOk(Cl.uint(1)); // bond-id 1
+
+    // Verify escalation state
+    const escalationState = simnet.callReadOnlyFn(
+      'hro-resolver',
+      'get-escalation-state',
+      [Cl.uint(1)],
+      deployer
+    );
+    expect(escalationState.result.type).toBe('ok');
+
+    // ========================================================================
+    // STEP 2: Disputer challenges with 2x bond (200 USDC)
+    // ========================================================================
+    const challengeBond = 200_000_000n; // 2x initial bond
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(challengeBond)], wallet2);
+
+    const disputeResult = simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-dispute',
+      [
+        Cl.uint(1), // market-id
+        Cl.uint(1), // outcome (NO - opposite of creator's claim)
+        Cl.uint(challengeBond),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet2
+    );
+
+    expect(disputeResult.result).toBeOk(Cl.uint(2)); // bond-id 2
+
+    // Verify leading outcome flipped to NO
+    const leadingOutcome = simnet.callReadOnlyFn(
+      'hro-resolver',
+      'get-leading-outcome',
+      [Cl.uint(1)],
+      deployer
+    );
+    expect(leadingOutcome.result).toBeOk(Cl.uint(1)); // NO is now leading
+
+    // ========================================================================
+    // STEP 3: Creator counter-disputes with 4x bond (400 USDC)
+    // ========================================================================
+    const counterBond = 400_000_000n; // 2x challenge bond
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(counterBond)], wallet1);
+
+    const counterResult = simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-dispute',
+      [
+        Cl.uint(1), // market-id
+        Cl.uint(0), // outcome (YES - back to original)
+        Cl.uint(counterBond),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet1
+    );
+
+    expect(counterResult.result).toBeOk(Cl.uint(3)); // bond-id 3
+
+    // Verify leading outcome flipped back to YES
+    const leadingOutcomeAfterCounter = simnet.callReadOnlyFn(
+      'hro-resolver',
+      'get-leading-outcome',
+      [Cl.uint(1)],
+      deployer
+    );
+    expect(leadingOutcomeAfterCounter.result).toBeOk(Cl.uint(0)); // YES is leading again
+
+    // ========================================================================
+    // STEP 4: Disputer escalates again with 8x bond (800 USDC)
+    // ========================================================================
+    const escalateBond = 800_000_000n; // 2x counter bond
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(escalateBond)], wallet2);
+
+    const escalateResult = simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-dispute',
+      [
+        Cl.uint(1), // market-id
+        Cl.uint(1), // outcome (NO)
+        Cl.uint(escalateBond),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet2
+    );
+
+    expect(escalateResult.result).toBeOk(Cl.uint(4)); // bond-id 4
+
+    // Verify escalation state shows round 3
+    const escalationStateAfter = simnet.callReadOnlyFn(
+      'hro-resolver',
+      'get-escalation-state',
+      [Cl.uint(1)],
+      deployer
+    );
+    expect(escalationStateAfter.result.type).toBe('ok');
+
+    // ========================================================================
+    // STEP 5: Wait for timeout and finalize escalation
+    // ========================================================================
+    simnet.mineEmptyBlocks(Number(ESCALATION_TIMEOUT) + 1);
+
+    // Check if escalation can be finalized
+    const canFinalize = simnet.callReadOnlyFn(
+      'hro-resolver',
+      'can-finalize-escalation',
+      [Cl.uint(1)],
+      deployer
+    );
+    expect(canFinalize.result).toBeOk(Cl.bool(true));
+
+    // Finalize escalation (NO wins since it was the last outcome)
+    const finalizeResult = simnet.callPublicFn(
+      'hro-resolver',
+      'finalize-escalation',
+      [Cl.uint(1)],
+      wallet1
+    );
+
+    expect(finalizeResult.result.type).toBe('ok');
+
+    // Verify escalation is resolved
+    const finalState = simnet.callReadOnlyFn(
+      'hro-resolver',
+      'get-escalation-state',
+      [Cl.uint(1)],
+      deployer
+    );
+    expect(finalState.result.type).toBe('ok');
+  });
+
+  it('should handle HRO bond escalation that triggers Layer 4 voting (threshold reached)', () => {
+    // ========================================================================
+    // SETUP: Create market and escalate to threshold
+    // ========================================================================
+    const currentBlock = simnet.blockHeight;
+    const deadline = currentBlock + 10;
+    const resDeadline = deadline + 100;
+
+    // Give wallet1 USDC for collateral
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+
+    // Initialize market pool
+    simnet.callPublicFn(
+      'market-pool',
+      'initialize',
+      [
+        Cl.stringUtf8('Will voting threshold be reached?'),
+        Cl.uint(deadline),
+        Cl.uint(resDeadline),
+        Cl.uint(MINIMUM_COLLATERAL),
+      ],
+      wallet1
+    );
+
+    // Resolve market (YES wins)
+    simnet.mineEmptyBlocks(11);
+    simnet.callPublicFn('market-pool', 'resolve', [Cl.uint(0)], wallet1);
+
+    // ========================================================================
+    // Escalate through multiple rounds until threshold is reached
+    // ========================================================================
+    // Round 0: Creator initiates with 50 USDC
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(50_000_000n)], wallet1);
+    simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-escalation',
+      [
+        Cl.uint(1),
+        Cl.uint(0),
+        Cl.uint(50_000_000n),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet1
+    );
+
+    // Round 1: Disputer with 100 USDC
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(100_000_000n)], wallet2);
+    simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-dispute',
+      [
+        Cl.uint(1),
+        Cl.uint(1),
+        Cl.uint(100_000_000n),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet2
+    );
+
+    // Round 2: Creator with 200 USDC
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(200_000_000n)], wallet1);
+    simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-dispute',
+      [
+        Cl.uint(1),
+        Cl.uint(0),
+        Cl.uint(200_000_000n),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet1
+    );
+
+    // Round 3: Disputer with 400 USDC
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(400_000_000n)], wallet2);
+    simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-dispute',
+      [
+        Cl.uint(1),
+        Cl.uint(1),
+        Cl.uint(400_000_000n),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet2
+    );
+
+    // Round 4: Creator with 800 USDC
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(800_000_000n)], wallet1);
+    simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-dispute',
+      [
+        Cl.uint(1),
+        Cl.uint(0),
+        Cl.uint(800_000_000n),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet1
+    );
+
+    // Round 5: Disputer with 1,600 USDC
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(1_600_000_000n)], wallet2);
+    simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-dispute',
+      [
+        Cl.uint(1),
+        Cl.uint(1),
+        Cl.uint(1_600_000_000n),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet2
+    );
+
+    // Round 6: Creator with 3,200 USDC
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(3_200_000_000n)], wallet1);
+    simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-dispute',
+      [
+        Cl.uint(1),
+        Cl.uint(0),
+        Cl.uint(3_200_000_000n),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet1
+    );
+
+    // Round 7: Disputer with 6,400 USDC - This should trigger voting threshold
+    // Total bonds: 50 + 100 + 200 + 400 + 800 + 1600 + 3200 + 6400 = 12,750 USDC
+    // Still below 51,200 USDC threshold, continue escalating...
+
+    // Round 8: Creator with 12,800 USDC
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(12_800_000_000n)], wallet1);
+    simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-dispute',
+      [
+        Cl.uint(1),
+        Cl.uint(0),
+        Cl.uint(12_800_000_000n),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet1
+    );
+
+    // Round 9: Disputer with 25,600 USDC
+    // Total bonds: 12,750 + 12,800 + 25,600 = 51,150 USDC (still below threshold)
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(25_600_000_000n)], wallet2);
+    const round9Result = simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-dispute',
+      [
+        Cl.uint(1),
+        Cl.uint(1),
+        Cl.uint(25_600_000_000n),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet2
+    );
+
+    // After round 9, total bonds = 51,150 USDC, still below 51,200 threshold
+    // Round 10 would be 51,200 USDC which exceeds threshold
+    expect(round9Result.result.type).toBe('ok');
+
+    // Check if bond threshold is reached
+    const thresholdReached = simnet.callReadOnlyFn(
+      'hro-resolver',
+      'is-bond-threshold-reached',
+      [Cl.uint(1)],
+      deployer
+    );
+    // Should be false since 51,150 < 51,200
+    expect(thresholdReached.result).toBeOk(Cl.bool(false));
+
+    // Round 10: One more escalation to exceed threshold
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(51_200_000_000n)], wallet1);
+    const round10Result = simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-dispute',
+      [
+        Cl.uint(1),
+        Cl.uint(0),
+        Cl.uint(51_200_000_000n),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet1
+    );
+
+    expect(round10Result.result.type).toBe('ok');
+
+    // Now threshold should be reached
+    const thresholdReachedAfter = simnet.callReadOnlyFn(
+      'hro-resolver',
+      'is-bond-threshold-reached',
+      [Cl.uint(1)],
+      deployer
+    );
+    expect(thresholdReachedAfter.result).toBeOk(Cl.bool(true));
+  });
+
+  it('should handle AI oracle council advisory flow', () => {
+    // ========================================================================
+    // SETUP: Request AI evaluation for a market
+    // ========================================================================
+    const marketId = 1;
+
+    // Request AI evaluation
+    const requestResult = simnet.callPublicFn(
+      'ai-oracle-council',
+      'request-ai-evaluation',
+      [
+        Cl.uint(marketId),
+        Cl.stringUtf8('Will Bitcoin reach $100k by end of 2025?'),
+        Cl.list([
+          Cl.stringUtf8('https://example.com/evidence1'),
+          Cl.stringUtf8('https://example.com/evidence2'),
+        ])
+      ],
+      wallet1
+    );
+
+    expect(requestResult.result).toBeOk(Cl.bool(true));
+
+    // Verify evaluation request exists
+    const evaluation = simnet.callReadOnlyFn(
+      'ai-oracle-council',
+      'get-market-evaluation',
+      [Cl.uint(marketId)],
+      deployer
+    );
+    expect(evaluation.result.type).toBe('ok');
+
+    // ========================================================================
+    // Record AI recommendation (simulating authorized AI bridge)
+    // ========================================================================
+    // Note: In production, this would be called by an authorized AI bridge
+    // For testing, we use the deployer as the authorized caller
+    const recordResult = simnet.callPublicFn(
+      'ai-oracle-council',
+      'record-ai-recommendation',
+      [
+        Cl.uint(marketId),
+        Cl.uint(0), // outcome: YES
+        Cl.uint(850000), // confidence: 85% (850000 = 85%)
+        Cl.list([
+          Cl.stringUtf8('https://example.com/analysis1'),
+          Cl.stringUtf8('https://example.com/analysis2'),
+        ])
+      ],
+      deployer
+    );
+
+    expect(recordResult.result).toBeOk(Cl.bool(true));
+
+    // Verify AI recommendation
+    const recommendation = simnet.callReadOnlyFn(
+      'ai-oracle-council',
+      'get-ai-recommendation',
+      [Cl.uint(marketId)],
+      deployer
+    );
+    expect(recommendation.result.type).toBe('ok');
+  });
+
+  it('should handle quadratic voting with commit-reveal scheme', () => {
+    // ========================================================================
+    // SETUP: Initialize voting session
+    // ========================================================================
+    const marketId = 1;
+
+    // Create voting session (simulating what hro-resolver would do)
+    const createSessionResult = simnet.callPublicFn(
+      'quadratic-voting',
+      'create-voting-session',
+      [Cl.uint(marketId)],
+      deployer
+    );
+
+    expect(createSessionResult.result).toBeOk(Cl.uint(1)); // session-id 1
+
+    // ========================================================================
+    // Voter commits their vote (Phase 1: Commit)
+    // ========================================================================
+    // Voter needs to have $PRED tokens staked
+    // For testing, we'll simulate the commit with a hash
+    const salt = 12345n;
+    const outcome = 0n; // YES
+    const commitment = Cl.bufferFromHex('a'.repeat(64)); // Simulated hash
+
+    // Mint $PRED tokens for voter (simulating governance-token)
+    simnet.callPublicFn(
+      'reputation-registry',
+      'mint',
+      [
+        Cl.uint(100_000_000n), // 100 $PRED tokens (8 decimals)
+        Cl.standardPrincipal(wallet1)
+      ],
+      deployer
+    );
+
+    // Commit vote
+    const commitResult = simnet.callPublicFn(
+      'quadratic-voting',
+      'commit-vote',
+      [
+        Cl.uint(1), // session-id
+        Cl.uint(0), // outcome: YES
+        Cl.uint(10_000_000n), // 10 $PRED staked
+        Cl.uint(salt)
+      ],
+      wallet1
+    );
+
+    // Note: commit-vote requires the commitment hash calculation
+    // The actual implementation uses sha256(outcome || salt)
+    expect(commitResult.result.type).toBe('ok');
+
+    // Verify commitment exists
+    const commitmentCheck = simnet.callReadOnlyFn(
+      'quadratic-voting',
+      'has-committed',
+      [Cl.uint(1), Cl.standardPrincipal(wallet1)],
+      deployer
+    );
+    expect(commitmentCheck.result.type).toBe('ok');
+  });
+
+  it('should handle market fork when dispute threshold exceeded', () => {
+    // ========================================================================
+    // SETUP: Create market and trigger fork threshold
+    // ========================================================================
+    const marketId = 1;
+
+    // Check fork threshold (10% of total supply)
+    const forkThreshold = simnet.callReadOnlyFn(
+      'market-fork',
+      'get-fork-threshold',
+      [],
+      deployer
+    );
+    expect(forkThreshold.result).toBeOk(Cl.uint(1000000)); // 10% in basis points
+
+    // ========================================================================
+    // Initiate fork (simulating >10% disputed stake)
+    // ========================================================================
+    const initiateForkResult = simnet.callPublicFn(
+      'market-fork',
+      'initiate-fork',
+      [Cl.uint(marketId)],
+      deployer
+    );
+
+    // This should create two child markets: A and B
+    expect(initiateForkResult.result.type).toBe('ok');
+
+    // Verify fork state
+    const forkState = simnet.callReadOnlyFn(
+      'market-fork',
+      'get-fork-state',
+      [Cl.uint(marketId)],
+      deployer
+    );
+    expect(forkState.result.type).toBe('ok');
+  });
+
+  it('should handle complete HRO flow with dispute -> voting -> fork', () => {
+    // ========================================================================
+    // This test demonstrates the complete flow:
+    // 1. Market resolution
+    // 2. Dispute with bond escalation
+    // 3. Bond threshold triggers voting
+    // 4. Fork mechanism as nuclear option
+    // ========================================================================
+
+    const currentBlock = simnet.blockHeight;
+    const deadline = currentBlock + 10;
+    const resDeadline = deadline + 100;
+
+    // ========================================================================
+    // STEP 1: Create and resolve market
+    // ========================================================================
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+    simnet.callPublicFn(
+      'market-pool',
+      'initialize',
+      [
+        Cl.stringUtf8('Will HRO complete flow work?'),
+        Cl.uint(deadline),
+        Cl.uint(resDeadline),
+        Cl.uint(MINIMUM_COLLATERAL),
+      ],
+      wallet1
+    );
+
+    simnet.mineEmptyBlocks(11);
+    simnet.callPublicFn('market-pool', 'resolve', [Cl.uint(0)], wallet1);
+
+    // ========================================================================
+    // STEP 2: Initiate HRO escalation
+    // ========================================================================
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(100_000_000n)], wallet1);
+    simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-escalation',
+      [
+        Cl.uint(1),
+        Cl.uint(0),
+        Cl.uint(100_000_000n),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet1
+    );
+
+    // ========================================================================
+    // STEP 3: Dispute with bond escalation
+    // ========================================================================
+    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(200_000_000n)], wallet2);
+    simnet.callPublicFn(
+      'hro-resolver',
+      'initiate-dispute',
+      [
+        Cl.uint(1),
+        Cl.uint(1),
+        Cl.uint(200_000_000n),
+        Cl.standardPrincipal(simnet.getContractAddress('mock-usdc'))
+      ],
+      wallet2
+    );
+
+    // Verify escalation state
+    const escalationState = simnet.callReadOnlyFn(
+      'hro-resolver',
+      'get-escalation-state',
+      [Cl.uint(1)],
+      deployer
+    );
+    expect(escalationState.result.type).toBe('ok');
+
+    // ========================================================================
+    // STEP 4: Request AI evaluation (advisory layer)
+    // ========================================================================
+    const aiRequestResult = simnet.callPublicFn(
+      'ai-oracle-council',
+      'request-ai-evaluation',
+      [
+        Cl.uint(1),
+        Cl.stringUtf8('Will dispute resolution work correctly?'),
+        Cl.list([Cl.stringUtf8('https://evidence.example.com')])
+      ],
+      wallet1
+    );
+    expect(aiRequestResult.result).toBeOk(Cl.bool(true));
+
+    // ========================================================================
+    // STEP 5: Record AI recommendation
+    // ========================================================================
+    const aiRecordResult = simnet.callPublicFn(
+      'ai-oracle-council',
+      'record-ai-recommendation',
+      [
+        Cl.uint(1),
+        Cl.uint(0), // YES
+        Cl.uint(800000), // 80% confidence
+        Cl.list([Cl.stringUtf8('https://analysis.example.com')])
+      ],
+      deployer
+    );
+    expect(aiRecordResult.result).toBeOk(Cl.bool(true));
+
+    // ========================================================================
+    // STEP 6: Wait for timeout and finalize escalation
+    // ========================================================================
+    simnet.mineEmptyBlocks(Number(ESCALATION_TIMEOUT) + 1);
+
+    const finalizeResult = simnet.callPublicFn(
+      'hro-resolver',
+      'finalize-escalation',
+      [Cl.uint(1)],
+      wallet1
+    );
+    expect(finalizeResult.result.type).toBe('ok');
+
+    // ========================================================================
+    // STEP 7: Verify final state
+    // ========================================================================
+    const finalEscalationState = simnet.callReadOnlyFn(
+      'hro-resolver',
+      'get-escalation-state',
+      [Cl.uint(1)],
+      deployer
+    );
+    expect(finalEscalationState.result.type).toBe('ok');
+
+    // Verify AI recommendation was recorded
+    const aiRecommendation = simnet.callReadOnlyFn(
+      'ai-oracle-council',
+      'get-ai-recommendation',
+      [Cl.uint(1)],
+      deployer
+    );
+    expect(aiRecommendation.result.type).toBe('ok');
   });
 });

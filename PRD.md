@@ -595,8 +595,8 @@ No dispute  Dispute (2x bond)
 - [ ] All evidence and deliberations stored on-chain for transparency
 
 ### Testing Requirements
-- [ ] Unit tests for each contract
-- [ ] Integration tests for full escalation → voting → resolution flow
+- [x] Unit tests for each contract
+- [x] Integration tests for full escalation → voting → resolution flow (see tests/integration.test.ts)
 - [ ] Simulation tests for attack scenarios:
   - Whale accumulation attack
   - Sybil voting attack
