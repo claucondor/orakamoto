@@ -3,6 +3,8 @@
 .cache/**
 history.txt
 SESSION-CONTEXT.md
+PRD.md
+.ralphy/
 
 logs
 *.log
