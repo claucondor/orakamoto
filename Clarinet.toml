@@ -101,6 +101,10 @@ depends_on = ["sip-010-trait", "reputation-registry"]
 path = "contracts/ai-oracle-council.clar"
 depends_on = ["sip-010-trait"]
 
+[contracts.market-fork]
+path = "contracts/market-fork.clar"
+depends_on = ["sip-010-trait"]
+
 [repl.analysis]
 passes = ["check_checker"]
 check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }

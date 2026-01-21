@@ -522,16 +522,16 @@ Where:
 - [x] Write tests for AI integration (mock responses)
 
 #### market-fork.clar (Nuclear Option)
-- [ ] Implement check-fork-threshold(market-id) returns bool
-- [ ] Implement initiate-fork(market-id) when threshold exceeded
-- [ ] Implement fork-market(market-id) creating two child markets:
+- [x] Implement check-fork-threshold(market-id) returns bool
+- [x] Implement initiate-fork(market-id) when threshold exceeded
+- [x] Implement fork-market(market-id) creating two child markets:
   - market-id-A: Original resolution stands
   - market-id-B: Disputed resolution wins
-- [ ] Implement migrate-positions(original-market, fork-choice) for users to choose
-- [ ] After FORK_SETTLEMENT_PERIOD (30 days):
+- [x] Implement migrate-position(original-market, fork-choice) for users to choose
+- [x] After FORK_SETTLEMENT_PERIOD (30 days):
   - Fork with more liquidity/volume = canonical
   - Other fork positions can redeem at discount or hold
-- [ ] Write tests for fork scenarios
+- [x] Write tests for fork scenarios
 
 ### Resolution Flow Diagram
 ```

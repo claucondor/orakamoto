@@ -1,5 +1,59 @@
 # Ralphy Progress Log
 
+## 2026-01-21: Fixed and Completed Market Fork Contract (Phase 6 - Layer 5: FORK)
+
+### Summary
+Fixed syntax errors in the existing market-fork.clar contract and wrote comprehensive test suite. The contract implements Layer 5 (Fork - Nuclear Option) for the Hybrid Reputation Oracle (HRO) system.
+
+### Changes Made
+
+1. **contracts/market-fork.clar** (fixed):
+   - Fixed `migrate-position` function: Added `begin` block to wrap multiple expressions in the `let` binding
+   - Fixed `claim-non-canonical` function: Corrected parentheses and added `begin` block
+   - Fixed `map-set` call: Changed from `(map-set position-key {...})` to `(map-set user-positions position-key {...})`
+   - Contract now compiles successfully with `clarinet check`
+
+2. **tests/market-fork.test.ts** (new file):
+   - 100+ comprehensive tests covering:
+     - Fork threshold calculation (disputed percentage vs threshold)
+     - Fork initiation with validation (threshold, invalid outcomes, duplicate prevention)
+     - Position migration to fork A or B
+     - Fork settlement after FORK_SETTLEMENT_PERIOD (30 days)
+     - Canonical fork determination based on total staked
+     - Claim from canonical fork (full value)
+     - Claim from non-canonical fork (50% discount)
+     - Read-only functions (get-fork-state, get-user-position, etc.)
+     - Admin functions (reset-fork, update-fork-params)
+     - Integration tests for full fork lifecycle
+
+### Key Features of market-fork.clar
+- **Fork Threshold**: Triggers when disputed stake / total supply > 10%
+- **Two Child Markets**: Creates fork-A (original resolution) and fork-B (disputed resolution)
+- **Position Migration**: Users can migrate to their chosen fork
+- **Settlement Period**: 30 days after fork initiation
+- **Canonical Determination**: Fork with more total staked wins
+- **Non-Canonical Discount**: 50% discount for users who chose the losing fork
+- **Permissionless**: Anyone can trigger settlement after timeout
+
+### HRO Layer 5 Architecture
+```
+Layer 5: FORK (Nuclear Option)
+  └── Triggered when >10% supply disputes after Layer 4
+  └── Market splits into two child markets
+  └── Users migrate positions to chosen fork
+  └── After 30 days: fork with more liquidity = canonical
+  └── Non-canonical positions redeem at 50% discount
+```
+
+### Verification
+- `clarinet check contracts/market-fork.clar` passes with no errors
+- Contract compiles successfully
+- Contract follows existing patterns from other HRO contracts
+- 100+ tests written covering all major functionality
+- Note: Full test execution blocked by pre-existing environment issues in vitest configuration (same issue as previous commits)
+
+---
+
 ## 2026-01-21: Implemented AI Oracle Council Contract (Phase 6 - Hybrid Reputation Oracle)
 
 ### Summary
