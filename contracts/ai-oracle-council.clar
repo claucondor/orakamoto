@@ -156,7 +156,10 @@
     (
       (model-ids (default-to (list) (map-get? market-models market-id)))
     )
-    (map get-model-recommendation-helper model-ids (list market-id market-id market-id market-id market-id))
+    (if (> (len model-ids) u0)
+      (map get-model-recommendation-helper model-ids (list market-id market-id market-id market-id market-id))
+      (list)
+    )
   )
 )
 

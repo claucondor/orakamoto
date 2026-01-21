@@ -109,8 +109,8 @@ describe('Market Pool - Dispute Window', () => {
       const result = (disputeInfo.result as any).value.value;
 
       expect(result['dispute-window-blocks']).toEqual(Cl.uint(DISPUTE_WINDOW));
-      expect(result['resolution-block']).toBeGreaterThan(Cl.uint(0));
-      expect(result['dispute-window-ends']).toBeGreaterThan(Cl.uint(0));
+      expect(Number((result['resolution-block'] as any).value)).toBeGreaterThan(0);
+      expect(Number((result['dispute-window-ends'] as any).value)).toBeGreaterThan(0);
       expect(result['claims-enabled']).toEqual(Cl.bool(false));
     });
   });

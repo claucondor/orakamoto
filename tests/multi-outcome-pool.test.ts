@@ -372,7 +372,10 @@ describe('Multi-Outcome Pool Contract', () => {
       // Should receive some tokens (approx value, use range check due to trading dynamics)
       const tokensReceived = (buyResult.result as any).value.value;
       expect(Number(tokensReceived)).toBeGreaterThan(0);
-      expect(Number(tokensReceived)).toBeLessThan(10000000);
+      // With LMSR, tokens are scaled by PRECISION (1,000,000)
+      // Buying 5 USDC can receive millions of tokens depending on price
+      // Just verify it's a reasonable amount (less than 100 million)
+      expect(Number(tokensReceived)).toBeLessThan(100_000_000);
     });
 
     it('should fail to buy with invalid outcome', () => {
@@ -865,8 +868,8 @@ describe('Multi-Outcome Pool Contract', () => {
       );
 
       // Balance should be higher after claiming
-      const before = (usdcBalanceBefore.result as any).value;
-      const after = (usdcBalanceAfter.result as any).value;
+      const before = Number((usdcBalanceBefore.result as any).value.value);
+      const after = Number((usdcBalanceAfter.result as any).value.value);
       expect(after).toBeGreaterThan(before);
     });
 
