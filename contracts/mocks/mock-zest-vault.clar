@@ -73,9 +73,9 @@
       (current-total-shares (ft-get-supply z-usdc))
     )
     (asserts! (> amount u0) ERR-ZERO-AMOUNT)
-    (asserts! (is-eq caller owner) ERR-NOT-AUTHORIZED)
 
-    ;; Transfer USDC from user to this vault contract
+    ;; Transfer USDC from caller to this vault contract
+    ;; Note: caller must have USDC to deposit
     (try! (contract-call? .mock-usdc transfer amount caller (as-contract tx-sender) none))
 
     ;; Calculate shares to mint
@@ -94,7 +94,7 @@
       (var-set total-deposits (+ current-total-deposits amount))
       (var-set last-yield-update block-height)
 
-      ;; Mint zUSDC shares to user
+      ;; Mint zUSDC shares to owner (the account that will receive the shares)
       (try! (ft-mint? z-usdc shares-to-mint owner))
 
       (print {event: "supply", provider: caller, owner: owner, amount: amount, shares: shares-to-mint})

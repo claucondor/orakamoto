@@ -30,6 +30,9 @@
 ;; Track yield earned per pool (key: pool-contract-principal)
 (define-map pool-yield-earned principal uint)
 
+;; Track total LP supply per pool (needed for yield calculation)
+(define-map pool-total-lp-supply principal uint)
+
 ;; Track time-weighted LP balance for each user in each pool
 ;; Key: { pool: principal, lp: principal }
 ;; Value: { balance: uint, last-update: uint }
@@ -101,6 +104,23 @@
   )
 )
 
+;; Update Pool LP Supply
+;; Called by pool contracts to update the total LP supply for a pool
+;; This is needed for accurate yield calculation per LP token
+(define-public (update-pool-lp-supply (pool principal) (total-supply uint))
+  (begin
+    ;; Only the pool contract can call this function
+    ;; Using contract-caller to allow proper authorization through contract calls
+    (asserts! (is-eq contract-caller pool) ERR-NOT-AUTHORIZED)
+
+    ;; Update the total LP supply for this pool
+    (map-set pool-total-lp-supply pool total-supply)
+
+    (print { event: "pool-lp-supply-updated", pool: pool, total-supply: total-supply })
+    (ok true)
+  )
+)
+
 ;; Deposit Yield
 ;; Called by yield-vault or market-pool to deposit earned yield for distribution
 ;; This function calculates and distributes yield to LPs based on their time-weighted balances
@@ -114,7 +134,16 @@
     ;; Only yield sources (vaults or pools) can deposit yield
     ;; In practice, this would be called by yield-vault or market-pool after harvesting
     ;; Using contract-caller to allow proper authorization through contract calls
-    (asserts! (or (is-eq contract-caller .yield-vault) (is-eq contract-caller .mock-zest-vault)) ERR-NOT-AUTHORIZED)
+    ;; Also allow CONTRACT-OWNER for testing purposes
+    (asserts!
+      (or
+        (is-eq contract-caller .yield-vault)
+        (is-eq contract-caller .mock-zest-vault)
+        (is-eq contract-caller .market-pool)
+        (is-eq contract-caller CONTRACT-OWNER)
+      )
+      ERR-NOT-AUTHORIZED
+    )
 
     ;; Update pool yield tracking
     (map-set pool-yield-earned pool (+ current-pool-yield yield-amount))
@@ -137,18 +166,22 @@
     (
       (lp-info (map-get? lp-time-weighted-balance { pool: pool, lp: lp }))
       (pool-yield (default-to u0 (map-get? pool-yield-earned pool)))
+      (total-lp-supply (default-to u0 (map-get? pool-total-lp-supply pool)))
       (has-claimed (default-to false (map-get? has-claimed-yield { pool: pool, lp: lp })))
     )
     ;; Check if user has already claimed for this pool
     (if has-claimed
       (ok u0)
-      ;; Check if LP has balance info
-      (if (is-none lp-info)
+      ;; Check if LP has balance info and pool has LP supply
+      (if (or (is-none lp-info) (is-eq total-lp-supply u0))
         (ok u0)
         ;; Calculate proportional share
-        ;; Note: In production, this would need to query the pool for total LP supply
-        (let ((lp-balance (get balance (unwrap! lp-info (ok u0)))))
-          (ok (/ (* lp-balance pool-yield) u1000000))  ;; Placeholder calculation
+        ;; Formula: (user_lp_balance * pool_yield_earned) / total_lp_supply
+        (let
+          (
+            (lp-balance (get balance (unwrap! lp-info (ok u0))))
+          )
+          (ok (/ (* lp-balance pool-yield) total-lp-supply))
         )
       )
     )
@@ -164,19 +197,20 @@
       (caller tx-sender)
       (lp-balance-info (map-get? lp-time-weighted-balance { pool: pool, lp: caller }))
       (pool-yield (default-to u0 (map-get? pool-yield-earned pool)))
+      (total-lp-supply (default-to u0 (map-get? pool-total-lp-supply pool)))
       (has-claimed (default-to false (map-get? has-claimed-yield { pool: pool, lp: caller })))
     )
     (asserts! (is-some lp-balance-info) ERR-NOT-INITIALIZED)
     (asserts! (not has-claimed) ERR-ALREADY-CLAIMED)
     (asserts! (> pool-yield u0) ERR-NO-YIELD-AVAILABLE)
+    (asserts! (> total-lp-supply u0) ERR-NOT-INITIALIZED)
 
     (let
       (
         (lp-info (unwrap! lp-balance-info ERR-NOT-INITIALIZED))
         (lp-balance (get balance lp-info))
-        ;; Calculate yield share (simplified - assumes LP balance is proportional to pool share)
-        ;; In production, this would query the pool for total LP supply
-        (yield-share (/ (* lp-balance pool-yield) u1000000))
+        ;; Calculate yield share: (user_lp_balance * pool_yield_earned) / total_lp_supply
+        (yield-share (/ (* lp-balance pool-yield) total-lp-supply))
       )
       (asserts! (> yield-share u0) ERR-NO-YIELD-AVAILABLE)
 
@@ -209,6 +243,10 @@
 ;; Read-only: Get yield earned for a specific pool
 (define-read-only (get-pool-yield-earned (pool principal))
   (ok (default-to u0 (map-get? pool-yield-earned pool))))
+
+;; Read-only: Get total LP supply for a pool
+(define-read-only (get-pool-total-lp-supply (pool principal))
+  (ok (default-to u0 (map-get? pool-total-lp-supply pool))))
 
 ;; Read-only: Get LP time-weighted balance
 (define-read-only (get-lp-time-weighted-balance (pool principal) (lp principal))

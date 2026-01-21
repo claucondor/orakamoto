@@ -65,13 +65,32 @@ describe('Mock Zest Vault', () => {
       expect(result.result).toBeErr(Cl.uint(102)); // ERR-ZERO-AMOUNT
     });
 
-    it('should reject supply from non-owner', () => {
-      // wallet1 tries to supply on behalf of wallet2
+    it('should allow supply on behalf of another user (shares go to owner)', () => {
+      // wallet1 supplies USDC, but shares go to wallet2
+      simnet.callPublicFn('mock-usdc', 'transfer',
+        [Cl.uint(100000000), Cl.standardPrincipal(wallet1), Cl.standardPrincipal(deployer), Cl.none()],
+        wallet1
+      );
+
       const result = simnet.callPublicFn('mock-zest-vault', 'supply',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet2)],
         wallet1
       );
-      expect(result.result).toBeErr(Cl.uint(100)); // ERR-NOT-AUTHORIZED
+      expect(result.result).toBeOk(Cl.bool(true));
+
+      // Check that wallet2 received the shares (not wallet1)
+      const balance2 = simnet.callReadOnlyFn('mock-zest-vault', 'get-balance',
+        [Cl.standardPrincipal(wallet2)],
+        wallet2
+      );
+      expect(balance2.result).toBeOk(Cl.uint(100000000));
+
+      // wallet1 should have 0 shares
+      const balance1 = simnet.callReadOnlyFn('mock-zest-vault', 'get-balance',
+        [Cl.standardPrincipal(wallet1)],
+        wallet1
+      );
+      expect(balance1.result).toBeOk(Cl.uint(0));
     });
 
     it('should calculate correct shares for subsequent deposits', () => {

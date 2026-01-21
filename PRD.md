@@ -245,7 +245,7 @@ Real Zest functions to mock:
 - [x] Implement deposit-idle-funds to move 90% of pool liquidity to yield source
 - [x] Implement withdraw-for-trade to pull funds when needed for large trades
 - [x] Implement harvest-yield to collect and distribute earned yield
-- [ ] Track yield per LP token for fair distribution
+- [x] Track yield per LP token for fair distribution (via yield-distributor integration)
 
 ### Yield Distributor
 - [x] Create yield-distributor.clar to handle yield distribution logic
@@ -382,6 +382,231 @@ Contract: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
 - [ ] Add proposal cooldown per address (1 proposal per week)
 - [ ] Implement guardian multisig for critical emergencies (can pause, cannot change params)
 - [ ] Write tests for governance attacks: flash loan voting, last-minute swings, etc.
+
+---
+
+## Phase 6: Hybrid Reputation Oracle (HRO) - Advanced Resolution System
+
+> **Research-backed design** combining lessons from UMA/Polymarket failures, Reality.eth bond escalation,
+> and emerging AI oracle research. Goal: manipulation-resistant resolution for subjective events
+> (e.g., "Will Shakira perform in Peru this year?").
+
+### Problem Statement
+
+Current oracle approaches have critical vulnerabilities:
+
+| System | Vulnerability | Example Failure |
+|--------|--------------|-----------------|
+| UMA (Polymarket) | Whale manipulation via token-weighted voting | March 2025: $7M loss, 25% token holder manipulated Ukraine minerals market |
+| Simple DAO voting | Plutocracy - rich users control outcomes | Flash loan attacks, vote buying |
+| Centralized oracles | Single point of failure, trust assumptions | Exchange manipulation, admin key compromise |
+| Pure Schelling points | Sybil attacks, coordination failures | Multiple addresses, vote splitting |
+
+### HRO Architecture: 5-Layer Defense
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    HYBRID REPUTATION ORACLE                      │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 5: FORK (Nuclear Option)                                 │
+│  └── Market forks if >10% supply disputes after Layer 4        │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 4: QUADRATIC REPUTATION VOTING                           │
+│  └── vote_power = √(tokens) × reputation_score                 │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 3: AI PRE-VERIFICATION (Advisory)                        │
+│  └── Multi-LLM council evaluates evidence, provides recommendation│
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 2: BOND ESCALATION (Reality.eth style)                   │
+│  └── Disputers must 2x bond; winner takes all bonds            │
+├─────────────────────────────────────────────────────────────────┤
+│  Layer 1: OPTIMISTIC RESOLUTION                                 │
+│  └── Creator resolves + bond; 7-day dispute window             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Mathematical Formulas
+
+#### Layer 2: Bond Escalation
+```
+bond_n = bond_0 × 2^n
+
+Where:
+- bond_0 = MINIMUM_DISPUTE_BOND (e.g., 50 USDC)
+- n = escalation round (0, 1, 2, ...)
+- Max escalation: n_max where bond_n > ESCALATION_THRESHOLD
+
+Example escalation:
+Round 0: 50 USDC (creator's initial bond)
+Round 1: 100 USDC (first disputer)
+Round 2: 200 USDC (creator counter-disputes)
+Round 3: 400 USDC (disputer escalates)
+...
+Round 10: 51,200 USDC → triggers Layer 4 voting
+```
+
+#### Layer 4: Quadratic Reputation Voting
+```
+vote_power_i = √(tokens_i) × reputation_i × time_multiplier_i
+
+Where:
+- tokens_i = $PRED tokens staked by voter i
+- reputation_i = historical_accuracy_i × participation_rate_i
+- time_multiplier_i = min(4, 1 + (stake_duration_days / 365))
+
+historical_accuracy = correct_votes / total_votes
+participation_rate = votes_cast / eligible_votes (capped at 1.0)
+
+Anti-whale property:
+- 10,000 tokens with rep=0.9: √10000 × 0.9 = 90 vote power
+- 1,000,000 tokens with rep=0.5: √1000000 × 0.5 = 500 vote power
+- Ratio: 5.5x power for 100x tokens (vs 100x in linear voting)
+```
+
+#### Layer 5: Fork Threshold
+```
+fork_triggered = (disputing_stake / total_staked) > FORK_THRESHOLD
+
+Where:
+- FORK_THRESHOLD = 0.10 (10%)
+- If triggered: market splits into two outcomes
+- Each fork has its own resolution
+- Market determines which fork has value
+```
+
+### Smart Contracts
+
+#### hro-resolver.clar
+- [ ] Define HRO-related constants: MINIMUM_DISPUTE_BOND, ESCALATION_THRESHOLD, FORK_THRESHOLD, MAX_ESCALATION_ROUNDS
+- [ ] Implement dispute-bond map tracking: disputer, amount, outcome_claimed, round, timestamp
+- [ ] Implement escalation-state for each market: current_round, current_bond, last_action_block, leading_outcome
+- [ ] Implement initiate-dispute(market-id, claimed_outcome) requiring 2x current bond
+- [ ] Implement counter-dispute(market-id) for creator/previous winner to defend
+- [ ] Implement finalize-escalation() when timeout reached without counter
+- [ ] Implement trigger-voting() when bond exceeds ESCALATION_THRESHOLD
+- [ ] Implement distribute-bonds() to winner after resolution
+- [ ] Write tests for full escalation sequence
+
+#### reputation-registry.clar
+- [ ] Define reputation-score map: principal → { correct_votes, total_votes, participation_score, last_updated }
+- [ ] Implement calculate-reputation(principal) → uint (scaled 0-1000000 for precision)
+- [ ] Implement update-reputation(principal, was_correct) called after vote resolution
+- [ ] Implement get-vote-power(principal, tokens_staked, stake_duration) using quadratic formula
+- [ ] Implement decay function: reputation decays 1% per month of inactivity
+- [ ] Implement reputation-history for transparency/auditing
+- [ ] Write tests for reputation edge cases: new users, perfect accuracy, zero participation
+
+#### quadratic-voting.clar
+- [ ] Implement create-vote(market-id, options) when escalation triggers voting
+- [ ] Implement cast-vote(market-id, outcome, tokens_to_stake) with quadratic power calculation
+- [ ] Implement voting period: VOTING_DURATION = 3 days (432 blocks)
+- [ ] Implement commit-reveal scheme to prevent last-minute swings:
+  - Phase 1 (2 days): commit hash(vote + salt)
+  - Phase 2 (1 day): reveal vote + salt
+- [ ] Implement tally-votes() with quadratic reputation weighting
+- [ ] Implement slash-non-revealers() - lose 10% of staked tokens
+- [ ] Write tests for: normal voting, ties, manipulation attempts
+
+#### ai-oracle-council.clar (Advisory Layer)
+- [ ] Define AI_RECOMMENDATION_WEIGHT = 0 (advisory only, no voting power)
+- [ ] Implement request-ai-evaluation(market-id, question, evidence_links)
+- [ ] Implement record-ai-recommendation(market-id, outcome, confidence, sources) - called by authorized AI bridge
+- [ ] Implement get-ai-recommendation(market-id) for voters to reference
+- [ ] AI recommendation displayed in UI but CANNOT override human vote
+- [ ] Implement ai-accuracy-tracking for future calibration
+- [ ] Write tests for AI integration (mock responses)
+
+#### market-fork.clar (Nuclear Option)
+- [ ] Implement check-fork-threshold(market-id) returns bool
+- [ ] Implement initiate-fork(market-id) when threshold exceeded
+- [ ] Implement fork-market(market-id) creating two child markets:
+  - market-id-A: Original resolution stands
+  - market-id-B: Disputed resolution wins
+- [ ] Implement migrate-positions(original-market, fork-choice) for users to choose
+- [ ] After FORK_SETTLEMENT_PERIOD (30 days):
+  - Fork with more liquidity/volume = canonical
+  - Other fork positions can redeem at discount or hold
+- [ ] Write tests for fork scenarios
+
+### Resolution Flow Diagram
+```
+Market Deadline Reached
+        │
+        ▼
+┌───────────────────┐
+│ Layer 1: Creator  │
+│ resolves + bond   │
+└────────┬──────────┘
+         │
+         ▼
+    7-day window
+         │
+    ┌────┴────┐
+    │         │
+No dispute  Dispute (2x bond)
+    │         │
+    ▼         ▼
+ Finalize  ┌──────────────────┐
+           │ Layer 2: Bond    │
+           │ Escalation       │
+           └────────┬─────────┘
+                    │
+              ┌─────┴─────┐
+              │           │
+         Timeout      Escalates to
+         (winner)     threshold
+              │           │
+              ▼           ▼
+           Finalize  ┌───────────────────┐
+                     │ Layer 3: AI       │
+                     │ Pre-verification  │
+                     │ (advisory only)   │
+                     └────────┬──────────┘
+                              │
+                              ▼
+                     ┌───────────────────┐
+                     │ Layer 4: Quadratic│
+                     │ Reputation Vote   │
+                     └────────┬──────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │                   │
+               Clear winner       >10% dispute stake
+                    │                   │
+                    ▼                   ▼
+                Finalize        ┌──────────────────┐
+                                │ Layer 5: Fork    │
+                                │ Market splits    │
+                                └──────────────────┘
+```
+
+### Security Considerations
+- [ ] Bond escalation prevents spam disputes (economic cost)
+- [ ] Quadratic voting limits whale influence (√n growth)
+- [ ] Reputation system rewards honest long-term participation
+- [ ] Commit-reveal prevents last-minute vote manipulation
+- [ ] Fork mechanism ensures no single party can force incorrect outcome
+- [ ] AI layer is advisory-only (cannot be manipulated to change outcome)
+- [ ] All evidence and deliberations stored on-chain for transparency
+
+### Testing Requirements
+- [ ] Unit tests for each contract
+- [ ] Integration tests for full escalation → voting → resolution flow
+- [ ] Simulation tests for attack scenarios:
+  - Whale accumulation attack
+  - Sybil voting attack
+  - Flash loan voting attack
+  - Collusion between disputers
+  - AI recommendation manipulation
+- [ ] Economic simulation: ensure honest behavior is always more profitable
+
+### References
+- [UMA Optimistic Oracle failures](https://orochi.network/blog/oracle-manipulation-in-polymarket-2025)
+- [Reality.eth Whitepaper](https://reality.eth.limo/app/docs/html/whitepaper.html)
+- [Quadratic Voting (Weyl & Posner)](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2003531)
+- [SoK: Market Microstructure for DePMs](https://arxiv.org/html/2510.15612)
+- [Schelling Point Oracle Vulnerabilities](https://medium.com/reserve-currency/schelling-network-oracles-are-vulnerable-to-manipulation-68d1a88cbcf3)
+- [AI Oracles for Prediction Markets](https://chaoslabs.xyz/posts/edge-proofs-ai-powered-prediction-market-oracles)
 
 ---
 

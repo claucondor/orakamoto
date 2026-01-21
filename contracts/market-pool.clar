@@ -11,6 +11,7 @@
 (define-constant CREATOR-FEE-SHARE-BP u1000)    ;; 10% of fees go to creator
 (define-constant PROTOCOL-FEE-SHARE-BP u2000)   ;; 20% of fees go to protocol
 (define-constant DISPUTE-WINDOW u1008)          ;; ~7 days in blocks (144 blocks/day * 7)
+(define-constant YIELD-DISTRIBUTION-THRESHOLD u1000000)  ;; Minimum 1 USDC to distribute yield
 
 ;; Error Constants
 (define-constant ERR-NOT-AUTHORIZED (err u1000))
@@ -31,6 +32,7 @@
 (define-constant ERR-DISPUTE-ALREADY-CLOSED (err u1015))
 (define-constant ERR-ALREADY-DEPOSITED (err u1016))
 (define-constant ERR-INSUFFICIENT-IDLE-LIQUIDITY (err u1017))
+(define-constant ERR-NO-YIELD-TO-DISTRIBUTE (err u1018))
 
 ;; Data Variables - Market State
 (define-data-var market-question (string-utf8 256) u"")
@@ -234,6 +236,12 @@
       ;; Mint LP tokens
       (map-set lp-balances caller (+ current-lp-balance lp-tokens-to-mint))
 
+      ;; Update yield-distributor with LP balance changes
+      ;; Update caller's LP balance
+      (try! (contract-call? .yield-distributor update-lp-balance (as-contract tx-sender) caller (+ current-lp-balance lp-tokens-to-mint)))
+      ;; Update total LP supply
+      (try! (contract-call? .yield-distributor update-pool-lp-supply (as-contract tx-sender) (+ current-total lp-tokens-to-mint)))
+
       (print { event: "liquidity-added", provider: caller, amount: amount, lp-tokens: lp-tokens-to-mint })
       (ok lp-tokens-to-mint)
     )
@@ -282,6 +290,12 @@
 
       ;; Burn LP tokens
       (map-set lp-balances caller (- current-lp-balance lp-amount))
+
+      ;; Update yield-distributor with LP balance changes
+      ;; Update caller's LP balance
+      (try! (contract-call? .yield-distributor update-lp-balance (as-contract tx-sender) caller (- current-lp-balance lp-amount)))
+      ;; Update total LP supply
+      (try! (contract-call? .yield-distributor update-pool-lp-supply (as-contract tx-sender) (- current-total-lp lp-amount)))
 
       ;; Transfer USDC back to user
       (try! (as-contract (contract-call? .mock-usdc transfer total-return tx-sender caller none)))
@@ -710,5 +724,60 @@
       deposited-to-yield: deposited,
       total-available: (+ yes-res no-res)
     })
+  )
+)
+
+;; Harvest and Distribute Yield
+;; Harvests yield from the yield source and distributes it to LPs via the yield-distributor
+;; This function can be called by anyone to trigger yield distribution
+;; The yield is calculated from accumulated trading fees
+(define-public (harvest-and-distribute-yield)
+  (let
+    (
+      (caller tx-sender)
+      (accumulated (var-get accumulated-fees))
+      (lp-fee-pool (/ (* accumulated LP-FEE-SHARE-BP) u10000))
+    )
+    (asserts! (var-get is-initialized) ERR-NOT-INITIALIZED)
+    (asserts! (> lp-fee-pool YIELD-DISTRIBUTION-THRESHOLD) ERR-NO-YIELD-TO-DISTRIBUTE)
+
+    ;; Transfer LP fee portion to yield-distributor for distribution
+    ;; The yield-distributor will track this yield and allow LPs to claim it
+    (try! (contract-call? .yield-distributor deposit-yield (as-contract tx-sender) lp-fee-pool))
+
+    ;; Reset accumulated fees (they've been distributed as yield)
+    (var-set accumulated-fees (- accumulated lp-fee-pool))
+
+    (print
+      {
+        event: "yield-harvested-and-distributed",
+        amount: lp-fee-pool,
+        remaining-accumulated: (- accumulated lp-fee-pool),
+        distributor: .yield-distributor
+      }
+    )
+    (ok lp-fee-pool)
+  )
+)
+
+;; Read-only: Get pending yield for a specific LP
+(define-read-only (get-pending-yield-for-lp (lp principal))
+  (ok (contract-call? .yield-distributor calculate-pending-yield (as-contract tx-sender) lp))
+)
+
+;; Claim Yield
+;; Allows LPs to claim their accumulated yield from the yield-distributor
+(define-public (claim-yield)
+  (let
+    (
+      (caller tx-sender)
+    )
+    (asserts! (var-get is-initialized) ERR-NOT-INITIALIZED)
+
+    ;; Call yield-distributor to claim yield
+    (try! (contract-call? .yield-distributor claim-yield (as-contract tx-sender)))
+
+    (print { event: "yield-claimed", lp: caller })
+    (ok true)
   )
 )
