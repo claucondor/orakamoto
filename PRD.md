@@ -318,7 +318,7 @@ Contract: SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4
 - [x] Implement mint function restricted to reward contracts
 - [x] Implement burn function for token holders
 - [x] Add delegate function for vote delegation
-- [ ] Create vesting-vault.clar for team/investor vesting with cliff and linear unlock
+- [x] Create vesting-vault.clar for team/investor vesting with cliff and linear unlock
 
 ### Reward Distribution
 - [ ] Create lp-rewards.clar to distribute $PRED to LPs based on time-weighted liquidity

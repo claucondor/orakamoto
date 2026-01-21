@@ -107,3 +107,80 @@ Created the oracle-resolver.clar contract that enables markets to be automatical
 - `clarinet check` passes with only informational warnings (no errors)
 - Contract compiles successfully
 - Total test count: 295 passed / 312 (17 pre-existing failures in other test files unrelated to oracle-resolver)
+
+---
+
+## 2026-01-20: Implemented Vesting Vault Contract (Phase 5 - Governance)
+
+### Summary
+Created the vesting-vault.clar contract that handles token vesting for team members, investors, and early contributors. The contract supports flexible vesting schedules with configurable cliff periods and linear unlock over the vesting duration.
+
+### Changes Made
+
+1. **contracts/vesting-vault.clar** (new file):
+   - Error constants:
+     - `ERR-NOT-AUTHORIZED` (u600) - Only contract owner or beneficiary can call
+     - `ERR-ZERO-AMOUNT` (u601) - Amount must be greater than zero
+     - `ERR-ALREADY-VESTED` (u602) - Schedule is already fully vested or revoked
+     - `ERR-NO-VESTING-FOUND` (u603) - Schedule ID doesn't exist
+     - `ERR-CLIFF-NOT-REACHED` (u604) - Cliff period hasn't passed
+     - `ERR-INSUFFICIENT-CLAIMABLE` (u605) - No tokens available to claim
+     - `ERR-INVALID-SCHEDULE` (u606) - Invalid schedule parameters
+     - `ERR-ALREADY-CLAIMED` (u607) - Tokens already claimed
+     - `ERR-ALREADY-REVOKED` (u608) - Schedule already revoked
+   - Vesting schedule structure:
+     - `beneficiary`: Principal receiving vested tokens
+     - `total-amount`: Total tokens to vest
+     - `claimed-amount`: Tokens already claimed
+     - `start-block`: Block height when vesting begins
+     - `cliff-duration`: Blocks before any tokens can be claimed
+     - `vesting-duration`: Blocks over which tokens vest linearly
+     - `is-revoked`: Whether the schedule has been revoked
+   - Data maps:
+     - `vesting-schedules`: Maps schedule ID to vesting schedule
+     - `beneficiary-schedules`: Maps beneficiary to list of their schedule IDs
+   - Sequential schedule ID counter
+   - Public functions:
+     - `create-vesting-schedule`: Create new vesting schedule (owner only)
+     - `claim`: Beneficiary claims vested tokens
+     - `revoke-schedule`: Owner revokes schedule, returns unvested tokens
+     - `claim-revoked`: Owner claims remaining tokens from revoked schedule
+   - Read-only functions:
+     - `get-vesting-schedule`: Get schedule details by ID
+     - `get-beneficiary-schedules`: Get all schedule IDs for a beneficiary
+     - `get-claimable-amount`: Calculate tokens claimable now
+     - `is-fully-vested`: Check if schedule is complete
+     - `get-total-vested`: Get total vested amount (including claimed)
+     - `get-schedule-id-counter`: Get current counter value
+
+2. **Clarinet.toml**:
+   - Added vesting-vault contract configuration with sip-010-trait dependency
+
+3. **tests/vesting-vault.test.ts** (new file):
+   - 34 comprehensive tests covering:
+     - Schedule creation with validation
+     - Schedule retrieval by ID and beneficiary
+     - Claimable amount calculations (before cliff, during vesting, after completion)
+     - Claim function with beneficiary authorization
+     - Revoke schedule functionality
+     - Claim revoked tokens by owner
+     - Error handling for edge cases
+     - Real-world scenarios:
+       - Team member vesting (3 years with 1 year cliff)
+       - Investor vesting (2 years, no cliff)
+       - Multiple beneficiaries with different schedules
+
+### Design Notes
+- Uses `contract-caller` for authorization (secure against phishing)
+- Linear vesting formula: `vested = total * (elapsed - cliff) / vesting-duration`
+- Cliff period: No tokens can be claimed before cliff ends
+- After vesting completes: All remaining tokens become claimable
+- Revocation: Returns unvested tokens to contract owner immediately
+- Schedule IDs are sequential starting from 1
+- Maximum 20 schedules per beneficiary (configurable via list length)
+
+### Verification
+- All 34 vesting-vault tests pass
+- `clarinet check` passes (14 contracts checked, no errors)
+- Contract compiles successfully
+- Total test count: 329 passed / 346 (17 pre-existing failures in other test files unrelated to vesting-vault)

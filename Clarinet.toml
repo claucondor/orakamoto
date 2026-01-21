@@ -53,6 +53,10 @@ depends_on = ["oracle-trait"]
 path = "contracts/governance-token.clar"
 depends_on = ["sip-010-trait"]
 
+[contracts.vesting-vault]
+path = "contracts/vesting-vault.clar"
+depends_on = ["sip-010-trait"]
+
 [repl.analysis]
 passes = ["check_checker"]
 check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }
