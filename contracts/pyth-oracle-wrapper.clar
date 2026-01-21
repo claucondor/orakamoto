@@ -177,7 +177,7 @@
 
 ;; Check if an asset is supported
 (define-read-only (is-asset-supported (asset (string-ascii 32)))
-  (is-some (map-get? price-feed-ids asset))
+  (ok (is-some (map-get? price-feed-ids asset)))
 )
 
 ;; Get the underlying oracle info

@@ -18,9 +18,9 @@ describe('Pyth Oracle Wrapper', () => {
       expect(true).toBe(true); // Just verify contract compiles
     });
 
-    it('should have correct Pyth oracle contract address', () => {
-      const result = simnet.callReadOnlyFn('pyth-oracle-wrapper', 'get-pyth-oracle-contract', [], wallet1);
-      expect(result.result).toBeOk(Cl.stringAscii('SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4'));
+    it('should have correct oracle mode', () => {
+      const result = simnet.callReadOnlyFn('pyth-oracle-wrapper', 'get-oracle-mode', [], wallet1);
+      expect(result.result).toBeOk(Cl.stringAscii('devnet-mock-oracle'));
     });
   });
 
