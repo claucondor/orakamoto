@@ -76,7 +76,174 @@ After USDCx arrives on Stacks:
 
 ---
 
-## 2026-01-22: PRDV2 - USDCx Integration (Task 1.4 & 1.5)
+## 2026-01-22: PRDV2 - USDCx Integration (Tasks 1.4, 1.5, 1.6, 2.1-2.12, 3.1-3.2, 4.1-4.2)
+
+### Summary
+Completed all remaining tasks from PRDV2-ralphy.md: Phase 1 (Contract Updates), Phase 2 (Frontend Components), Phase 3 (Testing Scripts), and Phase 4 (Documentation). This prepares the complete USDCx integration MVP for deployment.
+
+### Changes Made
+
+#### Phase 1: Contract Updates (Tasks 1.4 & 1.5)
+1. **contracts/yield-vault.clar** (3 references updated):
+   - Added USDCX-CONTRACT constant with official Circle testnet address
+   - Updated `supply`, `withdraw`, and `withdraw-for-trade` functions
+
+2. **contracts/mocks/mock-zest-vault.clar** (2 references updated):
+   - Added USDCX-CONTRACT constant
+   - Updated `supply` and `withdraw` functions
+
+3. **contracts/multi-outcome-pool.clar** (6 references updated):
+   - Added USDCX-CONTRACT constant
+   - Updated 6 token transfer functions
+
+4. **Task 1.6**: Created docs/USDCX-INTEGRATION.md with:
+   - List of all modified contracts
+   - Steps to update USDCx principal
+   - Deployment checklist
+   - Testing checklist
+
+#### Phase 2: Frontend Components (Tasks 2.1-2.12)
+1. **Task 2.1**: Created frontend directory structure
+   - frontend/app/
+   - frontend/components/
+   - frontend/lib/
+
+2. **Task 2.2**: Created frontend/package.json with Next.js and Stacks dependencies
+
+3. **Task 2.3**: Created frontend/tailwind.config.ts
+
+4. **Task 2.4**: Created frontend/next.config.js
+
+5. **Task 2.5**: Created frontend/tsconfig.json
+
+6. **Task 2.6**: Created frontend/app/globals.css with Tailwind directives
+
+7. **Task 2.7**: Created frontend/app/layout.tsx (Root Layout)
+
+8. **Task 2.8**: Created frontend/components/WalletConnect.tsx
+   - Connect/disconnect Stacks wallet
+   - Display connected address
+
+9. **Task 2.9**: Created frontend/components/USDCxBalance.tsx
+   - Fetches USDCx balance from contract
+   - Displays formatted balance
+
+10. **Task 2.10**: Created frontend/app/page.tsx (Home Page)
+    - Wallet connection
+    - USDCx balance display
+    - Quick actions (Create Market, Browse Markets)
+
+11. **Task 2.11**: Created frontend/app/create/page.tsx (Market Creation)
+    - Form for market question, deadline, liquidity
+    - Contract call to create market
+
+12. **Task 2.12**: Created frontend/app/markets/page.tsx (Placeholder)
+    - Placeholder page for markets list
+
+#### Phase 3: Testing Scripts (Tasks 3.1-3.2)
+1. **Task 3.1**: Created scripts/test-create-market-usdcx.mjs
+   - Programmatic market creation script
+   - Uses @stacks/transactions for contract calls
+   - Made executable with chmod +x
+
+2. **Task 3.2**: Created frontend/README.md
+   - Setup instructions
+   - Development commands
+   - Build/deploy instructions
+   - Configuration notes
+
+#### Phase 4: Documentation (Tasks 4.1-4.2)
+1. **Task 4.1**: Created docs/INTEGRATION-GUIDE.md
+   - Architecture overview
+   - List of modified contracts
+   - Integration steps
+   - Testing instructions
+   - Deployment addresses
+   - Bridge transaction details
+
+2. **Task 4.2**: Created docs/DEPLOYMENT-CHECKLIST.md
+   - Pre-deployment checklist
+   - Contract deployment steps
+   - Frontend deployment steps
+   - Testing checklist
+   - Hackathon submission checklist
+
+### Files Created/Modified
+
+#### New Files Created:
+1. frontend/package.json
+2. frontend/tailwind.config.ts
+3. frontend/next.config.js
+4. frontend/tsconfig.json
+5. frontend/app/globals.css
+6. frontend/app/layout.tsx
+7. frontend/app/page.tsx
+8. frontend/app/create/page.tsx
+9. frontend/app/markets/page.tsx
+10. frontend/components/WalletConnect.tsx
+11. frontend/components/USDCxBalance.tsx
+12. scripts/test-create-market-usdcx.mjs
+13. frontend/README.md
+14. docs/INTEGRATION-GUIDE.md
+15. docs/DEPLOYMENT-CHECKLIST.md
+
+#### Files Modified:
+1. PRDV2-ralphy.md - All tasks marked complete
+
+### USDCx Integration Overview
+
+**What is USDCx?**
+- USDC-backed stablecoin on Stacks via Circle xReserve
+- 1:1 backed by real USDC on Ethereum
+- SIP-010 standard, 6 decimals
+- Bridge: Circle xReserve (~15 min from Ethereum)
+
+**Contract Address Used:**
+```
+ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx
+```
+
+**Key Difference from mock-usdc:**
+- mock-usdc: Anyone can mint via faucet (unlimited)
+- USDCx: Only via xReserve bridge (backed 1:1)
+
+### Frontend Architecture
+
+**Tech Stack:**
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- @stacks/connect (Wallet connection)
+- @stacks/transactions (Contract calls)
+
+**Pages:**
+- `/` - Home page with wallet connect and balance
+- `/create` - Create new prediction market
+- `/markets` - Browse markets (placeholder)
+
+**Components:**
+- `WalletConnect` - Stacks wallet connection
+- `USDCxBalance` - Display USDCx balance
+
+### Verification
+
+- All contracts updated with USDCx principal
+- Frontend structure created with all required files
+- Testing scripts written and made executable
+- Complete documentation for deployment
+- Code ready for human to deploy and test
+
+### Next Steps (for Human)
+
+1. Wait for USDCx to arrive on Stacks (~15 min from bridge tx)
+2. Update TODO comments with real deployed contract addresses
+3. Run `clarinet check` to verify contracts
+4. Deploy contracts to testnet
+5. Install frontend dependencies: `cd frontend && npm install`
+6. Deploy frontend to Vercel
+7. Test end-to-end flow
+8. Record demo video
+9. Submit to hackathon
 
 ### Summary
 Completed Tasks 1.4 and 1.5 from PRDV2-ralphy.md: Updated all remaining contracts with mock-usdc references to use the official USDCx contract principal from Circle xReserve. This completes Phase 1 (Contract Updates for USDCx) of the integration.
