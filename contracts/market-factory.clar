@@ -6,6 +6,12 @@
 (define-constant DEFAULT-RESOLUTION-WINDOW u1008)  ;; ~7 days in blocks (144 blocks/day * 7)
 (define-constant CONTRACT-OWNER tx-sender)
 
+;; USDCx Contract (Circle xReserve - 1:1 backed by USDC on Ethereum)
+;; Testnet: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx
+;; Mainnet: SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx
+;; TODO: Update this principal when USDCx arrives
+(define-constant USDCX-CONTRACT 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx)
+
 ;; Constants for Multi-Outcome Markets
 (define-constant MAX-OUTCOMES u10)
 (define-constant MIN-OUTCOMES u2)
@@ -128,7 +134,7 @@
 
     ;; Transfer collateral from creator to contract
     ;; This acts as both initial liquidity and creator collateral
-    (try! (contract-call? .mock-usdc transfer collateral caller (as-contract tx-sender) none))
+    (try! (contract-call? USDCX-CONTRACT transfer collateral caller (as-contract tx-sender) none))
 
     ;; Create market entry for binary market
     (map-set markets
@@ -235,7 +241,7 @@
 
     ;; Transfer collateral from creator to contract
     ;; This acts as both initial liquidity and creator collateral
-    (try! (contract-call? .mock-usdc transfer collateral caller (as-contract tx-sender) none))
+    (try! (contract-call? USDCX-CONTRACT transfer collateral caller (as-contract tx-sender) none))
 
     ;; Create market entry for multi-outcome market
     (map-set markets
