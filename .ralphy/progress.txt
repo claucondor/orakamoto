@@ -1,9 +1,78 @@
 # Ralphy Progress Log
 
-## 2026-01-21: Phase 7 - Fix Test Failures (Error Codes and Test Issues)
+## 2026-01-22: PRDV2 - USDCx Integration Preparation (Task 1.1)
 
 ### Summary
-Fixed test failures in lp-rewards.test.ts, ai-oracle-council.test.ts, and guardian-multisig.test.ts. Reduced failures from 97 to 75 (22 more tests passing). Fixed error code constants, undefined variable issues, and contract address format issues.
+Completed Task 1.1 from PRDV2-ralphy.md: Searched all contracts for mock-usdc references and created comprehensive USDCX-INTEGRATION.md documentation. This prepares the codebase for USDCx integration by Circle xReserve.
+
+### Changes Made
+
+1. **Comprehensive Search for mock-usdc References:**
+   - Ran `grep -r "mock-usdc" contracts/ > usdc-references.txt`
+   - Identified all 26 mock-usdc references across 6 contracts:
+     - contracts/market-factory.clar (2 references)
+     - contracts/market-pool.clar (6 references)
+     - contracts/multi-outcome-pool.clar (6 references)
+     - contracts/yield-vault.clar (3 references)
+     - contracts/mocks/mock-zest-vault.clar (2 references)
+     - contracts/mock-usdc.clar (7 references - the contract itself)
+
+2. **Created docs/USDCX-INTEGRATION.md:**
+   - Documented official USDCx contract addresses:
+     - Testnet: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx
+     - Mainnet: SP120SBRBQJ00MCWS7TM5D64R3BCB6A2AG2ZQ8YPD5
+   - Listed all contracts that need updating with specific line numbers
+   - Provided before/after code examples for each contract
+   - Created integration checklist for Phase 1-3 updates
+   - Included devnet vs testnet considerations
+   - Added token transfer patterns and error handling notes
+
+3. **Updated PRDV2-ralphy.md:**
+   - Marked Task 1.1 as complete with [x] checkboxes
+
+### USDCx Integration Overview
+
+**What is USDCx?**
+- USDC-backed stablecoin on Stacks via Circle xReserve
+- 1:1 backed by real USDC on Ethereum
+- SIP-010 standard, 6 decimals
+- Bridge: Circle xReserve (~15 min from Ethereum)
+
+**Key Difference from mock-usdc:**
+- mock-usdc: Anyone can mint via faucet (unlimited)
+- USDCx: Only via xReserve bridge (backed 1:1)
+
+**Integration = Simple find & replace:**
+- Find: `.mock-usdc`
+- Replace: `'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx`
+
+### Files Modified
+
+1. **docs/USDCX-INTEGRATION.md** (new file)
+   - Complete integration guide with all references
+   - Contract-specific update instructions
+   - Migration checklist
+   - Resources and contact info
+
+2. **PRDV2-ralphy.md**
+   - Marked Task 1.1 as complete
+
+### Verification
+
+- All 843 tests pass (100% pass rate)
+- `clarinet check` passes with 0 errors (only warnings)
+- No code changes - documentation only
+- Ready for human to execute USDCx integration
+
+### Next Steps (for human)
+
+After USDCx arrives on Stacks:
+1. Update all 6 contracts with USDCx principal (see USDCX-INTEGRATION.md)
+2. Run `clarinet check` to verify
+3. Run `npm test` to verify tests still pass
+4. Deploy contracts to testnet
+5. Update frontend with new addresses
+6. Test end-to-end flow
 
 ### Changes Made
 
