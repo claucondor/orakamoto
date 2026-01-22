@@ -11,6 +11,12 @@
 (define-constant TOKEN-SYMBOL "zUSDC")
 (define-constant TOKEN-DECIMALS u6)
 
+;; USDCx Contract (Circle xReserve - 1:1 backed by USDC on Ethereum)
+;; Testnet: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx
+;; Mainnet: SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx
+;; TODO: Update this principal when USDCx arrives
+(define-constant USDCX-CONTRACT 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx)
+
 ;; Error constants
 (define-constant ERR-NOT-AUTHORIZED (err u100))
 (define-constant ERR-NOT-TOKEN-OWNER (err u101))
@@ -74,9 +80,9 @@
     )
     (asserts! (> amount u0) ERR-ZERO-AMOUNT)
 
-    ;; Transfer USDC from caller (contract-caller) to this vault contract
-    ;; When market-pool calls supply, it transfers its own USDC
-    (try! (contract-call? .mock-usdc transfer amount caller (as-contract tx-sender) none))
+    ;; Transfer USDCx from caller (contract-caller) to this vault contract
+    ;; When market-pool calls supply, it transfers its own USDCx
+    (try! (contract-call? USDCX-CONTRACT transfer amount caller (as-contract tx-sender) none))
 
     ;; Calculate shares to mint
     ;; If first deposit: 1:1 ratio
@@ -137,8 +143,8 @@
       ;; Burn zUSDC shares
       (try! (ft-burn? z-usdc amount owner))
 
-      ;; Transfer USDC back to user
-      (try! (as-contract (contract-call? .mock-usdc transfer usdc-out tx-sender owner none)))
+      ;; Transfer USDCx back to user
+      (try! (as-contract (contract-call? USDCX-CONTRACT transfer usdc-out tx-sender owner none)))
 
       (print {event: "withdraw", withdrawer: caller, owner: owner, shares-burned: amount, usdc-returned: usdc-out})
       (ok usdc-out)

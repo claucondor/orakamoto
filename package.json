@@ -19,6 +19,7 @@
     "@types/node": "^24.4.0",
     "bip39": "^3.1.0",
     "chokidar-cli": "^3.0.0",
+    "viem": "^2.44.4",
     "vitest": "^4.0.7",
     "vitest-environment-clarinet": "^3.0.0"
   }

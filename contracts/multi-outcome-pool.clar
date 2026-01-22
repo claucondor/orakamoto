@@ -13,6 +13,12 @@
 (define-constant MAX-OUTCOMES u10)              ;; Maximum 10 outcomes per market
 (define-constant LMSR-B-PRECISION u1000000)     ;; Precision for LMSR liquidity parameter b
 
+;; USDCx Contract (Circle xReserve - 1:1 backed by USDC on Ethereum)
+;; Testnet: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx
+;; Mainnet: SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx
+;; TODO: Update this principal when USDCx arrives
+(define-constant USDCX-CONTRACT 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx)
+
 ;; Error Constants
 (define-constant ERR-NOT-AUTHORIZED (err u2000))
 (define-constant ERR-MARKET-NOT-ACTIVE (err u2001))
@@ -203,7 +209,7 @@
     (asserts! (> b u0) ERR-ZERO-AMOUNT)
 
     ;; Transfer initial liquidity from creator
-    (try! (contract-call? .mock-usdc transfer initial-liquidity caller (as-contract tx-sender) none))
+    (try! (contract-call? USDCX-CONTRACT transfer initial-liquidity caller (as-contract tx-sender) none))
 
     ;; Set market parameters
     (var-set market-question question)
@@ -312,8 +318,8 @@
     (asserts! (not (var-get is-resolved)) ERR-MARKET-ALREADY-RESOLVED)
     (asserts! (> amount u0) ERR-ZERO-AMOUNT)
 
-    ;; Transfer USDC from user to contract
-    (try! (contract-call? .mock-usdc transfer amount caller (as-contract tx-sender) none))
+    ;; Transfer USDCx from user to contract
+    (try! (contract-call? USDCX-CONTRACT transfer amount caller (as-contract tx-sender) none))
 
     ;; Calculate LP tokens to mint
     (let
@@ -370,8 +376,8 @@
       ;; Burn LP tokens
       (map-set lp-balances caller (- current-lp-balance lp-amount))
 
-      ;; Transfer USDC back to user
-      (try! (as-contract (contract-call? .mock-usdc transfer total-return tx-sender caller none)))
+      ;; Transfer USDCx back to user
+      (try! (as-contract (contract-call? USDCX-CONTRACT transfer total-return tx-sender caller none)))
 
       (print {
         event: "liquidity-removed",
@@ -418,8 +424,8 @@
       )
       (asserts! (>= tokens-out min-tokens-out) ERR-SLIPPAGE-TOO-HIGH)
 
-      ;; Transfer USDC from user to contract
-      (try! (contract-call? .mock-usdc transfer amount caller (as-contract tx-sender) none))
+      ;; Transfer USDCx from user to contract
+      (try! (contract-call? USDCX-CONTRACT transfer amount caller (as-contract tx-sender) none))
 
       ;; Accumulate fees
       (var-set accumulated-fees (+ (var-get accumulated-fees) fee))
@@ -477,8 +483,8 @@
       ;; Debit outcome tokens from user
       (map-set outcome-balances { owner: caller, outcome: outcome } (- current-balance token-amount))
 
-      ;; Transfer USDC back to user
-      (try! (as-contract (contract-call? .mock-usdc transfer usdc-out-net tx-sender caller none)))
+      ;; Transfer USDCx back to user
+      (try! (as-contract (contract-call? USDCX-CONTRACT transfer usdc-out-net tx-sender caller none)))
 
       (print { event: "outcome-sold", seller: caller, outcome: outcome, tokens-sold: token-amount, usdc-received: usdc-out-net, fee: fee })
       (ok usdc-out-net)
@@ -539,7 +545,7 @@
       (map-set outcome-balances { owner: caller, outcome: win-outcome } u0)
 
       ;; Transfer winnings (1:1 with winning tokens)
-      (try! (as-contract (contract-call? .mock-usdc transfer winner-balance tx-sender caller none)))
+      (try! (as-contract (contract-call? USDCX-CONTRACT transfer winner-balance tx-sender caller none)))
 
       (print { event: "winnings-claimed", winner: caller, amount: winner-balance })
       (ok winner-balance)

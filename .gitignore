@@ -14,3 +14,8 @@ coverage
 costs-reports.json
 node_modules
 deployments/
+
+# PRD documents
+PRD.md
+PRD-*.md
+PRDV2*.md
