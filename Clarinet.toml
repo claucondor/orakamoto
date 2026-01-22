@@ -11,138 +11,138 @@ contract_id = 'SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4'
 
 [contracts.ai-oracle-council]
 path = 'contracts/ai-oracle-council.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.creator-rewards]
 path = 'contracts/creator-rewards.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.dispute]
 path = 'contracts/dispute.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.governance]
 path = 'contracts/governance.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.governance-token]
 path = 'contracts/governance-token.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.guardian-multisig]
 path = 'contracts/guardian-multisig.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.hro-resolver]
 path = 'contracts/hro-resolver.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.lp-rewards]
 path = 'contracts/lp-rewards.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.market-factory]
 path = 'contracts/market-factory.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.market-fork]
 path = 'contracts/market-fork.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.market-pool]
 path = 'contracts/market-pool.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.mock-oracle]
 path = 'contracts/mocks/mock-oracle.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.mock-usdc]
 path = 'contracts/mock-usdc.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.mock-zest-vault]
 path = 'contracts/mocks/mock-zest-vault.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.multi-outcome-pool]
 path = 'contracts/multi-outcome-pool.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.oracle-resolver]
 path = 'contracts/oracle-resolver.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.oracle-trait]
 path = 'contracts/traits/oracle-trait.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.prediction-market-trait]
 path = 'contracts/traits/prediction-market-trait.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.pyth-oracle-wrapper]
 path = 'contracts/pyth-oracle-wrapper.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.quadratic-voting]
 path = 'contracts/quadratic-voting.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.reputation-registry]
 path = 'contracts/reputation-registry.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.sip-010-trait]
 path = 'contracts/traits/sip-010-trait.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.trader-rewards]
 path = 'contracts/trader-rewards.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.vesting-vault]
 path = 'contracts/vesting-vault.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.vote-escrow]
 path = 'contracts/vote-escrow.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.yield-distributor]
 path = 'contracts/yield-distributor.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 
 [contracts.yield-vault]
 path = 'contracts/yield-vault.clar'
-clarity_version = 1
-epoch = '2.05'
+clarity_version = 2
+epoch = '2.1'
 [repl.analysis]
 passes = [
     'call_checker',
