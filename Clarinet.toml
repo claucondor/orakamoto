@@ -9,10 +9,6 @@ cache_dir = './.cache'
 [[project.requirements]]
 contract_id = 'SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4'
 
-# USDCx (Circle xReserve - bridged USDC on Stacks)
-[[project.requirements]]
-contract_id = 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx'
-
 [contracts.ai-oracle-council]
 path = 'contracts/ai-oracle-council.clar'
 clarity_version = 2
@@ -147,6 +143,22 @@ epoch = '2.1'
 path = 'contracts/yield-vault.clar'
 clarity_version = 2
 epoch = '2.1'
+
+[contracts.market-factory-v2]
+path = 'contracts/market-factory-v2.clar'
+clarity_version = 2
+epoch = '2.1'
+
+[contracts.math-fixed-point]
+path = 'contracts/lib/math-fixed-point.clar'
+clarity_version = 2
+epoch = '2.1'
+
+[contracts.pm-amm-core]
+path = 'contracts/lib/pm-amm-core.clar'
+clarity_version = 2
+epoch = '2.1'
+
 [repl.analysis]
 passes = [
     'call_checker',
