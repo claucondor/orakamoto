@@ -286,6 +286,7 @@
 
 ;; Calculate price for outcome i: Price_i = exp(q_i / b) / sum(exp(q_j / b))
 ;; Returns price as a uint (scaled by PRECISION)
+;; IMPORTANT: Only sums over actual outcomes (0 to outcome-count - 1)
 (define-read-only (calculate-lmsr-price (market-id uint) (outcome uint))
   (let
     (
@@ -295,12 +296,13 @@
       some-market
         (let
           (
+            (outcome-count (get outcome-count some-market))
             (b (get lmsr-b some-market))
             ;; Get reserve for the outcome
             (q-i (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: outcome })))
             ;; Calculate exp(q_i / b)
             (exp-q-i (exp-approx (/ q-i b)))
-            ;; Calculate sum of exp(q_j / b) for all j
+            ;; Calculate sum of exp(q_j / b) ONLY for actual outcomes
             (q-0 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u0 })))
             (q-1 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u1 })))
             (q-2 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u2 })))
@@ -311,11 +313,21 @@
             (q-7 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u7 })))
             (q-8 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u8 })))
             (q-9 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u9 })))
-            (quantities (list q-0 q-1 q-2 q-3 q-4 q-5 q-6 q-7 q-8 q-9))
-            (exp-sum (fold + (map exp-approx (map / quantities (list b b b b b b b b b b))) u0))
+            ;; Only include exp(q_j/b) for outcomes that exist
+            (exp-0 (exp-approx (/ q-0 b)))
+            (exp-1 (exp-approx (/ q-1 b)))
+            (exp-2 (if (>= outcome-count u3) (exp-approx (/ q-2 b)) u0))
+            (exp-3 (if (>= outcome-count u4) (exp-approx (/ q-3 b)) u0))
+            (exp-4 (if (>= outcome-count u5) (exp-approx (/ q-4 b)) u0))
+            (exp-5 (if (>= outcome-count u6) (exp-approx (/ q-5 b)) u0))
+            (exp-6 (if (>= outcome-count u7) (exp-approx (/ q-6 b)) u0))
+            (exp-7 (if (>= outcome-count u8) (exp-approx (/ q-7 b)) u0))
+            (exp-8 (if (>= outcome-count u9) (exp-approx (/ q-8 b)) u0))
+            (exp-9 (if (>= outcome-count u10) (exp-approx (/ q-9 b)) u0))
+            (exp-sum (+ exp-0 (+ exp-1 (+ exp-2 (+ exp-3 (+ exp-4 (+ exp-5 (+ exp-6 (+ exp-7 (+ exp-8 exp-9))))))))))
           )
           (if (is-eq exp-sum u0)
-            (/ PRECISION (get outcome-count some-market))  ;; Equal probability if no reserves
+            (/ PRECISION outcome-count)  ;; Equal probability if no reserves
             (/ (* exp-q-i PRECISION) exp-sum)
           )
         )
@@ -347,18 +359,28 @@
             (q-7 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u7 })))
             (q-8 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u8 })))
             (q-9 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u9 })))
-            (quantities (list q-0 q-1 q-2 q-3 q-4 q-5 q-6 q-7 q-8 q-9))
-            (exp-sum (fold + (map exp-approx (map / quantities (list b b b b b b b b b b))) u0))
-            (price-0 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-0 b)) PRECISION) exp-sum)))
-            (price-1 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-1 b)) PRECISION) exp-sum)))
-            (price-2 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-2 b)) PRECISION) exp-sum)))
-            (price-3 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-3 b)) PRECISION) exp-sum)))
-            (price-4 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-4 b)) PRECISION) exp-sum)))
-            (price-5 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-5 b)) PRECISION) exp-sum)))
-            (price-6 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-6 b)) PRECISION) exp-sum)))
-            (price-7 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-7 b)) PRECISION) exp-sum)))
-            (price-8 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-8 b)) PRECISION) exp-sum)))
-            (price-9 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-9 b)) PRECISION) exp-sum)))
+            ;; Only include exp(q_j/b) for outcomes that exist
+            (exp-0 (exp-approx (/ q-0 b)))
+            (exp-1 (exp-approx (/ q-1 b)))
+            (exp-2 (if (>= outcome-count u3) (exp-approx (/ q-2 b)) u0))
+            (exp-3 (if (>= outcome-count u4) (exp-approx (/ q-3 b)) u0))
+            (exp-4 (if (>= outcome-count u5) (exp-approx (/ q-4 b)) u0))
+            (exp-5 (if (>= outcome-count u6) (exp-approx (/ q-5 b)) u0))
+            (exp-6 (if (>= outcome-count u7) (exp-approx (/ q-6 b)) u0))
+            (exp-7 (if (>= outcome-count u8) (exp-approx (/ q-7 b)) u0))
+            (exp-8 (if (>= outcome-count u9) (exp-approx (/ q-8 b)) u0))
+            (exp-9 (if (>= outcome-count u10) (exp-approx (/ q-9 b)) u0))
+            (exp-sum (+ exp-0 (+ exp-1 (+ exp-2 (+ exp-3 (+ exp-4 (+ exp-5 (+ exp-6 (+ exp-7 (+ exp-8 exp-9))))))))))
+            (price-0 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* exp-0 PRECISION) exp-sum)))
+            (price-1 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* exp-1 PRECISION) exp-sum)))
+            (price-2 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* exp-2 PRECISION) exp-sum)))
+            (price-3 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* exp-3 PRECISION) exp-sum)))
+            (price-4 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* exp-4 PRECISION) exp-sum)))
+            (price-5 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* exp-5 PRECISION) exp-sum)))
+            (price-6 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* exp-6 PRECISION) exp-sum)))
+            (price-7 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* exp-7 PRECISION) exp-sum)))
+            (price-8 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* exp-8 PRECISION) exp-sum)))
+            (price-9 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* exp-9 PRECISION) exp-sum)))
           )
           (ok (list price-0 price-1 price-2 price-3 price-4 price-5 price-6 price-7 price-8 price-9))
         )
@@ -657,18 +679,19 @@
         (
           (reserve-per-outcome (/ initial-liquidity outcome-count))
         )
-        ;; Initialize outcome reserves for all outcomes
-        ;; We set reserves for all 10 possible outcomes, but only outcome-count will be used
+        ;; Initialize outcome reserves ONLY for actual outcomes (0 to outcome-count - 1)
+        ;; outcome-count is always >= 2, so u0 and u1 are always set
         (map-set outcome-reserves { market-id: market-id, outcome: u0 } reserve-per-outcome)
         (map-set outcome-reserves { market-id: market-id, outcome: u1 } reserve-per-outcome)
-        (map-set outcome-reserves { market-id: market-id, outcome: u2 } reserve-per-outcome)
-        (map-set outcome-reserves { market-id: market-id, outcome: u3 } reserve-per-outcome)
-        (map-set outcome-reserves { market-id: market-id, outcome: u4 } reserve-per-outcome)
-        (map-set outcome-reserves { market-id: market-id, outcome: u5 } reserve-per-outcome)
-        (map-set outcome-reserves { market-id: market-id, outcome: u6 } reserve-per-outcome)
-        (map-set outcome-reserves { market-id: market-id, outcome: u7 } reserve-per-outcome)
-        (map-set outcome-reserves { market-id: market-id, outcome: u8 } reserve-per-outcome)
-        (map-set outcome-reserves { market-id: market-id, outcome: u9 } reserve-per-outcome)
+        ;; Conditionally set remaining outcomes based on outcome-count
+        (if (>= outcome-count u3) (map-set outcome-reserves { market-id: market-id, outcome: u2 } reserve-per-outcome) true)
+        (if (>= outcome-count u4) (map-set outcome-reserves { market-id: market-id, outcome: u3 } reserve-per-outcome) true)
+        (if (>= outcome-count u5) (map-set outcome-reserves { market-id: market-id, outcome: u4 } reserve-per-outcome) true)
+        (if (>= outcome-count u6) (map-set outcome-reserves { market-id: market-id, outcome: u5 } reserve-per-outcome) true)
+        (if (>= outcome-count u7) (map-set outcome-reserves { market-id: market-id, outcome: u6 } reserve-per-outcome) true)
+        (if (>= outcome-count u8) (map-set outcome-reserves { market-id: market-id, outcome: u7 } reserve-per-outcome) true)
+        (if (>= outcome-count u9) (map-set outcome-reserves { market-id: market-id, outcome: u8 } reserve-per-outcome) true)
+        (if (>= outcome-count u10) (map-set outcome-reserves { market-id: market-id, outcome: u9 } reserve-per-outcome) true)
 
         ;; Create market entry
         (map-set markets market-id
@@ -755,22 +778,24 @@
           (lp-token-id (get-lp-token-id market-id))
         )
 
-        ;; Distribute liquidity equally across all outcomes
-        ;; Add to all outcome reserves (equal distribution)
+        ;; Distribute liquidity equally across actual outcomes only
+        ;; Add to outcome reserves (outcomes 0 to outcome-count - 1)
         (let
           (
             (amount-per-outcome (/ amount outcome-count))
           )
+          ;; outcome-count is always >= 2, so u0 and u1 are always updated
           (map-set outcome-reserves { market-id: market-id, outcome: u0 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u0 })) amount-per-outcome))
           (map-set outcome-reserves { market-id: market-id, outcome: u1 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u1 })) amount-per-outcome))
-          (map-set outcome-reserves { market-id: market-id, outcome: u2 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u2 })) amount-per-outcome))
-          (map-set outcome-reserves { market-id: market-id, outcome: u3 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u3 })) amount-per-outcome))
-          (map-set outcome-reserves { market-id: market-id, outcome: u4 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u4 })) amount-per-outcome))
-          (map-set outcome-reserves { market-id: market-id, outcome: u5 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u5 })) amount-per-outcome))
-          (map-set outcome-reserves { market-id: market-id, outcome: u6 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u6 })) amount-per-outcome))
-          (map-set outcome-reserves { market-id: market-id, outcome: u7 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u7 })) amount-per-outcome))
-          (map-set outcome-reserves { market-id: market-id, outcome: u8 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u8 })) amount-per-outcome))
-          (map-set outcome-reserves { market-id: market-id, outcome: u9 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u9 })) amount-per-outcome))
+          ;; Conditionally update remaining outcomes based on outcome-count
+          (if (>= outcome-count u3) (map-set outcome-reserves { market-id: market-id, outcome: u2 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u2 })) amount-per-outcome)) true)
+          (if (>= outcome-count u4) (map-set outcome-reserves { market-id: market-id, outcome: u3 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u3 })) amount-per-outcome)) true)
+          (if (>= outcome-count u5) (map-set outcome-reserves { market-id: market-id, outcome: u4 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u4 })) amount-per-outcome)) true)
+          (if (>= outcome-count u6) (map-set outcome-reserves { market-id: market-id, outcome: u5 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u5 })) amount-per-outcome)) true)
+          (if (>= outcome-count u7) (map-set outcome-reserves { market-id: market-id, outcome: u6 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u6 })) amount-per-outcome)) true)
+          (if (>= outcome-count u8) (map-set outcome-reserves { market-id: market-id, outcome: u7 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u7 })) amount-per-outcome)) true)
+          (if (>= outcome-count u9) (map-set outcome-reserves { market-id: market-id, outcome: u8 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u8 })) amount-per-outcome)) true)
+          (if (>= outcome-count u10) (map-set outcome-reserves { market-id: market-id, outcome: u9 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u9 })) amount-per-outcome)) true)
         )
 
         ;; Update market total liquidity
