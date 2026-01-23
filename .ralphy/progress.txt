@@ -2358,3 +2358,91 @@ The test execution is blocked by a pre-existing vitest environment issue:
 
 The pm-AMM Core Library is ready for integration into multi-market-pool.clar in a future PRD.
 
+
+## 2026-01-23: PRD-v3 Multi-Market - Phase 1: SIP-013 LP Token Implementation
+
+### Summary
+Implemented Phase 1 of PRD-v3: SIP-013 Semi-Fungible Token standard for LP tokens. This enables multiple markets with transferible LP tokens where token-id = market-id.
+
+### Changes Made
+
+1. **Created `contracts/traits/sip013-semi-fungible-token-trait.clar`**:
+   - Implemented SIP-013 trait with 8 standard functions:
+     - `get-balance (token-id uint) (who principal) -> (response uint uint)`
+     - `get-overall-balance (who principal) -> (response uint uint)`
+     - `get-total-supply (token-id uint) -> (response uint uint)`
+     - `get-overall-supply () -> (response uint uint)`
+     - `get-decimals (token-id uint) -> (response uint uint)`
+     - `get-token-uri (token-id uint) -> (response (optional (string-ascii 256)) uint)`
+     - `transfer (token-id uint) (amount uint) (sender principal) (recipient principal) -> (response bool uint)`
+     - `transfer-memo (token-id uint) (amount uint) (sender principal) (recipient principal) (memo (buff 34)) -> (response bool uint)`
+
+2. **Created `contracts/tokens/sip013-lp-token.clar`**:
+   - Implements SIP-013 trait for LP tokens
+   - Uses maps for balance tracking per token-id and owner:
+     - `token-balances: { token-id: uint, owner: principal } -> uint`
+     - `token-supplies: uint -> uint`
+   - Internal mint/burn functions (only callable by authorized minter/multi-market-pool)
+   - Public transfer/transfer-memo functions with authorization checks
+   - Emits events for mint, burn, transfer, transfer-memo
+   - Error constants: ERR-NOT-AUTHORIZED, ERR-INSUFFICIENT-BALANCE, ERR-INVALID-SENDER, ERR-ZERO-AMOUNT
+   - Read-only functions: get-decimals (6), get-token-uri (none), get-authorized-minter
+
+3. **Updated `Clarinet.toml`**:
+   - Added sip013-semi-fungible-token-trait contract configuration
+   - Added sip013-lp-token contract configuration
+   - Both contracts use clarity-version 2 and epoch 2.1
+
+4. **Created `tests/sip013-lp-token.test.ts`**:
+   - 34 comprehensive tests covering:
+     - SIP-013 trait functions (get-balance, get-total-supply, get-decimals, get-token-uri)
+     - Mint functionality (authorized caller, zero amount validation)
+     - Burn functionality (authorized caller, insufficient balance validation)
+     - Transfer functionality (sender validation, balance validation, self-transfer)
+     - Transfer with memo functionality
+     - Multi-token independence (different token-ids tracked separately)
+     - Integration tests (complete LP token lifecycle, multiple markets)
+
+5. **Updated `PRD-v3-multi-market.md`**:
+   - Marked all Phase 1 tasks (1.1-1.6) as complete
+
+### Files Created/Modified
+
+**New Files:**
+1. `contracts/traits/sip013-semi-fungible-token-trait.clar` - SIP-013 trait definition
+2. `contracts/tokens/sip013-lp-token.clar` - SIP-013 LP token implementation
+3. `tests/sip013-lp-token.test.ts` - Comprehensive test suite (34 tests)
+
+**Modified Files:**
+1. `Clarinet.toml` - Added SIP-013 contracts
+2. `PRD-v3-multi-market.md` - Marked Phase 1 tasks complete
+
+### Design Notes
+
+- **SIP-013 allows multiple token types in one contract**: token-id represents the market-id
+- **LP tokens are transferible**: Users can transfer their LP shares to other addresses
+- **Authorized minter pattern**: Only multi-market-pool can mint/burn LP tokens (controlled by AUTHORIZED-MINTER constant)
+- **Independent tracking**: Each token-id has its own balance map and supply
+- **Gas efficient**: Uses maps instead of NFT tokens for YES/NO positions (forces trades through AMM)
+
+### Verification
+
+- **clarinet check**: 0 errors, 33 contracts checked (including new SIP-013 contracts)
+- **npm test**: 34/34 tests pass for sip013-lp-token.test.ts
+- Contract follows existing patterns from governance-token and reputation-registry
+- Compatible with Clarity 2.0, epoch 2.1
+
+### Next Steps
+
+Phase 1 is complete. Next phase:
+- Phase 2: Multi-Market Pool implementation (tasks 2.1-2.14)
+- Create `contracts/multi-market-pool.clar` with markets map and outcome balances
+- Implement create-market, add-liquidity, remove-liquidity, buy-outcome, sell-outcome, resolve, claim
+
+### Reference
+
+- **SIP-013 Standard**: https://github.com/stacksgov/sips/blob/main/sips/sip-013/sip-013-semi-fungible-token-standard.md
+- **PRD-v3**: PRD-v3-multi-market.md
+- **ALEX Trading Pool**: https://alexlab.co/blog/introducing-trading-pool (inspiration for architecture)
+
+---
