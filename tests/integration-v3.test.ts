@@ -658,47 +658,44 @@ describe('Integration V3 - Complete Flow Tests', () => {
       expect(protocolFees).toBeGreaterThan(0n);
     });
 
-    it.skip('should handle slippage protection correctly', () => {
-      // This test is being skipped due to test ordering issues
-      // The market may not exist yet when this test runs
+    it('should handle slippage protection correctly', () => {
       const marketId = createMarket(deployer, 'Slippage Test Market', 10_000_000);
 
-      fundWallet(wallet1, 5_000_000n);
+      fundWallet(wallet1, 5_000_000);
 
-      // Buy with reasonable slippage tolerance should succeed
+      // Buy with reasonable slippage tolerance should succeed (min-tokens-out = 1)
       const buyOk = simnet.callPublicFn(
         'multi-market-pool',
         'buy-outcome',
-        [Cl.uint(marketId), Cl.uint(0), Cl.uint(5_000_000n), Cl.uint(1)],
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(5_000_000), Cl.uint(1)],
         wallet1
       );
       expect((buyOk.result as any).type).toBe("ok");
 
       // Buy with impossible slippage tolerance should fail
-      fundWallet(wallet2, 5_000_000n);
+      fundWallet(wallet2, 5_000_000);
       const buyFail = simnet.callPublicFn(
         'multi-market-pool',
         'buy-outcome',
-        [Cl.uint(marketId), Cl.uint(0), Cl.uint(5_000_000n), Cl.uint(100_000_000n)], // Impossible to get this many tokens
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(5_000_000), Cl.uint(100_000_000)], // Impossible to get this many tokens
         wallet2
       );
       expect(buyFail.result).toBeErr(Cl.uint(ERR_SLIPPAGE_TOO_HIGH));
     });
 
-    it.skip('should enforce dispute window for claiming', () => {
-      // This test is being skipped due to test timing issues
+    it('should enforce dispute window for claiming', () => {
       const marketId = createMarket(deployer, 'Dispute Window Test Market', 10_000_000, 50);
 
       // User buys YES tokens
-      fundWallet(wallet1, 5_000_000n);
+      fundWallet(wallet1, 5_000_000);
       simnet.callPublicFn(
         'multi-market-pool',
         'buy-outcome',
-        [Cl.uint(marketId), Cl.uint(0), Cl.uint(5_000_000n), Cl.uint(0)],
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(5_000_000), Cl.uint(0)],
         wallet1
       );
 
-      // Mine and resolve
+      // Mine past deadline and resolve
       simnet.mineEmptyBlocks(100);
       simnet.callPublicFn(
         'multi-market-pool',
@@ -716,8 +713,8 @@ describe('Integration V3 - Complete Flow Tests', () => {
       );
       expect(claimDuring.result).toBeErr(Cl.uint(ERR_DISPUTE_WINDOW_ACTIVE));
 
-      // Mine past dispute window (1008 blocks)
-      simnet.mineEmptyBlocks(2000);
+      // Mine past dispute window (1008 blocks default)
+      simnet.mineEmptyBlocks(1100);
 
       // Claiming after dispute window should succeed
       const claimAfter = simnet.callPublicFn(
