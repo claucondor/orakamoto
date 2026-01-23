@@ -52,6 +52,13 @@
   bool
 )
 
+;; Track market type for each market-id
+;; "binary" | "multi-outcome"
+(define-map market-types
+  uint
+  (string-ascii 16)
+)
+
 ;; ============================================================================
 ;; PRIVATE HELPER FUNCTIONS
 ;; ============================================================================
@@ -151,6 +158,12 @@
   )
 )
 
+;; Get market type: "binary" or "multi-outcome"
+;; Returns "binary" as default for backwards compatibility
+(define-read-only (get-market-type (market-id uint))
+  (ok (default-to "binary" (map-get? market-types market-id)))
+)
+
 ;; ============================================================================
 ;; PUBLIC FUNCTIONS
 ;; ============================================================================
@@ -232,6 +245,9 @@
 
       (add-to-category category market-id)
 
+      ;; Track market type as binary
+      (map-set market-types market-id "binary")
+
       (print
         {
           event: "market-created-v3",
@@ -251,7 +267,8 @@
   )
 )
 
-;; Placeholder for multi-outcome markets
+;; Create a multi-outcome prediction market (2-10 outcomes)
+;; Uses multi-outcome-pool-v2 with LMSR pricing
 (define-public (create-multi-outcome-market
     (question (string-utf8 256))
     (deadline uint)
@@ -261,8 +278,105 @@
     (tags (list 10 (string-utf8 32)))
     (outcome-count uint)
     (outcome-labels (list 10 (string-utf8 32)))
+    (lmsr-b uint)
   )
-  (err u5009)
+  (let
+    (
+      (caller tx-sender)
+      (res-deadline (match resolution-deadline rd rd (+ deadline DEFAULT-RESOLUTION-WINDOW)))
+    )
+    ;; Validate category (same as binary markets)
+    (asserts! (> (len category) u0) ERR-EMPTY-CATEGORY)
+    (asserts! (<= (len category) MAX-CATEGORY-LENGTH) ERR-INVALID-CATEGORY-LENGTH)
+    (asserts! (<= (len tags) MAX-TAGS) ERR-INVALID-TAG-COUNT)
+
+    ;; Call multi-outcome-pool-v2.create-market
+    (let
+      (
+        (result (contract-call? .multi-outcome-pool-v2 create-market question deadline res-deadline initial-liquidity outcome-count outcome-labels lmsr-b))
+        (market-id (unwrap! result ERR-MARKET-NOT-FOUND))
+      )
+      ;; Validate tags inline using if statements (same as binary markets)
+      (if (> (len tags) u0)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u0))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u1)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u1))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u2)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u2))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u3)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u3))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u4)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u4))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u5)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u5))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u6)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u6))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u7)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u7))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u8)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u8))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u9)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u9))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+
+      ;; Store metadata (same structure as binary markets)
+      (map-set market-metadata
+        market-id
+        {
+          category: category,
+          tags: tags,
+          featured: false,
+          active: true,
+          created-at: block-height,
+        }
+      )
+
+      ;; Track market type as multi-outcome
+      (map-set market-types market-id "multi-outcome")
+
+      ;; Add to category index
+      (add-to-category category market-id)
+
+      ;; Emit event
+      (print
+        {
+          event: "multi-outcome-market-created-v3",
+          market-id: market-id,
+          creator: caller,
+          question: question,
+          category: category,
+          tags: tags,
+          deadline: deadline,
+          resolution-deadline: res-deadline,
+          initial-liquidity: initial-liquidity,
+          outcome-count: outcome-count,
+          outcome-labels: outcome-labels,
+          lmsr-b: lmsr-b,
+        }
+      )
+
+      (ok market-id)
+    )
+  )
 )
 
 (define-public (feature-market (market-id uint))

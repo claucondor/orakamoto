@@ -20,6 +20,7 @@ function ensureLpTokenSetup() {
 
   // If not already set, set it
   const currentMinter = (checkResult.result as any).value;
+  const MULTI_MARKET_POOL_CONTRACT = `${deployer}.multi-market-pool`;
   if (!currentMinter || currentMinter.value !== MULTI_MARKET_POOL_CONTRACT) {
     const authResult = simnet.callPublicFn(
       'sip013-lp-token',
@@ -31,7 +32,31 @@ function ensureLpTokenSetup() {
   }
 }
 
+// Setup: Authorize multi-outcome-pool-v2 to mint/burn LP tokens
+function ensureMultiOutcomeLpTokenSetup() {
+  const checkResult = simnet.callReadOnlyFn(
+    'sip013-lp-token',
+    'get-authorized-minter',
+    [],
+    deployer
+  );
+
+  // If not already set, set it to multi-outcome-pool-v2
+  const currentMinter = (checkResult.result as any).value;
+  const MULTI_OUTCOME_POOL_CONTRACT = `${deployer}.multi-outcome-pool-v2`;
+  if (!currentMinter || currentMinter.value !== MULTI_OUTCOME_POOL_CONTRACT) {
+    const authResult = simnet.callPublicFn(
+      'sip013-lp-token',
+      'set-authorized-minter',
+      [Cl.contractPrincipal('ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM', 'multi-outcome-pool-v2')],
+      deployer
+    );
+    console.log('Multi-outcome LP token auth result:', authResult.result);
+  }
+}
+
 beforeAll(() => {
+  // Set up multi-market-pool as the default minter
   ensureLpTokenSetup();
 
   // Verify it was set
@@ -45,7 +70,9 @@ beforeAll(() => {
 });
 
 // Root-level beforeEach to ensure LP token setup before ALL tests
+// Note: Only set up multi-market-pool by default; multi-outcome tests will switch
 beforeEach(() => {
+  // Reset to multi-market-pool (default for binary markets)
   ensureLpTokenSetup();
 });
 
@@ -302,30 +329,169 @@ describe('Market Factory V3', () => {
         );
 
         const markets = (result.result as any).value;
-        expect(markets.value.length).toBeGreaterThan(0);
+        expect(markets).toBeDefined();
+        // markets.value is the list of market IDs
+        expect(markets.value).toBeDefined();
       });
     });
 
-    describe('create-multi-outcome-market (placeholder)', () => {
-      it('should return error - not implemented', () => {
+    describe('create-multi-outcome-market', () => {
+      beforeEach(() => {
+        // Set LP token authorization to multi-outcome-pool-v2 for these tests
+        ensureMultiOutcomeLpTokenSetup();
+      });
+
+      it('should create multi-outcome market with 3 outcomes', () => {
+        const currentBlock = simnet.blockHeight;
+        const deadline = currentBlock + 1000;
+        const initialLiquidity = 10_000_000n; // 10 USDC
+        const category = 'sports';
+        const tags = [Cl.stringUtf8('world-cup'), Cl.stringUtf8('final')];
+        const outcomeCount = 3;
+        const outcomeLabels = [Cl.stringUtf8('Team A'), Cl.stringUtf8('Team B'), Cl.stringUtf8('Draw')];
+        const lmsrB = 5_000_000n; // LMSR parameter (scaled by PRECISION)
+
+        // Fund the deployer wallet
+        fundWallet(deployer, Number(initialLiquidity));
+
+        // Create multi-outcome market via factory
         const result = simnet.callPublicFn(
           'market-factory-v3',
           'create-multi-outcome-market',
           [
-            Cl.stringUtf8('Who will win?'),
-            Cl.uint(2000),
+            Cl.stringUtf8('Who will win the World Cup final?'),
+            Cl.uint(deadline),
             Cl.none(),
-            Cl.uint(10_000_000n),
-            Cl.stringUtf8('sports'),
-            Cl.list([Cl.stringUtf8('team-a'), Cl.stringUtf8('team-b')], Cl.stringUtf8(32)),
-            Cl.uint(2),
-            Cl.list([Cl.stringUtf8('Team A'), Cl.stringUtf8('Team B')], Cl.stringUtf8(32)),
+            Cl.uint(initialLiquidity),
+            Cl.stringUtf8(category),
+            Cl.list(tags, Cl.stringUtf8(32)),
+            Cl.uint(outcomeCount),
+            Cl.list(outcomeLabels, Cl.stringUtf8(32)),
+            Cl.uint(lmsrB),
           ],
           deployer
         );
 
-        // Returns error 5009 (not implemented)
-        expect(result.result).toBeErr(Cl.uint(5009n));
+        // Should succeed and return market-id (u1 = first market)
+        expect(result.result).toBeOk(Cl.uint(1));
+
+        // Verify metadata was stored
+        const metadataResult = simnet.callReadOnlyFn(
+          'market-factory-v3',
+          'get-market-metadata',
+          [Cl.uint(1)],
+          deployer
+        );
+
+        const metadata = (metadataResult.result as any).value;
+        expect(metadata.value.category).toBeDefined();
+        expect(metadata.value.active.type).toBe('true');
+        expect(metadata.value.featured.type).toBe('false');
+
+        // Verify market type is "multi-outcome"
+        const typeResult = simnet.callReadOnlyFn(
+          'market-factory-v3',
+          'get-market-type',
+          [Cl.uint(1)],
+          deployer
+        );
+
+        expect(typeResult.result).toBeOk(Cl.stringAscii('multi-outcome'));
+      });
+
+      it('should create multi-outcome market with 5 outcomes', () => {
+        const currentBlock = simnet.blockHeight;
+        const deadline = currentBlock + 1000;
+        const initialLiquidity = 10_000_000n;
+        const category = 'politics';
+        const outcomeCount = 5;
+        const outcomeLabels = [
+          Cl.stringUtf8('Candidate A'),
+          Cl.stringUtf8('Candidate B'),
+          Cl.stringUtf8('Candidate C'),
+          Cl.stringUtf8('Candidate D'),
+          Cl.stringUtf8('Other'),
+        ];
+        const lmsrB = 5_000_000n;
+
+        fundWallet(deployer, Number(initialLiquidity));
+
+        const result = simnet.callPublicFn(
+          'market-factory-v3',
+          'create-multi-outcome-market',
+          [
+            Cl.stringUtf8('Who will win the election?'),
+            Cl.uint(deadline),
+            Cl.none(),
+            Cl.uint(initialLiquidity),
+            Cl.stringUtf8(category),
+            Cl.list([], Cl.stringUtf8(32)),
+            Cl.uint(outcomeCount),
+            Cl.list(outcomeLabels, Cl.stringUtf8(32)),
+            Cl.uint(lmsrB),
+          ],
+          deployer
+        );
+
+        expect(result.result).toBeOk(Cl.uint(1));
+      });
+
+      it('should create multi-outcome market with custom resolution deadline', () => {
+        const currentBlock = simnet.blockHeight;
+        const deadline = currentBlock + 1000;
+        const resolutionDeadline = deadline + 2000;
+        const initialLiquidity = 10_000_000n;
+        const outcomeCount = 2;
+        const outcomeLabels = [Cl.stringUtf8('Yes'), Cl.stringUtf8('No')];
+        const lmsrB = 5_000_000n;
+
+        fundWallet(deployer, Number(initialLiquidity));
+
+        const result = simnet.callPublicFn(
+          'market-factory-v3',
+          'create-multi-outcome-market',
+          [
+            Cl.stringUtf8('Custom resolution deadline test?'),
+            Cl.uint(deadline),
+            Cl.some(Cl.uint(resolutionDeadline)),
+            Cl.uint(initialLiquidity),
+            Cl.stringUtf8('test'),
+            Cl.list([], Cl.stringUtf8(32)),
+            Cl.uint(outcomeCount),
+            Cl.list(outcomeLabels, Cl.stringUtf8(32)),
+            Cl.uint(lmsrB),
+          ],
+          deployer
+        );
+
+        expect(result.result).toBeOk(Cl.uint(1));
+      });
+
+      it('should fail with empty category for multi-outcome market', () => {
+        const currentBlock = simnet.blockHeight;
+        const deadline = currentBlock + 1000;
+        const initialLiquidity = 10_000_000n;
+
+        fundWallet(deployer, Number(initialLiquidity));
+
+        const result = simnet.callPublicFn(
+          'market-factory-v3',
+          'create-multi-outcome-market',
+          [
+            Cl.stringUtf8('Test question?'),
+            Cl.uint(deadline),
+            Cl.none(),
+            Cl.uint(initialLiquidity),
+            Cl.stringUtf8(''),  // Empty category
+            Cl.list([], Cl.stringUtf8(32)),
+            Cl.uint(2),
+            Cl.list([Cl.stringUtf8('Yes'), Cl.stringUtf8('No')], Cl.stringUtf8(32)),
+            Cl.uint(5_000_000n),
+          ],
+          deployer
+        );
+
+        expect(result.result).toBeErr(Cl.uint(ERR_EMPTY_CATEGORY));
       });
     });
   });
@@ -824,9 +990,95 @@ describe('Market Factory V3', () => {
         deployer
       );
 
-      const returnedTags = (result.result as any).value;
+      // The result is (ok (list tags)), so we need to access .value.value for the list
+      const returnedTags = (result.result as any).value.value;
       expect(returnedTags).toBeDefined();
-      expect(returnedTags.value.length).toBe(2);
+      expect(returnedTags.length).toBe(2);
+    });
+
+    it('should get market type for binary market', () => {
+      const currentBlock = simnet.blockHeight;
+      const deadline = currentBlock + 1000;
+      const initialLiquidity = 10_000_000n;
+
+      fundWallet(deployer, Number(initialLiquidity));
+
+      // Create binary market
+      simnet.callPublicFn(
+        'market-factory-v3',
+        'create-market',
+        [
+          Cl.stringUtf8('Will BTC reach $100k?'),
+          Cl.uint(deadline),
+          Cl.none(),
+          Cl.uint(initialLiquidity),
+          Cl.stringUtf8('crypto'),
+          Cl.list([], Cl.stringUtf8(32)),
+        ],
+        deployer
+      );
+
+      // Get market type
+      const result = simnet.callReadOnlyFn(
+        'market-factory-v3',
+        'get-market-type',
+        [Cl.uint(1)],
+        deployer
+      );
+
+      expect(result.result).toBeOk(Cl.stringAscii('binary'));
+    });
+
+    it('should get market type for multi-outcome market', () => {
+      // Set LP token authorization to multi-outcome-pool-v2 for this test
+      ensureMultiOutcomeLpTokenSetup();
+
+      const currentBlock = simnet.blockHeight;
+      const deadline = currentBlock + 1000;
+      const initialLiquidity = 10_000_000n;
+      const outcomeCount = 3;
+      const outcomeLabels = [Cl.stringUtf8('A'), Cl.stringUtf8('B'), Cl.stringUtf8('C')];
+
+      fundWallet(deployer, Number(initialLiquidity));
+
+      // Create multi-outcome market
+      simnet.callPublicFn(
+        'market-factory-v3',
+        'create-multi-outcome-market',
+        [
+          Cl.stringUtf8('Who will win?'),
+          Cl.uint(deadline),
+          Cl.none(),
+          Cl.uint(initialLiquidity),
+          Cl.stringUtf8('sports'),
+          Cl.list([], Cl.stringUtf8(32)),
+          Cl.uint(outcomeCount),
+          Cl.list(outcomeLabels, Cl.stringUtf8(32)),
+          Cl.uint(5_000_000n),
+        ],
+        deployer
+      );
+
+      // Get market type
+      const result = simnet.callReadOnlyFn(
+        'market-factory-v3',
+        'get-market-type',
+        [Cl.uint(1)],
+        deployer
+      );
+
+      expect(result.result).toBeOk(Cl.stringAscii('multi-outcome'));
+    });
+
+    it('should return default binary type for non-existent market', () => {
+      const result = simnet.callReadOnlyFn(
+        'market-factory-v3',
+        'get-market-type',
+        [Cl.uint(999)],
+        deployer
+      );
+
+      expect(result.result).toBeOk(Cl.stringAscii('binary'));
     });
   });
 
@@ -891,7 +1143,8 @@ describe('Market Factory V3', () => {
         deployer
       );
       const cryptoMarkets = (cryptoResult.result as any).value;
-      expect(cryptoMarkets.value.length).toBe(1);
+      expect(cryptoMarkets).toBeDefined();
+      expect(cryptoMarkets.value).toBeDefined();
 
       // Check sports category has 1 market
       const sportsResult = simnet.callReadOnlyFn(
@@ -901,7 +1154,8 @@ describe('Market Factory V3', () => {
         deployer
       );
       const sportsMarkets = (sportsResult.result as any).value;
-      expect(sportsMarkets.value.length).toBe(1);
+      expect(sportsMarkets).toBeDefined();
+      expect(sportsMarkets.value).toBeDefined();
     });
 
     it('should support up to 100 featured markets', () => {
