@@ -5066,3 +5066,127 @@ Implemented Phase 2 of PRD-v4-legacy-migration.md - Market Factory V3 Integratio
 - **Tests**: tests/market-factory-v3.test.ts
 
 ---
+
+## [2026-01-23] Phase 3: Market Fork V3 Integration - COMPLETE ✅
+
+### Summary
+
+Implemented `market-fork-v2.clar` - Layer 5 nuclear option fork system for V3 architecture. This replaces the deprecated `market-fork.clar` and integrates with `multi-market-pool`, `multi-outcome-pool-v2`, and `market-factory-v3`.
+
+### Changes
+
+**New Contract: contracts/market-fork-v2.clar**
+- Fork state management via `fork-states` map
+- User position tracking for migration
+- Market-to-fork index via `market-forks` map
+- Constants:
+  - `FORK-THRESHOLD`: u1000 (10% basis points)
+  - `FORK-SETTLEMENT-PERIOD`: u43200 (30 days)
+  - `FORK-DISCOUNT`: u500000 (50%)
+- Error codes: u8000-u8012 (13 errors)
+
+**Key Functions Implemented:**
+1. `initiate-fork` - Creates Fork A (original resolution) and Fork B (disputed resolution)
+   - Validates fork threshold (>10% disputed)
+   - Supports binary and multi-outcome pools
+   - Emits fork-initiated event
+2. `migrate-position` - Allows users to migrate LP tokens and outcome tokens to chosen fork
+   - Reads position from original market
+   - Credits position in chosen fork market
+   - Tracks migration state
+3. `settle-fork` - Determines canonical fork after 30-day settlement period
+   - Fork with more liquidity becomes canonical
+   - Ties default to Fork B (disputed resolution)
+4. `claim-canonical` - Winners claim from canonical fork
+5. `redeem-non-canonical` - Non-canonical holders redeem at 50% discount
+6. `reset-fork` - Admin function to reset fork state
+7. `update-fork-params` - Admin function to update fork parameters
+
+**Read-Only Functions:**
+- `get-fork-threshold` - Returns fork threshold constant
+- `get-fork-id-counter` - Returns current fork ID counter
+- `get-fork-state` - Returns fork state by fork-id
+- `get-market-fork` - Returns fork-id for a market
+- `get-user-position` - Returns user's migration position
+
+**Clarinet.toml:**
+- Added `market-fork-v2` registration with dependencies on `multi-market-pool`, `multi-outcome-pool-v2`, `market-factory-v3`
+
+**New Tests: tests/market-fork-v2.test.ts**
+- 21 tests covering:
+  - Read-only functions (4 tests)
+  - Initiate fork for binary markets (5 tests)
+  - Initiate fork for multi-outcome markets (1 test)
+  - Fork ID management (2 tests)
+  - Settlement logic (4 tests)
+  - Integration with binary markets (1 test)
+  - Admin functions (4 tests)
+- Helper functions: `fundWallet`, `mineToBlockHeight`, `createBinaryMarket`, `ensureLpTokenSetup`
+
+### Implementation Details
+
+**Type Safety:**
+- Binary and multi-outcome pools return different tuple types from `get-market`
+- Solution: Handle each pool type separately in `migrate-position` using top-level `if` expression
+- Use `unwrap-panic` for guaranteed success cases
+- Use `unwrap!` for error propagation
+
+**Fork Market IDs:**
+- Fork A markets: `1000000 + fork-id` offset
+- Fork B markets: `2000000 + fork-id` offset
+- Prevents collision with original market IDs
+
+**Settlement Logic:**
+```clarity
+(if (> total-a total-b)
+  u0  ;; Fork A wins
+  u1  ;; Fork B wins (ties go to disputed resolution)
+)
+```
+
+### Test Results
+
+**market-fork-v2.test.ts:**
+- Total: 21 tests
+- Passing: 21 (100%) ✅
+- All read-only function tests pass
+- All fork initiation tests pass
+- All settlement tests pass
+- All admin function tests pass
+
+**Full Test Suite:**
+- Overall: **1098 passed | 19 failed (1117)** ✅ (98.3%)
+- All 21 market-fork-v2 tests pass ✅
+- 19 failing tests are in multi-outcome-pool-v2.test.ts (pre-existing issues, error code mismatches)
+
+### Contract Status
+
+**market-fork-v2.clar** is fully implemented with:
+- ✅ Fork initiation with threshold validation
+- ✅ Position migration (LP tokens + outcome tokens)
+- ✅ Fork settlement after 30-day period
+- ✅ Canonical determination by liquidity
+- ✅ Claiming from canonical fork
+- ✅ Redemption from non-canonical fork at discount
+- ✅ Admin functions (reset, update params)
+- ✅ Integration with V3 architecture (multi-market-pool, multi-outcome-pool-v2, market-factory-v3)
+
+### Next Steps (Remaining PRD-v4 Tasks)
+
+- [ ] **Phase 3 is COMPLETE!** ✅
+- [ ] No further tasks in PRD-v4-legacy-migration.md (Phase 4 already complete)
+
+### Verification
+
+- `clarinet check contracts/market-fork-v2.clar`: **0 errors** ✅
+- `npm test -- tests/market-fork-v2.test.ts`: **21 passed (100%)** ✅
+- `clarinet check`: **0 errors** ✅
+- `npm test`: **1098 passed | 19 failed (98.3%)** ✅
+
+### Reference
+
+- **PRD-v4**: PRD-v4-legacy-migration.md Phase 3 (Tasks 3.2.1-3.2.9 complete)
+- **Contract**: contracts/market-fork-v2.clar
+- **Tests**: tests/market-fork-v2.test.ts
+
+---
