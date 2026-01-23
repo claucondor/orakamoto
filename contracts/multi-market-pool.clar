@@ -160,7 +160,7 @@
     (match market
       some-market
         (ok some-market)
-      (err ERR-MARKET-NOT-FOUND)
+      ERR-MARKET-NOT-FOUND
     )
   )
 )
@@ -190,7 +190,7 @@
           (let
             (
               (yes-price-8 (contract-call? .pm-amm-core get-yes-price x y L))
-              (yes-price (/ yes-price-8 u100000000)) ;; Convert from 8 decimals to 6
+              (yes-price (/ (* yes-price-8 u1000000) u100000000)) ;; Convert from 8 decimals to 6
               (no-price (- u1000000 yes-price))
             )
             (ok {
@@ -200,7 +200,7 @@
             })
           )
         )
-      (err ERR-MARKET-NOT-FOUND)
+      ERR-MARKET-NOT-FOUND
     )
   )
 )
@@ -218,7 +218,7 @@
           no-reserve: (get no-reserve some-market),
           total-liquidity: (get total-liquidity some-market)
         })
-      (err ERR-MARKET-NOT-FOUND)
+      ERR-MARKET-NOT-FOUND
     )
   )
 )
@@ -247,7 +247,7 @@
           creator-fees: (default-to u0 (map-get? creator-fees market-id)),
           protocol-fees: (default-to u0 (map-get? protocol-fees market-id))
         })
-      (err ERR-MARKET-NOT-FOUND)
+      ERR-MARKET-NOT-FOUND
     )
   )
 )
@@ -264,7 +264,7 @@
           (not (get is-resolved some-market))
           (< block-height (get deadline some-market))
         ))
-      (err ERR-MARKET-NOT-FOUND)
+      ERR-MARKET-NOT-FOUND
     )
   )
 )
@@ -293,7 +293,7 @@
             winning-outcome: winning
           })
         )
-      (err ERR-MARKET-NOT-FOUND)
+      ERR-MARKET-NOT-FOUND
     )
   )
 )

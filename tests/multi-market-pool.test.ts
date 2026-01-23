@@ -19,6 +19,7 @@ const ERR_INVALID_OUTCOME = 4004n;
 const ERR_INVALID_QUESTION = 4012n;
 const ERR_INVALID_DEADLINE = 4013n;
 const ERR_INSUFFICIENT_LIQUIDITY = 4006n;
+const ERR_INSUFFICIENT_BALANCE = 4005n;
 const ERR_ZERO_AMOUNT = 4007n;
 const ERR_SLIPPAGE_TOO_HIGH = 4008n;
 const ERR_MARKET_ID_OVERFLOW = 4014n;
@@ -183,7 +184,7 @@ describe('Multi-Market Pool - Create Market', () => {
         'create-market',
         [
           Cl.stringUtf8('Will BTC reach $100k?'),
-          Cl.uint(500), // Past current block height (1000)
+          Cl.uint(0), // deadline of 0 is in the past
           Cl.uint(3000),
           Cl.uint(MINIMUM_INITIAL_LIQUIDITY),
         ],
@@ -245,7 +246,7 @@ describe('Multi-Market Pool - Create Market', () => {
       );
 
       // The USDCx transfer will fail
-      expect(result.result.type).toBe('error');
+      expect(result.result.type).toBe('err');
     });
 
     it('should create market with exactly minimum liquidity', () => {
@@ -701,7 +702,7 @@ describe('Multi-Market Pool - Create Market', () => {
         );
 
         // 1% of 1,000,000 = 10,000
-        expect(fee.result).toBeOk(Cl.uint(10_000n));
+        expect(fee.result).toBeUint(10_000n);
       });
     });
 
@@ -714,7 +715,7 @@ describe('Multi-Market Pool - Create Market', () => {
           deployer
         );
 
-        expect(lpTokens.result).toBeOk(Cl.uint(10_000_000n));
+        expect(lpTokens.result).toBeUint(10_000_000n);
       });
 
       it('should calculate proportional LP tokens for subsequent deposit', () => {
@@ -726,7 +727,7 @@ describe('Multi-Market Pool - Create Market', () => {
         );
 
         // 5,000,000 * 10,000,000 / 10,000,000 = 5,000,000
-        expect(lpTokens.result).toBeOk(Cl.uint(5_000_000n));
+        expect(lpTokens.result).toBeUint(5_000_000n);
       });
     });
   });
@@ -900,8 +901,8 @@ describe('Multi-Market Pool - Add Liquidity', () => {
       const r = (reserves.result as any).value.value;
 
       // YES and NO should each increase by 2M (half of 4M)
-      expect(Number((r['yes-reserve'] as any).value)).toBe(7_000_000n);
-      expect(Number((r['no-reserve'] as any).value)).toBe(7_000_000n);
+      expect(Number((r['yes-reserve'] as any).value)).toBe(7_000_000);
+      expect(Number((r['no-reserve'] as any).value)).toBe(7_000_000);
     });
 
     it('should allow adding liquidity with minimum amount', () => {
@@ -968,7 +969,7 @@ describe('Multi-Market Pool - Add Liquidity', () => {
       );
 
       // The USDCx transfer will fail
-      expect(result.result.type).toBe('error');
+      expect(result.result.type).toBe('err');
     });
   });
 });
@@ -1043,8 +1044,7 @@ describe('Multi-Market Pool - Remove Liquidity', () => {
         [Cl.uint(marketId), Cl.standardPrincipal(deployer)],
         deployer
       );
-      const lpAfter = (lpBalanceAfter.result as any).value.value;
-      expect(Number((lpAfter as any).value)).toBe(0);
+      expect(lpBalanceAfter.result).toBeOk(Cl.uint(0));
     });
 
     it('should reject removing liquidity from non-existent market', () => {
@@ -1079,7 +1079,7 @@ describe('Multi-Market Pool - Remove Liquidity', () => {
       );
 
       // The burn function in sip013-lp-token will fail with insufficient balance
-      expect(result.result.type).toBe('error');
+      expect(result.result.type).toBe('err');
     });
 
     it('should allow partial liquidity removal', () => {
@@ -1109,8 +1109,7 @@ describe('Multi-Market Pool - Remove Liquidity', () => {
         [Cl.uint(marketId), Cl.standardPrincipal(deployer)],
         deployer
       );
-      const lp = (lpBalance.result as any).value.value;
-      expect(Number((lp as any).value)).toBe(5_000_000n);
+      expect(lpBalance.result).toBeOk(Cl.uint(5_000_000));
 
       // Verify reserves decreased proportionally
       const reserves = simnet.callReadOnlyFn(
@@ -1120,7 +1119,7 @@ describe('Multi-Market Pool - Remove Liquidity', () => {
         deployer
       );
       const r = (reserves.result as any).value.value;
-      expect(Number((r['total-liquidity'] as any).value)).toBe(10_000_000n); // 15M - 5M removed
+      expect(Number((r['total-liquidity'] as any).value)).toBe(10_000_000); // 15M - 5M removed
     });
 
     it('should calculate correct USDC return without fees', () => {
@@ -1205,8 +1204,8 @@ describe('Multi-Market Pool - Remove Liquidity', () => {
       const r = (reserves.result as any).value.value;
 
       // Should have removed 2.5M from each reserve (50% of 5M)
-      expect(Number((r['yes-reserve'] as any).value)).toBe(2_500_000n);
-      expect(Number((r['no-reserve'] as any).value)).toBe(2_500_000n);
+      expect(Number((r['yes-reserve'] as any).value)).toBe(2_500_000);
+      expect(Number((r['no-reserve'] as any).value)).toBe(2_500_000);
     });
 
     it('should allow removing liquidity with minimum amount', () => {
@@ -1257,7 +1256,7 @@ describe('Multi-Market Pool - Remove Liquidity', () => {
         [Cl.uint(marketId), Cl.uint(3_000_000n)],
         wallet1
       );
-      expect(result1.result.type).toBe('response');
+      expect(result1.result.type).toBe('ok');
 
       // Remove liquidity from wallet2
       const result2 = simnet.callPublicFn(
@@ -1275,7 +1274,7 @@ describe('Multi-Market Pool - Remove Liquidity', () => {
         [Cl.uint(marketId), Cl.standardPrincipal(wallet1)],
         deployer
       );
-      expect(Number(((lp1.result as any).value.value as any).value)).toBe(0);
+      expect(lp1.result).toBeOk(Cl.uint(0));
 
       const lp2 = simnet.callReadOnlyFn(
         'multi-market-pool',
@@ -1283,7 +1282,7 @@ describe('Multi-Market Pool - Remove Liquidity', () => {
         [Cl.uint(marketId), Cl.standardPrincipal(wallet2)],
         deployer
       );
-      expect(Number(((lp2.result as any).value.value as any).value)).toBe(0);
+      expect(lp2.result).toBeOk(Cl.uint(0));
     });
 
     it('should return correct amount when all liquidity is removed', () => {
@@ -1475,7 +1474,7 @@ describe('Multi-Market Pool - Buy Outcome', () => {
       );
 
       // The USDCx transfer will fail
-      expect(result.result.type).toBe('error');
+      expect(result.result.type).toBe('err');
     });
 
     it('should reject buying when slippage protection is triggered', () => {
@@ -1503,7 +1502,7 @@ describe('Multi-Market Pool - Buy Outcome', () => {
         [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
         wallet1
       );
-      expect(result1.result.type).toBe('response');
+      expect(result1.result.type).toBe('ok');
 
       // Wallet 2 buys NO
       const result2 = simnet.callPublicFn(
@@ -1553,9 +1552,9 @@ describe('Multi-Market Pool - Buy Outcome', () => {
 
       // 1% of 2M = 20,000 fee
       // 70% to LP (14,000), 10% to creator (2,000), 20% to protocol (4,000)
-      expect(Number((f['accumulated-fees'] as any).value)).toBe(20_000n);
-      expect(Number((f['creator-fees'] as any).value)).toBe(2_000n);
-      expect(Number((f['protocol-fees'] as any).value)).toBe(4_000n);
+      expect(Number((f['accumulated-fees'] as any).value)).toBe(20_000);
+      expect(Number((f['creator-fees'] as any).value)).toBe(2_000);
+      expect(Number((f['protocol-fees'] as any).value)).toBe(4_000);
     });
 
     it('should update reserves correctly after buying YES', () => {
@@ -1748,7 +1747,7 @@ describe('Multi-Market Pool - Sell Outcome', () => {
         deployer
       );
       const remainingTokens = Number((balanceAfter.result as any).value.value);
-      expect(remainingTokens).toBe(tokensOwned - Number(sellAmount));
+      expect(remainingTokens).toBe(Number(tokensOwned - sellAmount));
     });
 
     it('should sell NO tokens correctly', () => {
@@ -2007,7 +2006,7 @@ describe('Multi-Market Pool - Sell Outcome', () => {
         [Cl.uint(marketId), Cl.uint(0), Cl.uint(tokens1), Cl.uint(1n)],
         wallet1
       );
-      expect(result1.result.type).toBe('response');
+      expect(result1.result.type).toBe('ok');
 
       const result2 = simnet.callPublicFn(
         'multi-market-pool',
