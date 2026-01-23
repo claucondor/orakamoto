@@ -398,3 +398,105 @@
     (- usdc-out-gross fee)
   )
 )
+
+;; ============================================================================
+;; PUBLIC FUNCTIONS - Market Management
+;; ============================================================================
+
+;; Create a new prediction market
+;; @param question: The market question (max 256 UTF-8 bytes)
+;; @param deadline: Trading deadline (block height)
+;; @param resolution-deadline: Resolution deadline (block height)
+;; @param initial-liquidity: Initial liquidity in USDCx (min 1 USDC)
+;; @returns (response uint uint): The market-id on success, error code on failure
+(define-public (create-market
+    (question (string-utf8 256))
+    (deadline uint)
+    (resolution-deadline uint)
+    (initial-liquidity uint)
+  )
+  (let
+    (
+      (caller tx-sender)
+      (current-block block-height)
+    )
+    ;; Validate question is not empty
+    (asserts! (> (len question) u0) ERR-INVALID-QUESTION)
+
+    ;; Validate deadline is in the future
+    (asserts! (> deadline current-block) ERR-INVALID-DEADLINE)
+
+    ;; Validate resolution-deadline is after deadline
+    (asserts! (> resolution-deadline deadline) ERR-INVALID-DEADLINE)
+
+    ;; Validate minimum initial liquidity
+    (asserts! (>= initial-liquidity MINIMUM-INITIAL-LIQUIDITY) ERR-INSUFFICIENT-LIQUIDITY)
+
+    ;; Get current market count and calculate new market-id
+    (let
+      (
+        (current-count (var-get market-count))
+        (market-id (+ current-count u1))
+      )
+
+      ;; Check for overflow
+      (asserts! (> market-id current-count) ERR-MARKET-ID-OVERFLOW)
+
+      ;; Transfer USDCx from creator to contract
+      (try! (contract-call? .usdcx transfer initial-liquidity caller (as-contract tx-sender) none))
+
+      ;; Split liquidity 50/50 for YES and NO reserves
+      (let
+        (
+          (split-amount (split-liquidity initial-liquidity))
+          (yes-portion (get yes-portion split-amount))
+          (no-portion (get no-portion split-amount))
+        )
+
+        ;; Create market entry
+        (map-set markets market-id
+          {
+            creator: caller,
+            question: question,
+            deadline: deadline,
+            resolution-deadline: resolution-deadline,
+            yes-reserve: yes-portion,
+            no-reserve: no-portion,
+            total-liquidity: initial-liquidity,
+            accumulated-fees: u0,
+            is-resolved: false,
+            winning-outcome: none,
+            resolution-block: u0,
+            created-at: current-block,
+            liquidity-parameter: initial-liquidity, ;; L = initial liquidity for pm-AMM
+          }
+        )
+
+        ;; Initialize fee maps
+        (map-set creator-fees market-id u0)
+        (map-set protocol-fees market-id u0)
+
+        ;; Mint LP tokens to creator
+        (try! (contract-call? .sip013-lp-token mint market-id initial-liquidity caller))
+
+        ;; Increment market count
+        (var-set market-count market-id)
+
+        ;; Emit event
+        (print {
+          event: "market-created",
+          market-id: market-id,
+          creator: caller,
+          question: question,
+          deadline: deadline,
+          resolution-deadline: resolution-deadline,
+          initial-liquidity: initial-liquidity,
+          liquidity-parameter: initial-liquidity,
+        })
+
+        ;; Return market-id
+        (ok market-id)
+      )
+    )
+  )
+)
