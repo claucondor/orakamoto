@@ -1,5 +1,177 @@
 # Ralphy Progress Log
 
+## 2026-01-23: PRD-mvp-tools - AI Judge Implementation
+
+### Summary
+Implemented AI Judge script (scripts/ai-judge.mjs) for using LLMs (GPT-4, Claude, Llama) to analyze market outcomes and submit resolution votes. The script supports multiple AI providers (OpenRouter, OpenAI, Anthropic), dry-run mode, auto-submit at 80%+ confidence, and batch processing. All 33 tests pass.
+
+### Changes Made
+
+1. **scripts/ai-judge.mjs** (new file):
+   - AI-powered market resolution judge using LLMs
+   - Features:
+     - `--market-id <id>`: Judge specific market by ID
+     - `--question <text>`: Market question to analyze
+     - `--evidence <urls>`: Comma-separated evidence URLs
+     - `--model <model>`: AI model to use (default: openai/gpt-4-turbo)
+     - `--api-provider <provider>`: API provider: openrouter, openai, or anthropic
+     - `--batch-pending`: Judge all pending markets automatically
+     - `--auto`: Auto-submit if confidence > 80%
+     - `--dry-run`: Analyze without submitting transactions
+     - `--mainnet`: Use mainnet instead of testnet
+     - `--help`: Display usage information
+   - Functions:
+     - `callLLM(question, evidence)`: Main LLM API call dispatcher
+     - `callOpenRouter(prompt, model)`: OpenRouter API integration
+     - `callOpenAI(prompt, model)`: OpenAI API integration
+     - `callAnthropic(prompt, model)`: Anthropic API integration
+     - `parseLLMResponse(content)`: Extract decision, confidence, reasoning from LLM output
+     - `submitRecommendation(marketId, outcome, confidence, evidence)`: Submit to ai-oracle-council contract
+     - `judgeMarket(marketId, question, evidence)`: Main judging workflow
+   - Contract integration:
+     - Calls `request-ai-evaluation` on ai-oracle-council contract
+     - Uses `uintCV`, `stringAsciiCV`, `listCV` for Clarity types
+     - Supports simnet, testnet, and mainnet
+
+2. **scripts/test-ai-judge.mjs** (new file):
+   - Comprehensive test suite for ai-judge.mjs
+   - 33 tests covering:
+     - Syntax validation
+     - Help flag functionality
+     - File permissions
+     - Script structure (imports, functions, configuration)
+     - Command line argument parsing
+     - API integration patterns (OpenRouter, OpenAI, Anthropic)
+     - LLM response parsing (REASONING, DECISION, CONFIDENCE)
+     - Contract interaction (request-ai-evaluation, Clarity types)
+     - Prompt engineering
+     - Configuration and defaults
+   - All tests pass ✅
+
+3. **PRD-mvp-tools.md** (updated):
+   - Marked Phase 2 Task 5 (AI Judge) as complete
+   - Updated section 2.1 with implementation details
+   - Updated Success Criteria to note AI judge is implemented
+
+### Design Notes
+
+**Multi-Provider Support:**
+- OpenRouter (default): Unified API for GPT-4, Claude, Llama, and more
+- OpenAI Direct: For users with OpenAI API keys
+- Anthropic Direct: For users with Anthropic API keys
+
+**Supported Models:**
+- openai/gpt-4-turbo, openai/gpt-4o (OpenRouter)
+- anthropic/claude-3-opus, anthropic/claude-3-sonnet (OpenRouter)
+- meta-llama/llama-3-70b (OpenRouter)
+- gpt-4-turbo, gpt-4o (OpenAI)
+- claude-3-opus-20240229, claude-3-sonnet-20240229 (Anthropic)
+
+**Prompt Engineering:**
+- Structured prompt with clear role ("impartial judge")
+- Current date injection for time-aware decisions
+- Evidence support with URL/context formatting
+- Structured output format (REASONING, DECISION, CONFIDENCE)
+- Confidence tracking (0-100) for quality filtering
+
+**Contract Integration:**
+- Calls `request-ai-evaluation` which creates evaluation request
+- In production, authorized AI bridge would call `record-ai-recommendation`
+- Confidence scaled to 6 decimals (0-1000000) for contract precision
+
+**Auto-Submit Behavior:**
+- Requires `--auto` flag OR 80%+ confidence
+- Prevents low-confidence submissions from being recorded on-chain
+- Dry-run mode available for testing without transactions
+
+### Usage Examples
+
+```bash
+# Dry-run (no API key required for testing help)
+node scripts/ai-judge.mjs --help
+
+# Judge with OpenRouter (requires OPENROUTER_API_KEY)
+export OPENROUTER_API_KEY=sk-or-...
+export STACKS_PRIVATE_KEY=your_private_key_here
+node scripts/ai-judge.mjs --market-id 5 --question "Will BTC reach 100k?" --dry-run
+
+# Judge with OpenAI (requires OPENAI_API_KEY)
+export OPENAI_API_KEY=sk-...
+export STACKS_PRIVATE_KEY=your_private_key_here
+node scripts/ai-judge.mjs --api-provider openai --market-id 5 --question "Will BTC reach 100k?" --dry-run
+
+# Judge with Anthropic (requires ANTHROPIC_API_KEY)
+export ANTHROPIC_API_KEY=sk-ant-...
+export STACKS_PRIVATE_KEY=your_private_key_here
+node scripts/ai-judge.mjs --api-provider anthropic --market-id 5 --question "Will BTC reach 100k?" --auto
+
+# Use specific model via OpenRouter
+export OPENROUTER_API_KEY=sk-or-...
+export STACKS_PRIVATE_KEY=your_private_key_here
+node scripts/ai-judge.mjs --market-id 5 --question "Will BTC reach 100k?" --model anthropic/claude-3-opus --auto
+
+# Batch pending markets
+export OPENROUTER_API_KEY=sk-or-...
+export STACKS_PRIVATE_KEY=your_private_key_here
+node scripts/ai-judge.mjs --batch-pending --auto
+```
+
+### Test Results
+
+```
+✓ Script has valid JavaScript syntax
+✓ Help flag displays usage information
+✓ Script is executable
+✓ Script imports required Stacks.js modules
+✓ Script has required functions
+✓ Script has API provider functions
+✓ Script has contract configuration
+✓ Script exports helper functions
+✓ Script parses --market-id argument
+✓ Script parses --question argument
+✓ Script parses --evidence argument
+✓ Script parses --model argument
+✓ Script parses --api-provider argument
+✓ Script parses --batch-pending argument
+✓ Script parses --auto argument
+✓ Script parses --dry-run argument
+✓ Script uses fetch for HTTP requests
+✓ Script has error handling for fetch failures
+✓ Script uses makeContractCall for transactions
+✓ Script uses broadcastTransaction for broadcasting
+✓ Script parses REASONING from LLM response
+✓ Script parses DECISION from LLM response
+✓ Script parses CONFIDENCE from LLM response
+✓ Script handles confidence scaling (0-100 to 0-1000000)
+✓ Script calls request-ai-evaluation function
+✓ Script uses correct Clarity types for arguments
+✓ Script includes clear instructions in prompt
+✓ Script includes current date in prompt
+✓ Script handles evidence in prompt
+✓ Script has default model
+✓ Script has default API provider
+✓ Script checks for API keys
+✓ Script has network configuration
+
+Passed: 33
+Failed: 0
+Total:  33
+```
+
+### Verification
+
+- `node --check scripts/ai-judge.mjs`: Passes ✅
+- `node scripts/test-ai-judge.mjs`: **33 passed | 0 failed** ✅
+- Script is executable ✅
+- All required features implemented ✅
+
+### Reference
+
+- **PRD-mvp-tools**: PRD-mvp-tools.md Section 2.1 (AI Market Resolver / AI Judge)
+- **Related**: contracts/ai-oracle-council.clar (contract for AI recommendations)
+
+---
+
 ## 2026-01-23: PRD-mvp-tools - Pyth Oracle Updater Implementation
 
 ### Summary
