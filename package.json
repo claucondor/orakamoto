@@ -7,7 +7,16 @@
   "scripts": {
     "test": "vitest run",
     "test:report": "vitest run -- --coverage --costs",
-    "test:watch": "chokidar \"tests/**/*.ts\" \"contracts/**/*.clar\" -c \"npm run test:report\""
+    "test:watch": "chokidar \"tests/**/*.ts\" \"contracts/**/*.clar\" -c \"npm run test:report\"",
+    "test:phase0": "vitest run tests/multi-market-pool.test.ts tests/sip013-lp-token.test.ts tests/mock-usdc.test.ts",
+    "test:phase1": "vitest run tests/market-factory-v3.test.ts",
+    "test:phase2": "vitest run tests/multi-outcome-pool-v2.test.ts",
+    "test:phase3": "vitest run tests/yield-vault.test.ts tests/yield-distributor.test.ts tests/deposit-idle-funds.test.ts",
+    "test:phase4": "vitest run tests/oracle-resolver.test.ts tests/pyth-oracle-wrapper.test.ts",
+    "test:phase5": "vitest run tests/hro-resolver.test.ts tests/hro-attack-scenarios.test.ts tests/quadratic-voting.test.ts tests/reputation-registry.test.ts tests/dispute.test.ts",
+    "test:phase6": "vitest run tests/governance.test.ts tests/governance-token.test.ts tests/vote-escrow.test.ts tests/vesting-vault.test.ts tests/creator-rewards.test.ts tests/trader-rewards.test.ts tests/lp-rewards.test.ts",
+    "test:phase7": "vitest run tests/market-fork-v2.test.ts",
+    "test:integration": "vitest run tests/integration.test.ts tests/integration-v3.test.ts"
   },
   "author": "",
   "license": "ISC",
