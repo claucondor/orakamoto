@@ -520,9 +520,6 @@
         (market-id (+ current-count u1))
       )
 
-      ;; Check for overflow
-      (asserts! (> market-id current-count) ERR-MARKET-ID-OVERFLOW)
-
       ;; Transfer USDCx from creator to contract
       (try! (contract-call? .usdcx transfer initial-liquidity caller (as-contract tx-sender) none))
 

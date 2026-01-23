@@ -174,6 +174,12 @@ path = 'contracts/market-factory-v2.clar'
 clarity_version = 2
 epoch = '2.1'
 
+[contracts.market-factory-v3]
+path = 'contracts/market-factory-v3.clar'
+clarity_version = 2
+epoch = '2.1'
+depends_on = ['multi-market-pool']
+
 [contracts.math-fixed-point]
 path = 'contracts/lib/math-fixed-point.clar'
 clarity_version = 2
