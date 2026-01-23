@@ -70,6 +70,7 @@
 (define-constant ERR-INVALID-QUESTION (err u4012))
 (define-constant ERR-INVALID-DEADLINE (err u4013))
 (define-constant ERR-MARKET-ID_OVERFLOW (err u4014))
+(define-constant ERR-NOT-AUTHORIZED (err u4015))
 
 ;; ============================================================================
 ;; DATA STRUCTURES
@@ -931,6 +932,72 @@
           )
         )
       )
+    )
+  )
+)
+
+;; Resolve a market by setting the winning outcome
+;; @param market-id: The market to resolve
+;; @param outcome: The winning outcome (0 = YES, 1 = NO)
+;; @returns (response bool bool): true on success, error code on failure
+(define-public (resolve (market-id uint) (outcome uint))
+  (let
+    (
+      (caller tx-sender)
+      (market (map-get? markets market-id))
+    )
+    ;; Validate market exists
+    (asserts! (is-some market) ERR-MARKET-NOT-FOUND)
+
+    (let
+      (
+        (market-data (unwrap! (map-get? markets market-id) ERR-MARKET-NOT-FOUND))
+        (creator (get creator market-data))
+        (is-resolved (get is-resolved market-data))
+        (deadline (get deadline market-data))
+      )
+      ;; Validate caller is the market creator
+      (asserts! (is-eq caller creator) ERR-NOT-AUTHORIZED)
+
+      ;; Validate market is not already resolved
+      (asserts! (not is-resolved) ERR-MARKET-ALREADY-RESOLVED)
+
+      ;; Validate deadline has passed
+      (asserts! (>= block-height deadline) ERR-DEADLINE-NOT-PASSED)
+
+      ;; Validate outcome is 0 (YES) or 1 (NO)
+      (asserts! (is-valid-outcome outcome) ERR-INVALID-OUTCOME)
+
+      ;; Resolve the market
+      (map-set markets market-id
+        {
+          creator: creator,
+          question: (get question market-data),
+          deadline: deadline,
+          resolution-deadline: (get resolution-deadline market-data),
+          yes-reserve: (get yes-reserve market-data),
+          no-reserve: (get no-reserve market-data),
+          total-liquidity: (get total-liquidity market-data),
+          accumulated-fees: (get accumulated-fees market-data),
+          is-resolved: true,
+          winning-outcome: (some outcome),
+          resolution-block: block-height,
+          created-at: (get created-at market-data),
+          liquidity-parameter: (get liquidity-parameter market-data),
+        }
+      )
+
+      ;; Emit event
+      (print {
+        event: "market-resolved",
+        market-id: market-id,
+        resolver: caller,
+        winning-outcome: outcome,
+        resolution-block: block-height,
+      })
+
+      ;; Return success
+      (ok true)
     )
   )
 )

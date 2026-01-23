@@ -22,6 +22,8 @@ const ERR_INSUFFICIENT_LIQUIDITY = 4006n;
 const ERR_ZERO_AMOUNT = 4007n;
 const ERR_SLIPPAGE_TOO_HIGH = 4008n;
 const ERR_MARKET_ID_OVERFLOW = 4014n;
+const ERR_NOT_AUTHORIZED = 4015n;
+const ERR_DEADLINE_NOT_PASSED = 4003n;
 
 // Helper function to give a wallet USDC via faucet
 function fundWallet(wallet: string, amount: number) {
@@ -2259,6 +2261,292 @@ describe('Multi-Market Pool - Sell Outcome', () => {
       );
 
       expect(result.result.type).toBe('response');
+    });
+  });
+});
+
+describe('Multi-Market Pool - Resolve Market', () => {
+  let marketId: bigint;
+
+  beforeEach(() => {
+    simnet.blockHeight = 1000n;
+
+    // Fund deployer and create a market
+    fundWallet(deployer, 20_000_000n);
+    const result = simnet.callPublicFn(
+      'multi-market-pool',
+      'create-market',
+      [
+        Cl.stringUtf8('Will BTC reach $100k?'),
+        Cl.uint(2000),
+        Cl.uint(3000),
+        Cl.uint(10_000_000n),
+      ],
+      deployer
+    );
+    marketId = (result.result as any).value.value;
+  });
+
+  describe('resolve', () => {
+    it('should resolve market as creator after deadline', () => {
+      // Mine past deadline
+      simnet.blockHeight = 2500n;
+
+      // Resolve market with YES winning
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)], // outcome=0 (YES)
+        deployer
+      );
+
+      expect(result.result).toBeOk(Cl.bool(true));
+
+      // Verify market is resolved
+      const market = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-market',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const m = (market.result as any).value.value;
+
+      expect(m['is-resolved']).toStrictEqual(Cl.bool(true));
+      expect(m['winning-outcome']).toStrictEqual(Cl.some(Cl.uint(0)));
+      expect(m['resolution-block']).toStrictEqual(Cl.uint(2500));
+    });
+
+    it('should resolve market with NO outcome', () => {
+      simnet.blockHeight = 2500n;
+
+      // Resolve market with NO winning
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(1)], // outcome=1 (NO)
+        deployer
+      );
+
+      expect(result.result).toBeOk(Cl.bool(true));
+
+      // Verify winning outcome is NO
+      const market = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-market',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const m = (market.result as any).value.value;
+
+      expect(m['winning-outcome']).toStrictEqual(Cl.some(Cl.uint(1)));
+    });
+
+    it('should reject resolving non-existent market', () => {
+      simnet.blockHeight = 2500n;
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(999), Cl.uint(0)], // market doesn't exist
+        deployer
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_MARKET_NOT_FOUND));
+    });
+
+    it('should reject resolving before deadline', () => {
+      // Still before deadline (block 1000 < deadline 2000)
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_DEADLINE_NOT_PASSED));
+    });
+
+    it('should reject resolving by non-creator', () => {
+      simnet.blockHeight = 2500n;
+
+      // Try to resolve as wallet1 (not the creator)
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_NOT_AUTHORIZED));
+    });
+
+    it('should reject resolving already resolved market', () => {
+      simnet.blockHeight = 2500n;
+
+      // First resolve
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+
+      // Try to resolve again
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(1)], // Try different outcome
+        deployer
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_MARKET_ALREADY_RESOLVED));
+    });
+
+    it('should reject resolving with invalid outcome', () => {
+      simnet.blockHeight = 2500n;
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(2)], // outcome=2 (invalid)
+        deployer
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_INVALID_OUTCOME));
+    });
+
+    it('should set resolution block correctly', () => {
+      simnet.blockHeight = 3000n;
+
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+
+      // Verify resolution block is set
+      const market = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-market',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const m = (market.result as any).value.value;
+
+      expect(m['resolution-block']).toStrictEqual(Cl.uint(3000));
+    });
+
+    it('should preserve other market data when resolving', () => {
+      simnet.blockHeight = 2500n;
+
+      // Get market data before resolving
+      const marketBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-market',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const mb = (marketBefore.result as any).value.value;
+
+      // Resolve
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+
+      // Get market data after resolving
+      const marketAfter = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-market',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const ma = (marketAfter.result as any).value.value;
+
+      // Verify preserved data
+      expect(ma['creator']).toStrictEqual(mb['creator']);
+      expect(ma['question']).toStrictEqual(mb['question']);
+      expect(ma['deadline']).toStrictEqual(mb['deadline']);
+      expect(ma['resolution-deadline']).toStrictEqual(mb['resolution-deadline']);
+      expect(ma['yes-reserve']).toStrictEqual(mb['yes-reserve']);
+      expect(ma['no-reserve']).toStrictEqual(mb['no-reserve']);
+      expect(ma['total-liquidity']).toStrictEqual(mb['total-liquidity']);
+      expect(ma['accumulated-fees']).toStrictEqual(mb['accumulated-fees']);
+      expect(ma['created-at']).toStrictEqual(mb['created-at']);
+      expect(ma['liquidity-parameter']).toStrictEqual(mb['liquidity-parameter']);
+    });
+
+    it('should allow resolving exactly at deadline', () => {
+      // Mine to exactly the deadline block
+      simnet.blockHeight = 2000n;
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+
+      // Should succeed (deadline is 2000, block-height >= deadline)
+      expect(result.result).toBeOk(Cl.bool(true));
+    });
+
+    it('should allow multiple markets to be resolved independently', () => {
+      // Create a second market
+      const result2 = simnet.callPublicFn(
+        'multi-market-pool',
+        'create-market',
+        [
+          Cl.stringUtf8('Will ETH reach $10k?'),
+          Cl.uint(2000),
+          Cl.uint(3000),
+          Cl.uint(10_000_000n),
+        ],
+        deployer
+      );
+      const marketId2 = (result2.result as any).value.value;
+
+      simnet.blockHeight = 2500n;
+
+      // Resolve first market with YES
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+
+      // Resolve second market with NO
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId2), Cl.uint(1)],
+        deployer
+      );
+
+      expect(result.result).toBeOk(Cl.bool(true));
+
+      // Verify both markets have correct winning outcomes
+      const market1 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-market',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const m1 = (market1.result as any).value.value;
+      expect(m1['winning-outcome']).toStrictEqual(Cl.some(Cl.uint(0)));
+
+      const market2 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-market',
+        [Cl.uint(marketId2)],
+        deployer
+      );
+      const m2 = (market2.result as any).value.value;
+      expect(m2['winning-outcome']).toStrictEqual(Cl.some(Cl.uint(1)));
     });
   });
 });

@@ -1,5 +1,68 @@
 # Ralphy Progress Log
 
+## 2026-01-22: PRD-v3 Phase 2 Task 2.8 - Implement resolve function
+
+### Summary
+Implemented the `resolve` function for the multi-market-pool contract, allowing market creators to resolve their markets after the trading deadline passes. This sets the winning outcome (YES or NO) and enables the claims process for winning token holders.
+
+### Changes Made
+
+1. **contracts/multi-market-pool.clar**:
+   - Added `ERR-NOT-AUTHORIZED` error constant (u4015)
+   - Implemented `resolve` public function:
+     - Validates market exists
+     - Validates caller is the market creator (authorization check)
+     - Validates market is not already resolved
+     - Validates deadline has passed (block-height >= deadline)
+     - Validates outcome is 0 (YES) or 1 (NO)
+     - Sets is-resolved = true
+     - Sets winning-outcome to (some outcome)
+     - Sets resolution-block to current block-height
+     - Emits `market-resolved` event
+     - Returns (ok true)
+
+2. **tests/multi-market-pool.test.ts**:
+   - Added `ERR_NOT_AUTHORIZED` and `ERR_DEADLINE_NOT_PASSED` error constants
+   - Added 11 comprehensive tests for resolve:
+     - Resolve market as creator after deadline with YES winning
+     - Resolve market with NO winning
+     - Reject resolving non-existent market
+     - Reject resolving before deadline
+     - Reject resolving by non-creator
+     - Reject resolving already resolved market
+     - Reject resolving with invalid outcome
+     - Set resolution block correctly
+     - Preserve other market data when resolving
+     - Allow resolving exactly at deadline
+     - Allow multiple markets to be resolved independently
+
+### Design Notes
+
+- **Authorization**: Only the market creator can resolve their market
+- **Deadline Validation**: Resolution can only happen after the trading deadline passes
+- **Resolution Block**: Records the block height when the market was resolved (used for dispute window)
+- **Winning Outcome**: Stored as an optional uint (some 0 for YES, some 1 for NO)
+- **Preserved Data**: All market data is preserved during resolution, only is-resolved, winning-outcome, and resolution-block are updated
+
+### Verification
+
+- `clarinet check contracts/multi-market-pool.clar`: Passes with only warnings (no errors)
+- Contract compiles successfully
+- Tests follow existing patterns from other multi-market-pool tests
+- Note: Test execution blocked by pre-existing vitest environment issues (forks worker error)
+
+### Next Steps
+
+- Next incomplete task: Task 2.9 - Implement `claim` function
+- Then: Task 2.10 - Implement read-only functions
+- Then: Task 2.12 - Write and run comprehensive tests
+
+### Reference
+
+- **PRD-v3**: PRD-v3-multi-market.md Phase 2 Task 2.8
+
+---
+
 ## 2026-01-22: PRD-v3 Phase 2 Task 2.7 - Implement sell-outcome function
 
 ### Summary
