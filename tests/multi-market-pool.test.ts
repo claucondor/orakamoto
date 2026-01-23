@@ -33,12 +33,26 @@ function fundWallet(wallet: string, amount: number) {
   simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(amount)], wallet);
 }
 
-describe('Multi-Market Pool - Create Market', () => {
-  beforeEach(() => {
-    // Reset state before each test
-    simnet.blockHeight = 1000n;
-  });
+// Setup: Authorize multi-market-pool to mint/burn LP tokens
+const MULTI_MARKET_POOL_PRINCIPAL = 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.multi-market-pool';
+const authResult = simnet.callPublicFn(
+  'sip013-lp-token',
+  'set-authorized-minter',
+  [Cl.contractPrincipal('ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM', 'multi-market-pool')],
+  deployer
+);
+console.log('Auth result:', authResult.result);
 
+// Verify it was set
+const getMinterResult = simnet.callReadOnlyFn(
+  'sip013-lp-token',
+  'get-authorized-minter',
+  [],
+  deployer
+);
+console.log('Current authorized minter:', getMinterResult.result);
+
+describe('Multi-Market Pool - Create Market', () => {
   describe('create-market', () => {
     it('should create market correctly with valid inputs', () => {
       const currentBlock = simnet.blockHeight;
@@ -682,8 +696,6 @@ describe('Multi-Market Pool - Add Liquidity', () => {
   let marketId: bigint;
 
   beforeEach(() => {
-    simnet.blockHeight = 1000n;
-
     // Fund deployer and create a market
     fundWallet(deployer, 20_000_000n);
     const result = simnet.callPublicFn(
@@ -925,8 +937,6 @@ describe('Multi-Market Pool - Remove Liquidity', () => {
   let marketId: bigint;
 
   beforeEach(() => {
-    simnet.blockHeight = 1000n;
-
     // Fund deployer and create a market
     fundWallet(deployer, 20_000_000n);
     const result = simnet.callPublicFn(
@@ -1267,8 +1277,6 @@ describe('Multi-Market Pool - Buy Outcome', () => {
   let marketId: bigint;
 
   beforeEach(() => {
-    simnet.blockHeight = 1000n;
-
     // Fund deployer and create a market
     fundWallet(deployer, 20_000_000n);
     const result = simnet.callPublicFn(
@@ -1641,8 +1649,6 @@ describe('Multi-Market Pool - Sell Outcome', () => {
   let marketId: bigint;
 
   beforeEach(() => {
-    simnet.blockHeight = 1000n;
-
     // Fund deployer and create a market
     fundWallet(deployer, 20_000_000n);
     const result = simnet.callPublicFn(
@@ -2272,8 +2278,6 @@ describe('Multi-Market Pool - Resolve Market', () => {
   let marketId: bigint;
 
   beforeEach(() => {
-    simnet.blockHeight = 1000n;
-
     // Fund deployer and create a market
     fundWallet(deployer, 20_000_000n);
     const result = simnet.callPublicFn(
@@ -2558,8 +2562,6 @@ describe('Multi-Market Pool - Claim Winnings', () => {
   let marketId: bigint;
 
   beforeEach(() => {
-    simnet.blockHeight = 1000n;
-
     // Fund deployer and create a market
     fundWallet(deployer, 20_000_000n);
     const result = simnet.callPublicFn(

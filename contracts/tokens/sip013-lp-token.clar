@@ -19,8 +19,8 @@
 (define-constant TOKEN-DECIMALS u6)
 
 ;; The multi-market-pool contract is the only authorized caller for mint/burn
-;; This will be set to the deployed multi-market-pool address
-(define-constant AUTHORIZED-MINTER tx-sender)
+;; Initially set to deployer, can be updated via set-authorized-minter
+(define-data-var authorized-minter principal tx-sender)
 
 ;; ============================================
 ;; ERROR CONSTANTS
@@ -177,7 +177,7 @@
       (caller contract-caller)
     )
     ;; Only authorized minter can mint
-    (asserts! (is-eq caller AUTHORIZED-MINTER) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq caller (var-get authorized-minter)) ERR-NOT-AUTHORIZED)
 
     ;; Validate amount > 0
     (asserts! (> amount u0) ERR-ZERO-AMOUNT)
@@ -213,7 +213,7 @@
       (owner-balance (default-to u0 (map-get? token-balances (merge {token-id: token-id} {owner: owner}))))
     )
     ;; Only authorized minter can burn
-    (asserts! (is-eq caller AUTHORIZED-MINTER) ERR-NOT-AUTHORIZED)
+    (asserts! (is-eq caller (var-get authorized-minter)) ERR-NOT-AUTHORIZED)
 
     ;; Validate amount > 0
     (asserts! (> amount u0) ERR-ZERO-AMOUNT)
@@ -247,9 +247,7 @@
 (define-public (set-authorized-minter (new-minter principal))
   (begin
     (asserts! (is-eq contract-caller CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
-    ;; Note: This would require updating the AUTHORIZED-MINTER constant
-    ;; Since constants cannot be changed, this is a placeholder for future implementation
-    ;; In production, use a data-var instead of a constant
+    (var-set authorized-minter new-minter)
     (print {event: "set-authorized-minter", new-minter: new-minter})
     (ok true)
   )
@@ -257,5 +255,5 @@
 
 ;; Get authorized minter
 (define-read-only (get-authorized-minter)
-  (ok AUTHORIZED-MINTER)
+  (ok (var-get authorized-minter))
 )

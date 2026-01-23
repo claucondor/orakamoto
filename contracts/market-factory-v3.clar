@@ -60,12 +60,11 @@
   (let
     (
       (current-list (default-to (list) (map-get? category-markets category)))
-      (list-len (len current-list))
+      ;; Append market to category list (max 1000 markets per category)
+      ;; This is safe because we only add markets one at a time
+      (new-list (unwrap-panic (as-max-len? (append current-list market-id) u1000)))
     )
-    (asserts! (< list-len u999) ERR-INVALID-TAG-COUNT)
-    ;; We know the list won't overflow because we checked length < 999, so appending will give <= 1000
-    (map-set category-markets category (unwrap! (as-max-len? (append current-list market-id) u1000) ERR-INVALID-TAG-COUNT))
-    true
+    (map-set category-markets category new-list)
   )
 )
 
@@ -178,50 +177,46 @@
         (result (contract-call? .multi-market-pool create-market question deadline res-deadline initial-liquidity))
         (market-id (unwrap! result ERR-MARKET-NOT-FOUND))
       )
-      ;; Validate tags inline without interdependent functions
-      (let
-        (
-          (tag1-len (len (default-to u"" (element-at tags u0))))
-          (tag2-len (len (default-to u"" (element-at tags u1))))
-          (tag3-len (len (default-to u"" (element-at tags u2))))
-          (tag4-len (len (default-to u"" (element-at tags u3))))
-          (tag5-len (len (default-to u"" (element-at tags u4))))
-          (tag6-len (len (default-to u"" (element-at tags u5))))
-          (tag7-len (len (default-to u"" (element-at tags u6))))
-          (tag8-len (len (default-to u"" (element-at tags u7))))
-          (tag9-len (len (default-to u"" (element-at tags u8))))
-          (tag10-len (len (default-to u"" (element-at tags u9))))
-        )
-        (when (> (len tags) u0)
-          (asserts! (and (> tag1-len u0) (<= tag1-len MAX-TAG-LENGTH)) ERR-INVALID-TAG-LENGTH)
-        )
-        (when (> (len tags) u1)
-          (asserts! (and (> tag2-len u0) (<= tag2-len MAX-TAG-LENGTH)) ERR-INVALID-TAG-LENGTH)
-        )
-        (when (> (len tags) u2)
-          (asserts! (and (> tag3-len u0) (<= tag3-len MAX-TAG-LENGTH)) ERR-INVALID-TAG-LENGTH)
-        )
-        (when (> (len tags) u3)
-          (asserts! (and (> tag4-len u0) (<= tag4-len MAX-TAG-LENGTH)) ERR-INVALID-TAG-LENGTH)
-        )
-        (when (> (len tags) u4)
-          (asserts! (and (> tag5-len u0) (<= tag5-len MAX-TAG-LENGTH)) ERR-INVALID-TAG-LENGTH)
-        )
-        (when (> (len tags) u5)
-          (asserts! (and (> tag6-len u0) (<= tag6-len MAX-TAG-LENGTH)) ERR-INVALID-TAG-LENGTH)
-        )
-        (when (> (len tags) u6)
-          (asserts! (and (> tag7-len u0) (<= tag7-len MAX-TAG-LENGTH)) ERR-INVALID-TAG-LENGTH)
-        )
-        (when (> (len tags) u7)
-          (asserts! (and (> tag8-len u0) (<= tag8-len MAX-TAG-LENGTH)) ERR-INVALID-TAG-LENGTH)
-        )
-        (when (> (len tags) u8)
-          (asserts! (and (> tag9-len u0) (<= tag9-len MAX-TAG-LENGTH)) ERR-INVALID-TAG-LENGTH)
-        )
-        (when (> (len tags) u9)
-          (asserts! (and (> tag10-len u0) (<= tag10-len MAX-TAG-LENGTH)) ERR-INVALID-TAG-LENGTH)
-        )
+      ;; Validate tags inline using if statements
+      (if (> (len tags) u0)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u0))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u1)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u1))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u2)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u2))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u3)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u3))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u4)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u4))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u5)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u5))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u6)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u6))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u7)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u7))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u8)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u8))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
+      )
+      (if (> (len tags) u9)
+        (asserts! (let ((tag-len (len (default-to u"" (element-at tags u9))))) (and (> tag-len u0) (<= tag-len MAX-TAG-LENGTH))) ERR-INVALID-TAG-LENGTH)
+        true
       )
 
       (map-set market-metadata

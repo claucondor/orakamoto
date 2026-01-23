@@ -22,7 +22,7 @@
     "chokidar-cli": "^3.0.0",
     "micro-packed": "^0.8.0",
     "viem": "^2.44.4",
-    "vitest": "^4.0.7",
+    "vitest": "^3.2.4",
     "vitest-environment-clarinet": "^3.0.0"
   }
 }

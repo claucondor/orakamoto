@@ -27,11 +27,6 @@ function fundWallet(wallet: string, amount: number) {
 }
 
 describe('Market Factory V3 - Create Market', () => {
-  beforeEach(() => {
-    // Reset state before each test
-    simnet.blockHeight = 1000n;
-  });
-
   describe('create-market', () => {
     it('should create market via factory with valid inputs', () => {
       const currentBlock = simnet.blockHeight;
@@ -286,10 +281,6 @@ describe('Market Factory V3 - Create Market', () => {
 });
 
 describe('Market Factory V3 - Feature Market', () => {
-  beforeEach(() => {
-    simnet.blockHeight = 1000n;
-  });
-
   it('should allow admin to feature a market', () => {
     const currentBlock = simnet.blockHeight;
     const deadline = currentBlock + 1000;
@@ -501,10 +492,6 @@ describe('Market Factory V3 - Feature Market', () => {
 });
 
 describe('Market Factory V3 - Deactivate Market', () => {
-  beforeEach(() => {
-    simnet.blockHeight = 1000n;
-  });
-
   it('should allow admin to deactivate a market', () => {
     const currentBlock = simnet.blockHeight;
     const deadline = currentBlock + 1000;
@@ -672,10 +659,6 @@ describe('Market Factory V3 - Deactivate Market', () => {
 });
 
 describe('Market Factory V3 - Read-Only Functions', () => {
-  beforeEach(() => {
-    simnet.blockHeight = 1000n;
-  });
-
   it('should get market metadata', () => {
     const currentBlock = simnet.blockHeight;
     const deadline = currentBlock + 1000;
@@ -790,10 +773,6 @@ describe('Market Factory V3 - Read-Only Functions', () => {
 });
 
 describe('Market Factory V3 - Multiple Markets', () => {
-  beforeEach(() => {
-    simnet.blockHeight = 1000n;
-  });
-
   it('should handle multiple markets with different categories', () => {
     const currentBlock = simnet.blockHeight;
     const deadline = currentBlock + 1000;
