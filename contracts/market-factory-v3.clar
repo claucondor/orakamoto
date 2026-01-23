@@ -80,7 +80,7 @@
     (match metadata
       some-metadata
         (ok some-metadata)
-      (err ERR-MARKET-NOT-FOUND)
+      ERR-MARKET-NOT-FOUND
     )
   )
 )
@@ -107,7 +107,7 @@
     (match metadata
       some-metadata
         (ok (get featured some-metadata))
-      (err ERR-MARKET-NOT-FOUND)
+      ERR-MARKET-NOT-FOUND
     )
   )
 )
@@ -120,7 +120,7 @@
     (match metadata
       some-metadata
         (ok (get active some-metadata))
-      (err ERR-MARKET-NOT-FOUND)
+      ERR-MARKET-NOT-FOUND
     )
   )
 )
@@ -133,7 +133,7 @@
     (match metadata
       some-metadata
         (ok (get category some-metadata))
-      (err ERR-MARKET-NOT-FOUND)
+      ERR-MARKET-NOT-FOUND
     )
   )
 )
@@ -146,7 +146,7 @@
     (match metadata
       some-metadata
         (ok (get tags some-metadata))
-      (err ERR-MARKET-NOT-FOUND)
+      ERR-MARKET-NOT-FOUND
     )
   )
 )
