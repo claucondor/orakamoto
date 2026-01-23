@@ -59,8 +59,9 @@ path = 'contracts/lp-rewards.clar'
 clarity_version = 2
 epoch = '2.1'
 
+# @deprecated - Use market-factory-v3 instead
 [contracts.market-factory]
-path = 'contracts/market-factory.clar'
+path = 'contracts/deprecated/market-factory.clar'
 clarity_version = 2
 epoch = '2.1'
 
@@ -69,8 +70,9 @@ path = 'contracts/market-fork.clar'
 clarity_version = 2
 epoch = '2.1'
 
+# @deprecated - Use multi-market-pool instead
 [contracts.market-pool]
-path = 'contracts/market-pool.clar'
+path = 'contracts/deprecated/market-pool.clar'
 clarity_version = 2
 epoch = '2.1'
 
@@ -169,8 +171,9 @@ path = 'contracts/yield-vault.clar'
 clarity_version = 2
 epoch = '2.1'
 
+# @deprecated - Use market-factory-v3 instead
 [contracts.market-factory-v2]
-path = 'contracts/market-factory-v2.clar'
+path = 'contracts/deprecated/market-factory-v2.clar'
 clarity_version = 2
 epoch = '2.1'
 

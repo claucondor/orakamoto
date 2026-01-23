@@ -1,8 +1,40 @@
+;; ============================================================================
+;; @deprecated DEPRECATED - DO NOT USE IN NEW DEVELOPMENT
+;; ============================================================================
+;;
+;; REPLACED BY: market-factory-v3.clar
+;; REASON: V2 factory creates markets in singleton market-pool (deprecated)
+;;
+;; WHAT CHANGED V1 -> V2:
+;; - Lowered MINIMUM-COLLATERAL from 50 USDC to 1 USDC (for easier testing)
+;; - Everything else identical to V1
+;;
+;; MIGRATION GUIDE:
+;; - Old: factory-v2.create-market() -> deploys to singleton market-pool.clar
+;; - New: factory-v3.create-market() -> creates market-id in multi-market-pool
+;;
+;; KEY DIFFERENCES V2 vs V3:
+;; - V2: Creates markets for deprecated market-pool.clar (singleton, CPMM)
+;; - V3: Creates markets in multi-market-pool (multi-market, pm-AMM, SIP-013 LP)
+;; - V3: Adds metadata support (categories, tags, featured, active flags)
+;;
+;; WHY DEPRECATED:
+;; 1. Points to deprecated market-pool.clar (singleton model)
+;; 2. CPMM pricing replaced by pm-AMM
+;; 3. No metadata support
+;;
+;; This contract is kept for:
+;; - Historical reference
+;; - Existing test coverage validation
+;; - Understanding the evolution of the protocol
+;;
+;; ============================================================================
+
 ;; Market Factory Contract
 ;; Creates and manages prediction market pools on StackPredict Protocol
 
 ;; Constants
-(define-constant MINIMUM-COLLATERAL u50000000)     ;; 50 USDC (6 decimals)
+(define-constant MINIMUM-COLLATERAL u1000000)      ;; 1 USDC (6 decimals) - lowered for testnet
 (define-constant DEFAULT-RESOLUTION-WINDOW u1008)  ;; ~7 days in blocks (144 blocks/day * 7)
 (define-constant CONTRACT-OWNER tx-sender)
 

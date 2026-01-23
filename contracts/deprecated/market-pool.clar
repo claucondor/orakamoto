@@ -1,3 +1,31 @@
+;; ============================================================================
+;; @deprecated DEPRECATED - DO NOT USE IN NEW DEVELOPMENT
+;; ============================================================================
+;;
+;; REPLACED BY: multi-market-pool.clar
+;; REASON: Singleton model replaced by multi-market architecture
+;;
+;; MIGRATION GUIDE:
+;; - Old: Single market per contract instance (this contract)
+;; - New: Multiple markets in one pool, identified by market-id
+;;
+;; KEY DIFFERENCES:
+;; - This (V1): CPMM pricing, singleton pool, non-transferable LP tokens
+;; - V3: pm-AMM pricing (Paradigm), multi-market pool, SIP-013 transferable LP tokens
+;;
+;; WHY DEPRECATED:
+;; 1. Singleton model requires deploying new contract per market (expensive)
+;; 2. CPMM has known issues with prediction markets (LVR varies with price)
+;; 3. LP tokens not transferable (poor composability)
+;; 4. No metadata support (categories, tags)
+;;
+;; This contract is kept for:
+;; - Historical reference
+;; - Existing test coverage validation
+;; - Understanding the evolution of the protocol
+;;
+;; ============================================================================
+
 ;; Market Pool Contract - Binary Prediction Market
 ;; Implements CPMM (Constant Product Market Maker) for binary YES/NO markets
 

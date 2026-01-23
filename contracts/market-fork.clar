@@ -1,3 +1,32 @@
+;; ============================================================================
+;; TODO: NEEDS V3 MIGRATION - NOT YET INTEGRATED WITH MULTI-MARKET-POOL
+;; ============================================================================
+;;
+;; CURRENT STATUS: Contract exists but NOT integrated with V3 architecture
+;;
+;; REQUIRED CHANGES FOR V3 INTEGRATION:
+;; 1. Update to work with multi-market-pool.clar instead of deprecated market-pool
+;; 2. Use market-id references instead of contract principals
+;; 3. Integrate with hro-resolver.clar for dispute escalation flow
+;; 4. Update fork creation to call multi-market-pool.create-market (via factory-v3?)
+;; 5. Handle SIP-013 LP token positions in fork migration
+;;
+;; CURRENT ISSUES:
+;; - Line 217: "would call market-factory to create new markets" - not implemented
+;; - References market-id but doesn't integrate with multi-market-pool
+;; - Position tracking assumes singleton model
+;;
+;; INTEGRATION POINTS NEEDED:
+;; - multi-market-pool.clar: For creating forked markets
+;; - market-factory-v3.clar: For proper market creation with metadata
+;; - hro-resolver.clar: For dispute escalation that triggers fork
+;; - governance.clar: For community voting on fork canonical status
+;;
+;; PRIORITY: Low - Fork is "nuclear option", rarely used
+;; DEPENDENCY: Requires multi-market-pool and hro-resolver integration first
+;;
+;; ============================================================================
+
 ;; Market Fork Contract for StackPredict Protocol
 ;; Implements Layer 5: Fork (Nuclear Option)
 ;; Triggered when >10% of supply disputes the outcome after Layer 4 voting

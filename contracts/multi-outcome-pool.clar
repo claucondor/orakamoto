@@ -1,3 +1,31 @@
+;; ============================================================================
+;; TODO: NEEDS V3 MIGRATION - NOT YET INTEGRATED WITH MULTI-MARKET ARCHITECTURE
+;; ============================================================================
+;;
+;; CURRENT STATUS: Working but uses SINGLETON model (like deprecated market-pool)
+;;
+;; REQUIRED CHANGES FOR V3 INTEGRATION:
+;; 1. Convert from singleton (data-var) to multi-market (define-map markets uint {...})
+;; 2. Add market-id parameter to all public functions
+;; 3. Integrate with market-factory-v3.clar (currently create-multi-outcome-market returns err)
+;; 4. Add SIP-013 LP token support (replace internal lp-balances map)
+;; 5. Consider using pm-amm-core.clar math or keep LMSR (LMSR may be better for multi-outcome)
+;;
+;; CURRENT ARCHITECTURE (Singleton - needs migration):
+;; - Uses data-var for market state (one market per contract)
+;; - Internal LP token tracking (non-transferable)
+;; - LMSR pricing (good for multi-outcome, may keep)
+;;
+;; TARGET ARCHITECTURE (Multi-market):
+;; - Use define-map for markets (multiple markets per contract)
+;; - SIP-013 LP tokens (transferable, composable)
+;; - Integrate with market-factory-v3.clar
+;;
+;; PRIORITY: Medium - Binary markets (multi-market-pool) are primary focus
+;; DEPENDENCY: market-factory-v3.clar needs create-multi-outcome-market implemented
+;;
+;; ============================================================================
+
 ;; Multi-Outcome Market Pool Contract
 ;; Implements LMSR (Logarithmic Market Scoring Rule) for markets with 2-10 outcomes
 ;; Uses integer approximations for exp() and ln() since Clarity has no native functions

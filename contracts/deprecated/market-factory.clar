@@ -1,8 +1,36 @@
+;; ============================================================================
+;; @deprecated DEPRECATED - DO NOT USE IN NEW DEVELOPMENT
+;; ============================================================================
+;;
+;; REPLACED BY: market-factory-v3.clar
+;; REASON: V1 factory creates markets in singleton market-pool (deprecated)
+;;
+;; MIGRATION GUIDE:
+;; - Old: factory.create-market() -> deploys to singleton market-pool.clar
+;; - New: factory-v3.create-market() -> creates market-id in multi-market-pool
+;;
+;; KEY DIFFERENCES:
+;; - This (V1): Creates markets for deprecated market-pool.clar
+;; - V2: Same as V1, just lower minimum collateral (1 USDC vs 50 USDC)
+;; - V3: Creates markets in multi-market-pool with metadata (categories, tags)
+;;
+;; WHY DEPRECATED:
+;; 1. Points to deprecated market-pool.clar (singleton model)
+;; 2. No metadata support (no categories, tags, featured)
+;; 3. 50 USDC minimum collateral too high for testing
+;;
+;; This contract is kept for:
+;; - Historical reference
+;; - Existing test coverage validation
+;; - Understanding the evolution of the protocol
+;;
+;; ============================================================================
+
 ;; Market Factory Contract
 ;; Creates and manages prediction market pools on StackPredict Protocol
 
 ;; Constants
-(define-constant MINIMUM-COLLATERAL u1000000)      ;; 1 USDC (6 decimals) - lowered for testnet
+(define-constant MINIMUM-COLLATERAL u50000000)     ;; 50 USDC (6 decimals)
 (define-constant DEFAULT-RESOLUTION-WINDOW u1008)  ;; ~7 days in blocks (144 blocks/day * 7)
 (define-constant CONTRACT-OWNER tx-sender)
 
