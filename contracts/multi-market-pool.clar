@@ -1001,3 +1001,74 @@
     )
   )
 )
+
+;; Claim winnings for a resolved market
+;; @param market-id: The market to claim winnings from
+;; @returns (response uint uint): USDC claimed on success, error code on failure
+(define-public (claim (market-id uint))
+  (let
+    (
+      (caller tx-sender)
+      (market (map-get? markets market-id))
+      (claim-key { market-id: market-id, owner: caller })
+    )
+    ;; Validate market exists
+    (asserts! (is-some market) ERR-MARKET-NOT-FOUND)
+
+    (let
+      (
+        (market-data (unwrap! (map-get? markets market-id) ERR-MARKET-NOT-FOUND))
+        (is-resolved (get is-resolved market-data))
+        (resolution-block (get resolution-block market-data))
+        (winning-outcome (get winning-outcome market-data))
+      )
+      ;; Validate market is resolved
+      (asserts! is-resolved ERR-MARKET-NOT-ACTIVE)
+
+      ;; Validate dispute window has passed
+      (asserts! (>= block-height (+ resolution-block DISPUTE-WINDOW)) ERR-DISPUTE-WINDOW-ACTIVE)
+
+      ;; Validate user has not already claimed
+      (asserts! (not (default-to false (map-get? has-claimed claim-key))) ERR-ALREADY-CLAIMED)
+
+      ;; Validate winning outcome is set
+      (asserts! (is-some winning-outcome) ERR-NO-WINNINGS)
+
+      (let
+        (
+          (winning-outcome-value (unwrap! winning-outcome ERR-NO-WINNINGS))
+          ;; Get user's balance of the winning outcome tokens
+          (outcome-key { market-id: market-id, owner: caller, outcome: winning-outcome-value })
+          (winning-tokens (default-to u0 (map-get? outcome-balances outcome-key)))
+        )
+        ;; Validate user has winning tokens
+        (asserts! (> winning-tokens u0) ERR-NO-WINNINGS)
+
+        ;; Calculate winnings: winning tokens are worth their face value in USDC
+        ;; Since outcome tokens are tracked in the same units as USDC (6 decimals),
+        ;; the winning tokens can be claimed 1:1 for USDC from the reserves
+
+        ;; Mark user as claimed
+        (map-set has-claimed claim-key true)
+
+        ;; Clear the user's outcome balance for the winning outcome
+        (map-set outcome-balances outcome-key u0)
+
+        ;; Transfer USDC to the winner
+        (try! (as-contract (contract-call? .usdcx transfer winning-tokens (as-contract tx-sender) caller none)))
+
+        ;; Emit event
+        (print {
+          event: "winnings-claimed",
+          market-id: market-id,
+          winner: caller,
+          winning-outcome: winning-outcome-value,
+          amount: winning-tokens,
+        })
+
+        ;; Return claimed amount
+        (ok winning-tokens)
+      )
+    )
+  )
+)

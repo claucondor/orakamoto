@@ -1,5 +1,72 @@
 # Ralphy Progress Log
 
+## 2026-01-23: PRD-v3 Phase 2 Task 2.9 - Implement claim function
+
+### Summary
+Implemented the `claim` function for the multi-market-pool contract, allowing users to claim their winnings after a market is resolved and the dispute window has passed. Winning outcome token holders can claim USDC equal to their token balance 1:1.
+
+### Changes Made
+
+1. **contracts/multi-market-pool.clar**:
+   - Implemented `claim` public function:
+     - Validates market exists
+     - Validates market is resolved (is-resolved = true)
+     - Validates dispute window has passed (block-height >= resolution-block + DISPUTE-WINDOW)
+     - Validates user has not already claimed (has-claimed map)
+     - Validates winning outcome is set
+     - Validates user has winning outcome tokens (outcome-balances map)
+     - Marks user as claimed in has-claimed map
+     - Clears user's winning outcome balance
+     - Transfers USDC to winner equal to winning token amount
+     - Emits `winnings-claimed` event
+     - Returns (ok winning-tokens)
+
+2. **tests/multi-market-pool.test.ts**:
+   - Added error constants: `ERR_ALREADY_CLAIMED`, `ERR_NO_WINNINGS`, `ERR_DISPUTE_WINDOW_ACTIVE`
+   - Added 15 comprehensive tests for claim:
+     - Claim winnings for user with winning YES tokens
+     - Claim winnings for user with winning NO tokens
+     - Reject claiming from non-existent market
+     - Reject claiming before market is resolved
+     - Reject claiming during dispute window
+     - Reject claiming if user has no winning tokens
+     - Reject claiming twice (double-spend protection)
+     - Allow multiple winners to claim independently
+     - Mark user as claimed after successful claim
+     - Allow claiming exactly when dispute window ends
+     - Handle user with both YES and NO tokens correctly
+     - Work with small winning amounts
+     - Emit winnings-claimed event
+     - Allow claiming for multiple markets independently
+     - Correctly calculate winnings after multiple buy/sell cycles
+
+### Design Notes
+
+- **Dispute Window**: 1008 blocks (~7 days) must pass after resolution before claiming is allowed. This provides time for disputes and challenges.
+- **Claim Once**: Users can only claim once per market. The has-claimed map tracks this.
+- **Winning Tokens Only**: Users can only claim winnings for the winning outcome. Losing outcome tokens are worthless.
+- **1:1 Redemption**: Winning outcome tokens are redeemable 1:1 for USDC (same units, 6 decimals).
+- **Balance Clearing**: After claiming, the user's winning outcome balance is set to 0.
+- **Both Tokens**: If a user holds both YES and NO tokens, only the winning outcome tokens are claimed. The losing tokens remain in the balance (worthless).
+
+### Verification
+
+- `clarinet check contracts/multi-market-pool.clar`: Passes with only warnings (no errors)
+- Contract compiles successfully
+- Tests follow existing patterns from resolve and other multi-market-pool tests
+- Note: Test execution blocked by pre-existing vitest environment issues (forks worker error)
+
+### Next Steps
+
+- Next incomplete task: Task 2.10 - Implement read-only helper functions
+- Then: Task 2.12 - Write and run comprehensive tests for all functions
+
+### Reference
+
+- **PRD-v3**: PRD-v3-multi-market.md Phase 2 Task 2.9
+
+---
+
 ## 2026-01-22: PRD-v3 Phase 2 Task 2.8 - Implement resolve function
 
 ### Summary

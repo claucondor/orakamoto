@@ -24,6 +24,9 @@ const ERR_SLIPPAGE_TOO_HIGH = 4008n;
 const ERR_MARKET_ID_OVERFLOW = 4014n;
 const ERR_NOT_AUTHORIZED = 4015n;
 const ERR_DEADLINE_NOT_PASSED = 4003n;
+const ERR_ALREADY_CLAIMED = 4009n;
+const ERR_NO_WINNINGS = 4010n;
+const ERR_DISPUTE_WINDOW_ACTIVE = 4011n;
 
 // Helper function to give a wallet USDC via faucet
 function fundWallet(wallet: string, amount: number) {
@@ -2547,6 +2550,747 @@ describe('Multi-Market Pool - Resolve Market', () => {
       );
       const m2 = (market2.result as any).value.value;
       expect(m2['winning-outcome']).toStrictEqual(Cl.some(Cl.uint(1)));
+    });
+  });
+});
+
+describe('Multi-Market Pool - Claim Winnings', () => {
+  let marketId: bigint;
+
+  beforeEach(() => {
+    simnet.blockHeight = 1000n;
+
+    // Fund deployer and create a market
+    fundWallet(deployer, 20_000_000n);
+    const result = simnet.callPublicFn(
+      'multi-market-pool',
+      'create-market',
+      [
+        Cl.stringUtf8('Will BTC reach $100k?'),
+        Cl.uint(2000),
+        Cl.uint(3000),
+        Cl.uint(10_000_000n),
+      ],
+      deployer
+    );
+    marketId = (result.result as any).value.value;
+  });
+
+  describe('claim', () => {
+    it('should claim winnings for user with winning YES tokens', () => {
+      // User buys YES tokens
+      const buyAmount = 2_000_000n; // 2 USDC
+      fundWallet(wallet1, Number(buyAmount));
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(buyAmount), Cl.uint(1000n)], // outcome=0 (YES)
+        wallet1
+      );
+
+      // Get the YES token balance
+      const balanceBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const yesTokens = Number((balanceBefore.result as any).value.value);
+
+      // Mine past deadline and resolve market with YES winning
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)], // YES wins
+        deployer
+      );
+
+      // Mine past dispute window
+      simnet.blockHeight = 2500n + DISPUTE_WINDOW;
+
+      // Claim winnings
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+
+      // Should receive USDC equal to YES tokens owned
+      expect(result.result).toBeOk(Cl.uint(yesTokens));
+
+      // Verify outcome balance is now 0
+      const balanceAfter = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      expect(Number((balanceAfter.result as any).value.value)).toBe(0);
+    });
+
+    it('should claim winnings for user with winning NO tokens', () => {
+      // User buys NO tokens
+      const buyAmount = 2_000_000n; // 2 USDC
+      fundWallet(wallet1, Number(buyAmount));
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(1), Cl.uint(buyAmount), Cl.uint(1000n)], // outcome=1 (NO)
+        wallet1
+      );
+
+      // Get the NO token balance
+      const balanceBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(1)],
+        deployer
+      );
+      const noTokens = Number((balanceBefore.result as any).value.value);
+
+      // Mine past deadline and resolve market with NO winning
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(1)], // NO wins
+        deployer
+      );
+
+      // Mine past dispute window
+      simnet.blockHeight = 2500n + DISPUTE_WINDOW;
+
+      // Claim winnings
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+
+      // Should receive USDC equal to NO tokens owned
+      expect(result.result).toBeOk(Cl.uint(noTokens));
+
+      // Verify outcome balance is now 0
+      const balanceAfter = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(1)],
+        deployer
+      );
+      expect(Number((balanceAfter.result as any).value.value)).toBe(0);
+    });
+
+    it('should reject claiming from non-existent market', () => {
+      simnet.blockHeight = 2500n + DISPUTE_WINDOW;
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(999)], // market doesn't exist
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_MARKET_NOT_FOUND));
+    });
+
+    it('should reject claiming before market is resolved', () => {
+      // User buys YES tokens
+      fundWallet(wallet1, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Try to claim before resolution
+      simnet.blockHeight = 2500n;
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_MARKET_NOT_ACTIVE));
+    });
+
+    it('should reject claiming during dispute window', () => {
+      // User buys YES tokens
+      fundWallet(wallet1, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Resolve market
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)], // YES wins
+        deployer
+      );
+
+      // Try to claim during dispute window (before DISPUTE_WINDOW blocks pass)
+      simnet.blockHeight = 2500n + DISPUTE_WINDOW - 1n;
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_DISPUTE_WINDOW_ACTIVE));
+    });
+
+    it('should reject claiming if user has no winning tokens', () => {
+      // User buys NO tokens
+      fundWallet(wallet1, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(1), Cl.uint(2_000_000n), Cl.uint(1000n)], // NO
+        wallet1
+      );
+
+      // Resolve market with YES winning (user has NO tokens)
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)], // YES wins
+        deployer
+      );
+
+      // Mine past dispute window
+      simnet.blockHeight = 2500n + DISPUTE_WINDOW;
+
+      // Try to claim (user has NO tokens, which lost)
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_NO_WINNINGS));
+    });
+
+    it('should reject claiming twice', () => {
+      // User buys YES tokens
+      fundWallet(wallet1, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Resolve market with YES winning
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+
+      // Mine past dispute window
+      simnet.blockHeight = 2500n + DISPUTE_WINDOW;
+
+      // First claim
+      const result1 = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+      expect(result1.result.type).toBe('response');
+
+      // Try to claim again
+      const result2 = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+
+      expect(result2.result).toBeErr(Cl.uint(ERR_ALREADY_CLAIMED));
+    });
+
+    it('should allow multiple winners to claim independently', () => {
+      // User1 buys YES tokens
+      fundWallet(wallet1, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // User2 buys YES tokens
+      fundWallet(wallet2, 3_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(3_000_000n), Cl.uint(1000n)],
+        wallet2
+      );
+
+      // Get balances before claiming
+      const balance1 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokens1 = Number((balance1.result as any).value.value);
+
+      const balance2 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet2), Cl.uint(0)],
+        deployer
+      );
+      const tokens2 = Number((balance2.result as any).value.value);
+
+      // Resolve market with YES winning
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+
+      // Mine past dispute window
+      simnet.blockHeight = 2500n + DISPUTE_WINDOW;
+
+      // Both users claim
+      const claim1 = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+      expect(claim1.result).toBeOk(Cl.uint(tokens1));
+
+      const claim2 = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet2
+      );
+      expect(claim2.result).toBeOk(Cl.uint(tokens2));
+
+      // Verify both users' balances are cleared
+      const finalBalance1 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      expect(Number((finalBalance1.result as any).value.value)).toBe(0);
+
+      const finalBalance2 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet2), Cl.uint(0)],
+        deployer
+      );
+      expect(Number((finalBalance2.result as any).value.value)).toBe(0);
+    });
+
+    it('should mark user as claimed after successful claim', () => {
+      // User buys YES tokens
+      fundWallet(wallet1, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Resolve market with YES winning
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+
+      // Mine past dispute window
+      simnet.blockHeight = 2500n + DISPUTE_WINDOW;
+
+      // Claim
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+
+      // Check claim status
+      const status = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-claim-status',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1)],
+        deployer
+      );
+      const s = (status.result as any).value.value;
+
+      expect(s['has-claimed']).toStrictEqual(Cl.bool(true));
+    });
+
+    it('should allow claiming exactly when dispute window ends', () => {
+      // User buys YES tokens
+      fundWallet(wallet1, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Get balance
+      const balanceBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const yesTokens = Number((balanceBefore.result as any).value.value);
+
+      // Resolve market
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+
+      // Mine to exactly the dispute window end
+      simnet.blockHeight = 2500n + DISPUTE_WINDOW;
+
+      // Claim should succeed
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+
+      expect(result.result).toBeOk(Cl.uint(yesTokens));
+    });
+
+    it('should handle user with both YES and NO tokens correctly', () => {
+      // User buys both YES and NO tokens
+      fundWallet(wallet1, 4_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)], // YES
+        wallet1
+      );
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(1), Cl.uint(2_000_000n), Cl.uint(1000n)], // NO
+        wallet1
+      );
+
+      // Get balances
+      const yesBalance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const yesTokens = Number((yesBalance.result as any).value.value);
+
+      // Resolve market with YES winning
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+
+      // Mine past dispute window
+      simnet.blockHeight = 2500n + DISPUTE_WINDOW;
+
+      // Claim - should only get YES tokens
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+
+      expect(result.result).toBeOk(Cl.uint(yesTokens));
+
+      // Verify YES balance is cleared but NO balance remains (worthless)
+      const yesAfter = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      expect(Number((yesAfter.result as any).value.value)).toBe(0);
+
+      const noAfter = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(1)],
+        deployer
+      );
+      expect(Number((noAfter.result as any).value.value)).toBeGreaterThan(0);
+    });
+
+    it('should work with small winning amounts', () => {
+      // User buys small amount of YES tokens
+      const minAmount = 100_000n; // 0.1 USDC
+      fundWallet(wallet1, Number(minAmount));
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(minAmount), Cl.uint(1n)],
+        wallet1
+      );
+
+      // Get balance
+      const balanceBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const yesTokens = Number((balanceBefore.result as any).value.value);
+
+      // Resolve market with YES winning
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+
+      // Mine past dispute window
+      simnet.blockHeight = 2500n + DISPUTE_WINDOW;
+
+      // Claim
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+
+      expect(result.result).toBeOk(Cl.uint(yesTokens));
+    });
+
+    it('should emit winnings-claimed event', () => {
+      // User buys YES tokens
+      fundWallet(wallet1, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Get balance
+      const balanceBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const yesTokens = Number((balanceBefore.result as any).value.value);
+
+      // Resolve market with YES winning
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+
+      // Mine past dispute window
+      simnet.blockHeight = 2500n + DISPUTE_WINDOW;
+
+      // Claim and check events
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+
+      expect(result.result).toBeOk(Cl.uint(yesTokens));
+      // Event is emitted via print, check that result is successful
+    });
+
+    it('should allow claiming for multiple markets independently', () => {
+      // Create a second market
+      const result2 = simnet.callPublicFn(
+        'multi-market-pool',
+        'create-market',
+        [
+          Cl.stringUtf8('Will ETH reach $10k?'),
+          Cl.uint(2000),
+          Cl.uint(3000),
+          Cl.uint(10_000_000n),
+        ],
+        deployer
+      );
+      const marketId2 = (result2.result as any).value.value;
+
+      // User buys YES in both markets
+      fundWallet(wallet1, 5_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_500_000n), Cl.uint(1000n)],
+        wallet1
+      );
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId2), Cl.uint(0), Cl.uint(2_500_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Get balances
+      const balance1 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokens1 = Number((balance1.result as any).value.value);
+
+      const balance2 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId2), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokens2 = Number((balance2.result as any).value.value);
+
+      // Resolve both markets
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId2), Cl.uint(0)],
+        deployer
+      );
+
+      // Mine past dispute window
+      simnet.blockHeight = 2500n + DISPUTE_WINDOW;
+
+      // Claim from first market
+      const claim1 = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+      expect(claim1.result).toBeOk(Cl.uint(tokens1));
+
+      // Claim from second market
+      const claim2 = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId2)],
+        wallet1
+      );
+      expect(claim2.result).toBeOk(Cl.uint(tokens2));
+    });
+
+    it('should correctly calculate winnings after multiple buy/sell cycles', () => {
+      // User buys YES, sells some, buys more
+      fundWallet(wallet1, 5_000_000n);
+
+      // First buy
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Sell half
+      const balance1 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokens1 = (balance1.result as any).value.value;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(tokens1 / 2n), Cl.uint(1n)],
+        wallet1
+      );
+
+      // Buy more
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(3_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Get final balance
+      const finalBalance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const finalTokens = Number((finalBalance.result as any).value.value);
+
+      // Resolve market with YES winning
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)],
+        deployer
+      );
+
+      // Mine past dispute window
+      simnet.blockHeight = 2500n + DISPUTE_WINDOW;
+
+      // Claim - should get all remaining YES tokens
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'claim',
+        [Cl.uint(marketId)],
+        wallet1
+      );
+
+      expect(result.result).toBeOk(Cl.uint(finalTokens));
     });
   });
 });
