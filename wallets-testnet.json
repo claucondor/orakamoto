@@ -1,6 +1,8 @@
 {
   "network": "testnet",
-  "updated": "2026-01-22",
+  "updated": "2026-01-23",
+  "version": "V3 - Multi-Market Architecture",
+  "deploymentPlan": "deployments/v3.testnet-plan.yaml",
   "wallets": [
     {
       "role": "deployer",
@@ -30,5 +32,133 @@
       "privateKey": "dea397522be459d4d6055be4651320bd57afc16945c376b6902971be2d256fd301",
       "mnemonic": "quick senior can cactus turn deliver ugly marriage logic much visit peace"
     }
-  ]
+  ],
+  "v3Contracts": {
+    "description": "PRD-v3 Multi-Market Architecture - Pending Deployment",
+    "deployer": "ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC",
+    "status": "pending",
+    "contracts": [
+      {
+        "name": "sip-010-trait",
+        "path": "contracts/traits/sip-010-trait.clar",
+        "description": "SIP-010 fungible token trait",
+        "expectedAddress": "ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC.sip-010-trait",
+        "cost": 19110,
+        "clarityVersion": 2
+      },
+      {
+        "name": "sip013-semi-fungible-token-trait",
+        "path": "contracts/traits/sip013-semi-fungible-token-trait.clar",
+        "description": "SIP-013 semi-fungible token trait",
+        "expectedAddress": "ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC.sip013-semi-fungible-token-trait",
+        "cost": 36000,
+        "clarityVersion": 2
+      },
+      {
+        "name": "sip013-lp-token",
+        "path": "contracts/tokens/sip013-lp-token.clar",
+        "description": "SIP-013 LP token contract - transferible liquidity provider tokens",
+        "expectedAddress": "ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC.sip013-lp-token",
+        "cost": 145000,
+        "clarityVersion": 2,
+        "dependsOn": ["sip013-semi-fungible-token-trait"]
+      },
+      {
+        "name": "math-fixed-point",
+        "path": "contracts/lib/math-fixed-point.clar",
+        "description": "ALEX fixed-point math library",
+        "expectedAddress": "ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC.math-fixed-point",
+        "cost": 42000,
+        "clarityVersion": 2
+      },
+      {
+        "name": "pm-amm-core",
+        "path": "contracts/lib/pm-amm-core.clar",
+        "description": "pm-AMM pricing algorithm library (Paradigm Research)",
+        "expectedAddress": "ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC.pm-amm-core",
+        "cost": 185000,
+        "clarityVersion": 2,
+        "dependsOn": ["math-fixed-point"]
+      },
+      {
+        "name": "multi-market-pool",
+        "path": "contracts/multi-market-pool.clar",
+        "description": "Multi-market pool contract - handles multiple markets in single contract",
+        "expectedAddress": "ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC.multi-market-pool",
+        "cost": 320000,
+        "clarityVersion": 2,
+        "dependsOn": ["sip013-lp-token", "sip-010-trait", "pm-amm-core"]
+      },
+      {
+        "name": "market-factory-v3",
+        "path": "contracts/market-factory-v3.clar",
+        "description": "Market factory V3 - creates markets with metadata tracking",
+        "expectedAddress": "ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC.market-factory-v3",
+        "cost": 85000,
+        "clarityVersion": 2,
+        "dependsOn": ["multi-market-pool"]
+      }
+    ],
+    "totalEstimatedCost": 832110,
+    "totalEstimatedCostSTX": "0.83"
+  },
+  "v2Contracts": {
+    "description": "Legacy V2 contracts (already deployed)",
+    "deployer": "ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC",
+    "status": "deployed",
+    "contracts": [
+      "sip-010-trait",
+      "ai-oracle-council",
+      "governance-token",
+      "creator-rewards",
+      "vote-escrow",
+      "dispute",
+      "governance",
+      "guardian-multisig",
+      "hro-resolver",
+      "lp-rewards",
+      "market-factory",
+      "market-fork",
+      "prediction-market-trait",
+      "yield-distributor",
+      "market-pool",
+      "oracle-trait",
+      "mock-oracle",
+      "mock-usdc",
+      "multi-outcome-pool",
+      "oracle-resolver",
+      "pyth-oracle-wrapper",
+      "reputation-registry",
+      "quadratic-voting",
+      "trader-rewards",
+      "vesting-vault",
+      "yield-vault",
+      "market-factory-v2"
+    ]
+  },
+  "externalDependencies": {
+    "usdcx": {
+      "name": "USDCx (Circle xReserve)",
+      "testnet": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx",
+      "mainnet": "SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx",
+      "description": "USDC-backed stablecoin on Stacks via Circle xReserve"
+    },
+    "pythOracle": {
+      "name": "Pyth Oracle",
+      "testnet": "SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4",
+      "mainnet": "SP1HHHKP08D9EM8HM4SZEE4HRSVSC7S3S8Q7V3K6Q.pyth-oracle-v4",
+      "description": "Pyth price feed oracle"
+    }
+  },
+  "deploymentNotes": {
+    "v3Architecture": "Single Vault Multi-Pool based on ALEX Lab design",
+    "keyFeatures": [
+      "SIP-013 LP Tokens - Transferible liquidity provider tokens",
+      "Multi-Market Pool - Single contract handling unlimited markets",
+      "Market Factory V3 - Metadata tracking for market discovery",
+      "pm-AMM Support - Optional Paradigm Research pricing algorithm"
+    ],
+    "migrationFromV2": "V3 is a breaking change. Users must withdraw from V2 before migrating.",
+    "deploymentCommand": "clarinet deployments apply -p deployments/v3.testnet-plan.yaml"
+  }
 }

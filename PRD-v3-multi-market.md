@@ -697,7 +697,10 @@ tests/
   ```
   - Created `deployments/v3.testnet-plan.yaml` with V3 contracts
 
-- [ ] 5.2 Actualizar `wallets-testnet.json` con nuevos contratos
+- [x] 5.2 Actualizar `wallets-testnet.json` con nuevos contratos
+  - Updated with V3 contracts section including all 7 contracts with expected addresses, costs, dependencies, and deployment notes
+  - Added external dependencies (USDCx, Pyth Oracle)
+  - Added V2 legacy contracts reference
 
 - [ ] 5.3 Crear script de migración (si hay liquidez existente):
   - `scripts/migrate-to-v3.mjs`

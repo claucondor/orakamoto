@@ -1,5 +1,83 @@
 # Ralphy Progress Log
 
+## 2026-01-23: PRD-v3 Phase 5 Task 5.2 - Update wallets-testnet.json with V3 Contracts
+
+### Summary
+Updated `wallets-testnet.json` to include comprehensive information about the V3 multi-market architecture contracts. The file now contains all V3 contract details including expected addresses, costs, dependencies, deployment notes, and external dependencies (USDCx, Pyth Oracle).
+
+### Changes Made
+
+1. **wallets-testnet.json** (updated):
+   - Updated `updated` date to 2026-01-23
+   - Added `version` field: "V3 - Multi-Market Architecture"
+   - Added `deploymentPlan` field pointing to deployments/v3.testnet-plan.yaml
+
+   **New `v3Contracts` section:**
+   - All 7 V3 contracts with full details:
+     - sip-010-trait (SIP-010 fungible token trait) - cost: 19,110 uSTX
+     - sip013-semi-fungible-token-trait (SIP-013 trait) - cost: 36,000 uSTX
+     - sip013-lp-token (LP token contract) - cost: 145,000 uSTX
+     - math-fixed-point (ALEX math library) - cost: 42,000 uSTX
+     - pm-amm-core (pm-AMM pricing) - cost: 185,000 uSTX
+     - multi-market-pool (core pool) - cost: 320,000 uSTX
+     - market-factory-v3 (factory) - cost: 85,000 uSTX
+   - Each contract includes: name, path, description, expectedAddress, cost, clarityVersion, dependsOn
+   - Total estimated cost: 832,110 uSTX (~0.83 STX)
+   - Status: "pending"
+
+   **New `v2Contracts` section:**
+   - Lists all 27 V2 legacy contracts as reference
+   - Status: "deployed"
+
+   **New `externalDependencies` section:**
+   - USDCx (Circle xReserve) - testnet and mainnet addresses
+   - Pyth Oracle - testnet and mainnet addresses
+
+   **New `deploymentNotes` section:**
+   - v3Architecture: "Single Vault Multi-Pool based on ALEX Lab design"
+   - keyFeatures: SIP-013 LP Tokens, Multi-Market Pool, Market Factory V3, pm-AMM Support
+   - migrationFromV2: "V3 is a breaking change. Users must withdraw from V2 before migrating."
+   - deploymentCommand: clarinet deployments apply command
+
+### File Structure
+The updated JSON follows this structure:
+```json
+{
+  "network": "testnet",
+  "updated": "2026-01-23",
+  "version": "V3 - Multi-Market Architecture",
+  "deploymentPlan": "deployments/v3.testnet-plan.yaml",
+  "wallets": [...],
+  "v3Contracts": { ... },
+  "v2Contracts": { ... },
+  "externalDependencies": { ... },
+  "deploymentNotes": { ... }
+}
+```
+
+### Verification
+
+- JSON syntax validated with Python json.tool
+- All contract file paths verified to exist
+- All contract paths match actual file locations
+- Contract addresses follow expected format: `${deployer}.${contract-name}`
+- Costs match those in v3.testnet-plan.yaml
+
+### Next Steps (for User)
+
+- Task 5.3: Create migration script (if needed) - `scripts/migrate-to-v3.mjs`
+- Task 5.4: Deploy to testnet using `clarinet deployments apply -p deployments/v3.testnet-plan.yaml`
+- Task 5.5: Verify deployment (create test market, add liquidity, trade, resolve, claim)
+- After deployment: Update `wallets-testnet.json` with actual deployed contract addresses
+
+### Reference
+
+- **PRD-v3**: PRD-v3-multi-market.md Phase 5 Task 5.2
+- **Deployment Plan**: deployments/v3.testnet-plan.yaml
+- **Deployment Docs**: docs/DEPLOYMENTS.md
+
+---
+
 ## 2026-01-23: PRD-v3 Phase 5 Tasks 5.1 & 5.6 - Deployment Documentation Complete
 
 ### Summary
