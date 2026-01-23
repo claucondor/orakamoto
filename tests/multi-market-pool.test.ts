@@ -1631,3 +1631,634 @@ describe('Multi-Market Pool - Buy Outcome', () => {
     });
   });
 });
+
+describe('Multi-Market Pool - Sell Outcome', () => {
+  let marketId: bigint;
+
+  beforeEach(() => {
+    simnet.blockHeight = 1000n;
+
+    // Fund deployer and create a market
+    fundWallet(deployer, 20_000_000n);
+    const result = simnet.callPublicFn(
+      'multi-market-pool',
+      'create-market',
+      [
+        Cl.stringUtf8('Will BTC reach $100k?'),
+        Cl.uint(2000),
+        Cl.uint(3000),
+        Cl.uint(10_000_000n),
+      ],
+      deployer
+    );
+    marketId = (result.result as any).value.value;
+  });
+
+  describe('sell-outcome', () => {
+    it('should sell YES tokens correctly', () => {
+      // First buy some YES tokens
+      const buyAmount = 2_000_000n; // 2 USDC
+      fundWallet(wallet1, Number(buyAmount));
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(buyAmount), Cl.uint(1000n)], // outcome=0 (YES)
+        wallet1
+      );
+
+      // Get the balance after buying
+      const balanceBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokensOwned = Number((balanceBefore.result as any).value.value);
+
+      // Sell half of the tokens
+      const sellAmount = tokensOwned / 2n;
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(sellAmount), Cl.uint(1n)], // outcome=0 (YES)
+        wallet1
+      );
+
+      // Should receive USDC
+      expect(result.result.type).toBe('response');
+      const usdcReceived = Number((result.result as any).value.value);
+      expect(usdcReceived).toBeGreaterThan(0);
+
+      // Verify outcome balance was updated
+      const balanceAfter = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const remainingTokens = Number((balanceAfter.result as any).value.value);
+      expect(remainingTokens).toBe(tokensOwned - Number(sellAmount));
+    });
+
+    it('should sell NO tokens correctly', () => {
+      // First buy some NO tokens
+      const buyAmount = 2_000_000n; // 2 USDC
+      fundWallet(wallet1, Number(buyAmount));
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(1), Cl.uint(buyAmount), Cl.uint(1000n)], // outcome=1 (NO)
+        wallet1
+      );
+
+      // Get the balance after buying
+      const balanceBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(1)],
+        deployer
+      );
+      const tokensOwned = Number((balanceBefore.result as any).value.value);
+
+      // Sell half of the tokens
+      const sellAmount = tokensOwned / 2n;
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(1), Cl.uint(sellAmount), Cl.uint(1n)], // outcome=1 (NO)
+        wallet1
+      );
+
+      // Should receive USDC
+      expect(result.result.type).toBe('response');
+      const usdcReceived = Number((result.result as any).value.value);
+      expect(usdcReceived).toBeGreaterThan(0);
+
+      // Verify outcome balance was updated
+      const balanceAfter = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(1)],
+        deployer
+      );
+      const remainingTokens = Number((balanceAfter.result as any).value.value);
+      expect(remainingTokens).toBe(tokensOwned - Number(sellAmount));
+    });
+
+    it('should reject selling from non-existent market', () => {
+      fundWallet(wallet1, 2_000_000n);
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(999), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1n)],
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_MARKET_NOT_FOUND));
+    });
+
+    it('should reject selling with invalid outcome', () => {
+      fundWallet(wallet1, 2_000_000n);
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(2), Cl.uint(2_000_000n), Cl.uint(1n)], // outcome=2 (invalid)
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_INVALID_OUTCOME));
+    });
+
+    it('should reject selling after deadline', () => {
+      // First buy some tokens
+      fundWallet(wallet1, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Mine past deadline
+      simnet.blockHeight = 2500n;
+
+      // Try to sell
+      const balance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokensOwned = (balance.result as any).value.value;
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(tokensOwned), Cl.uint(1n)],
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_MARKET_NOT_ACTIVE));
+    });
+
+    it('should reject selling when market is resolved', () => {
+      // First buy some tokens
+      fundWallet(wallet1, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Resolve the market first
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)], // YES wins
+        deployer
+      );
+
+      // Try to sell after resolution
+      const balance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokensOwned = (balance.result as any).value.value;
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(tokensOwned), Cl.uint(1n)],
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_MARKET_ALREADY_RESOLVED));
+    });
+
+    it('should reject selling with zero amount', () => {
+      fundWallet(wallet1, 2_000_000n);
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(0), Cl.uint(1n)], // amount=0
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_ZERO_AMOUNT));
+    });
+
+    it('should reject selling more tokens than owned', () => {
+      // First buy some tokens
+      fundWallet(wallet1, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Try to sell more than owned
+      const balance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokensOwned = Number((balance.result as any).value.value);
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(tokensOwned + 1_000_000n), Cl.uint(1n)],
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_INSUFFICIENT_BALANCE));
+    });
+
+    it('should reject selling when slippage protection is triggered', () => {
+      // First buy some tokens
+      fundWallet(wallet1, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Get balance
+      const balance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokensOwned = (balance.result as any).value.value;
+
+      // Set very high minimum USDC out (more than possible)
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(tokensOwned), Cl.uint(10_000_000n)], // min-usdc-out too high
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_SLIPPAGE_TOO_HIGH));
+    });
+
+    it('should allow multiple users to sell tokens', () => {
+      // Both users buy tokens
+      fundWallet(wallet1, 2_000_000n);
+      fundWallet(wallet2, 2_000_000n);
+
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(1), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet2
+      );
+
+      // Get balances
+      const balance1 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokens1 = (balance1.result as any).value.value;
+
+      const balance2 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet2), Cl.uint(1)],
+        deployer
+      );
+      const tokens2 = (balance2.result as any).value.value;
+
+      // Both users sell their tokens
+      const result1 = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(tokens1), Cl.uint(1n)],
+        wallet1
+      );
+      expect(result1.result.type).toBe('response');
+
+      const result2 = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(1), Cl.uint(tokens2), Cl.uint(1n)],
+        wallet2
+      );
+      expect(result2.result.type).toBe('response');
+
+      // Verify both users have 0 tokens
+      const finalBalance1 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      expect(Number((finalBalance1.result as any).value.value)).toBe(0);
+
+      const finalBalance2 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet2), Cl.uint(1)],
+        deployer
+      );
+      expect(Number((finalBalance2.result as any).value.value)).toBe(0);
+    });
+
+    it('should accumulate trading fees on sell', () => {
+      // First buy some tokens
+      fundWallet(wallet1, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Get fees before selling
+      const feesBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-accumulated-fees',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const fb = (feesBefore.result as any).value.value;
+      const feesBeforeBuy = Number((fb['accumulated-fees'] as any).value);
+
+      // Get tokens owned
+      const balance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokensOwned = (balance.result as any).value.value;
+
+      // Sell all tokens
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(tokensOwned), Cl.uint(1n)],
+        wallet1
+      );
+
+      // Check accumulated fees after selling
+      const feesAfter = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-accumulated-fees',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const fa = (feesAfter.result as any).value.value;
+      const feesAfterSell = Number((fa['accumulated-fees'] as any).value);
+
+      // Fees should have increased (buy fee + sell fee)
+      expect(feesAfterSell).toBeGreaterThan(feesBeforeBuy);
+    });
+
+    it('should update reserves correctly after selling YES', () => {
+      // First buy some YES tokens
+      const buyAmount = 2_000_000n;
+      fundWallet(wallet1, Number(buyAmount));
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(buyAmount), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Get reserves before selling
+      const reservesBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-reserves',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const rb = (reservesBefore.result as any).value.value;
+      const yesBefore = Number((rb['yes-reserve'] as any).value);
+      const noBefore = Number((rb['no-reserve'] as any).value);
+
+      // Get tokens owned
+      const balance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokensOwned = (balance.result as any).value.value;
+
+      // Sell YES tokens
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(tokensOwned), Cl.uint(1n)],
+        wallet1
+      );
+
+      // Get reserves after selling
+      const reservesAfter = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-reserves',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const ra = (reservesAfter.result as any).value.value;
+      const yesAfter = Number((ra['yes-reserve'] as any).value);
+      const noAfter = Number((ra['no-reserve'] as any).value);
+
+      // YES reserve should decrease (tokens sold)
+      expect(yesAfter).toBeLessThan(yesBefore);
+      // NO reserve should increase (USDC from fees)
+      expect(noAfter).toBeGreaterThan(noBefore);
+    });
+
+    it('should update reserves correctly after selling NO', () => {
+      // First buy some NO tokens
+      const buyAmount = 2_000_000n;
+      fundWallet(wallet1, Number(buyAmount));
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(1), Cl.uint(buyAmount), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Get reserves before selling
+      const reservesBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-reserves',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const rb = (reservesBefore.result as any).value.value;
+      const yesBefore = Number((rb['yes-reserve'] as any).value);
+      const noBefore = Number((rb['no-reserve'] as any).value);
+
+      // Get tokens owned
+      const balance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(1)],
+        deployer
+      );
+      const tokensOwned = (balance.result as any).value.value;
+
+      // Sell NO tokens
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(1), Cl.uint(tokensOwned), Cl.uint(1n)],
+        wallet1
+      );
+
+      // Get reserves after selling
+      const reservesAfter = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-reserves',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const ra = (reservesAfter.result as any).value.value;
+      const yesAfter = Number((ra['yes-reserve'] as any).value);
+      const noAfter = Number((ra['no-reserve'] as any).value);
+
+      // NO reserve should decrease (tokens sold)
+      expect(noAfter).toBeLessThan(noBefore);
+      // YES reserve should increase (USDC from fees)
+      expect(yesAfter).toBeGreaterThan(yesBefore);
+    });
+
+    it('should allow selling from same user multiple times', () => {
+      // Buy tokens first
+      fundWallet(wallet1, 5_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(5_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // First sell
+      const balance1 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokens1 = (balance1.result as any).value.value;
+
+      const result1 = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(tokens1 / 2n), Cl.uint(1n)],
+        wallet1
+      );
+      expect(result1.result.type).toBe('response');
+
+      // Second sell
+      const balance2 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokens2 = (balance2.result as any).value.value;
+
+      const result2 = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(tokens2), Cl.uint(1n)],
+        wallet1
+      );
+      expect(result2.result.type).toBe('response');
+
+      // Verify final balance is 0
+      const finalBalance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      expect(Number((finalBalance.result as any).value.value)).toBe(0);
+    });
+
+    it('should handle round-trip buy and sell', () => {
+      const initialUsdc = 5_000_000n;
+      fundWallet(wallet1, Number(initialUsdc));
+
+      // Buy YES tokens
+      const buyResult = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(initialUsdc), Cl.uint(1n)],
+        wallet1
+      );
+      const tokensBought = Number((buyResult.result as any).value.value);
+
+      // Sell all YES tokens
+      const sellResult = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(tokensBought), Cl.uint(1n)],
+        wallet1
+      );
+      const usdcReturned = Number((sellResult.result as any).value.value);
+
+      // Should receive less USDC than initially spent (due to fees)
+      expect(usdcReturned).toBeLessThan(Number(initialUsdc));
+
+      // But should receive more than 90% of initial (fees are ~2% total: 1% buy + 1% sell)
+      expect(usdcReturned).toBeGreaterThan(Number(initialUsdc) * 90n / 100n);
+    });
+
+    it('should work with minimum amount', () => {
+      // First buy small amount
+      const minAmount = 100_000n; // 0.1 USDC
+      fundWallet(wallet1, Number(minAmount));
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(minAmount), Cl.uint(1n)],
+        wallet1
+      );
+
+      // Get tokens owned
+      const balance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      const tokensOwned = (balance.result as any).value.value;
+
+      // Sell minimum amount
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'sell-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(tokensOwned), Cl.uint(1n)],
+        wallet1
+      );
+
+      expect(result.result.type).toBe('response');
+    });
+  });
+});

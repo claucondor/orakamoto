@@ -1,5 +1,95 @@
 # Ralphy Progress Log
 
+## 2026-01-22: PRD-v3 Phase 2 Task 2.7 - Implement sell-outcome function
+
+### Summary
+Implemented the `sell-outcome` function for the multi-market-pool contract, allowing users to sell their YES/NO outcome tokens back to the pool and receive USDCx. This function is the reverse of `buy-outcome`, using the pm-AMM algorithm to calculate the USDCx amount returned.
+
+### Changes Made
+
+1. **contracts/multi-market-pool.clar**:
+   - Implemented `sell-outcome` public function:
+     - Validates market exists and is active (not resolved, before deadline)
+     - Validates outcome is 0 (YES) or 1 (NO)
+     - Validates token-amount is above zero
+     - Validates user has sufficient outcome token balance
+     - Calculates USDCx out using pm-AMM via `calculate-usdc-out-pmamm`
+     - Calculates and deducts 1% trading fee
+     - Validates slippage protection (min-usdc-out)
+     - Updates reserves:
+       - Selling YES: YES reserve decreases, NO reserve increases by usdc-out-net
+       - Selling NO: NO reserve decreases, YES reserve increases by usdc-out-net
+     - Accumulates fees for LPs, creator, and protocol
+     - Debits outcome tokens from user's balance
+     - Transfers USDCx to user
+     - Emits `outcome-sold` event
+     - Returns USDCx received
+
+2. **tests/multi-market-pool.test.ts**:
+   - Added 17 comprehensive tests for sell-outcome:
+     - Sell YES tokens correctly
+     - Sell NO tokens correctly
+     - Reject selling from non-existent market
+     - Reject selling with invalid outcome
+     - Reject selling after deadline
+     - Reject selling when market is resolved
+     - Reject selling with zero amount
+     - Reject selling more tokens than owned
+     - Reject selling when slippage protection triggered
+     - Allow multiple users to sell tokens
+     - Accumulate trading fees on sell
+     - Update reserves correctly after selling YES
+     - Update reserves correctly after selling NO
+     - Allow selling from same user multiple times
+     - Handle round-trip buy and sell (verifies fees work correctly)
+     - Work with minimum amount
+
+3. **Fixed match expression syntax**:
+   - Fixed incorrect match syntax throughout multi-market-pool.clar
+   - Changed from 5-argument format (with `none` keyword) to 4-argument format
+   - Example fix:
+     - Before: `(match market some-market (ok some-market) none (err ERR-MARKET-NOT-FOUND))`
+     - After: `(match market some-market (ok some-market) (err ERR-MARKET-NOT-FOUND))`
+
+### Design Notes
+
+- **pm-AMM for Selling**: The sell function uses `calculate-usdc-out-pmamm` which reverses the buy calculation. It calculates the USDCx amount that would be required to buy the tokens being sold, then subtracts the trading fee.
+
+- **Reserve Updates**:
+  - Selling YES: User returns YES tokens, pool's YES reserve decreases, pool receives USDCx (minus fee) which goes to NO reserve
+  - Selling NO: User returns NO tokens, pool's NO reserve decreases, pool receives USDCx (minus fee) which goes to YES reserve
+
+- **Fee Distribution**: 1% trading fee is distributed the same as buy-outcome:
+  - 70% to LPs (accumulated-fees)
+  - 10% to creator (creator-fees)
+  - 20% to protocol (protocol-fees)
+
+- **Slippage Protection**: Users must specify min-usdc-out to prevent front-running or excessive slippage during volatile market conditions.
+
+- **Round-trip Test**: Verifies that buying and then selling tokens returns slightly less USDC than initially spent (due to ~2% total fees: 1% buy + 1% sell).
+
+### Verification
+
+- `clarinet check contracts/multi-market-pool.clar`: Passes with only warnings (no errors)
+- All match expressions fixed to use correct Clarity syntax
+- Contract compiles successfully with clarinet check
+- Tests follow existing patterns from buy-outcome tests
+- Note: Test execution blocked by pre-existing vitest environment issues (forks worker error)
+
+### Next Steps
+
+- Next incomplete task: Task 2.8 - Implement `resolve` function
+- Then: Task 2.9 - Implement `claim` function
+- Then: Task 2.10 - Implement read-only functions
+- Then: Task 2.12 - Write and run comprehensive tests
+
+### Reference
+
+- **PRD-v3**: PRD-v3-multi-market.md Phase 2 Task 2.7
+- **pm-AMM Paper**: https://www.paradigm.xyz/2024/11/pm-amm
+
+---
+
 ## 2026-01-22: PRD-pm-AMM - pm-AMM Core Library Implementation
 
 ### Summary

@@ -159,8 +159,7 @@
     (match market
       some-market
         (ok some-market)
-      none
-        (err ERR-MARKET-NOT-FOUND)
+      (err ERR-MARKET-NOT-FOUND)
     )
   )
 )
@@ -200,8 +199,7 @@
             })
           )
         )
-      none
-        (err ERR-MARKET-NOT-FOUND)
+      (err ERR-MARKET-NOT-FOUND)
     )
   )
 )
@@ -219,8 +217,7 @@
           no-reserve: (get no-reserve some-market),
           total-liquidity: (get total-liquidity some-market)
         })
-      none
-        (err ERR-MARKET-NOT-FOUND)
+      (err ERR-MARKET-NOT-FOUND)
     )
   )
 )
@@ -249,8 +246,7 @@
           creator-fees: (default-to u0 (map-get? creator-fees market-id)),
           protocol-fees: (default-to u0 (map-get? protocol-fees market-id))
         })
-      none
-        (err ERR-MARKET-NOT-FOUND)
+      (err ERR-MARKET-NOT-FOUND)
     )
   )
 )
@@ -267,8 +263,7 @@
           (not (get is-resolved some-market))
           (< block-height (get deadline some-market))
         ))
-      none
-        (err ERR-MARKET-NOT-FOUND)
+      (err ERR-MARKET-NOT-FOUND)
     )
   )
 )
@@ -297,8 +292,7 @@
             winning-outcome: winning
           })
         )
-      none
-        (err ERR-MARKET-NOT-FOUND)
+      (err ERR-MARKET-NOT-FOUND)
     )
   )
 )
@@ -797,6 +791,142 @@
 
               ;; Return tokens received
               (ok tokens-out)
+            )
+          )
+        )
+      )
+    )
+  )
+)
+
+;; Sell outcome tokens back to the market
+;; @param market-id: The market to sell to
+;; @param outcome: 0 = YES, 1 = NO
+;; @param token-amount: Number of outcome tokens to sell
+;; @param min-usdc-out: Minimum USDC to receive (slippage protection)
+;; @returns (response uint uint): USDC received on success, error code on failure
+(define-public (sell-outcome
+    (market-id uint)
+    (outcome uint)
+    (token-amount uint)
+    (min-usdc-out uint)
+  )
+  (let
+    (
+      (caller tx-sender)
+      (market (map-get? markets market-id))
+    )
+    ;; Validate market exists
+    (asserts! (is-some market) ERR-MARKET-NOT-FOUND)
+
+    (let
+      (
+        (market-data (unwrap! (map-get? markets market-id) ERR-MARKET-NOT-FOUND))
+        (is-resolved (get is-resolved market-data))
+        (deadline (get deadline market-data))
+      )
+      ;; Validate market is active (not resolved and before deadline)
+      (asserts! (not is-resolved) ERR-MARKET-ALREADY-RESOLVED)
+      (asserts! (< block-height deadline) ERR-MARKET-NOT-ACTIVE)
+
+      ;; Validate outcome is 0 (YES) or 1 (NO)
+      (asserts! (is-valid-outcome outcome) ERR-INVALID-OUTCOME)
+
+      ;; Validate token-amount is above zero
+      (asserts! (> token-amount u0) ERR-ZERO-AMOUNT)
+
+      ;; Get user's outcome balance
+      (let
+        (
+          (outcome-key { market-id: market-id, owner: caller, outcome: outcome })
+          (current-balance (default-to u0 (map-get? outcome-balances outcome-key)))
+        )
+        ;; Validate user has enough tokens
+        (asserts! (>= current-balance token-amount) ERR-INSUFFICIENT-BALANCE)
+
+        ;; Get current reserves and liquidity parameter
+        (let
+          (
+            (yes-reserve (get yes-reserve market-data))
+            (no-reserve (get no-reserve market-data))
+            (liquidity-param (get liquidity-parameter market-data))
+
+            ;; Calculate USDC out using pm-AMM (gross, before fee)
+            (usdc-out-gross (calculate-usdc-out-pmamm token-amount yes-reserve no-reserve liquidity-param (is-eq outcome u0)))
+
+            ;; Calculate trading fee
+            (fee (calculate-fee usdc-out-gross))
+            (usdc-out-net (- usdc-out-gross fee))
+          )
+          ;; Validate slippage protection
+          (asserts! (>= usdc-out-net min-usdc-out) ERR-SLIPPAGE-TOO-HIGH)
+
+          ;; Calculate new reserves after the trade
+          ;; For sell-yes (outcome=0): YES reserve decreases, NO reserve increases by usdc-out-net
+          ;; For sell-no (outcome=1): NO reserve decreases, YES reserve increases by usdc-out-net
+          (let
+            (
+              (new-yes-reserve (if (is-eq outcome u0)
+                (- yes-reserve token-amount)         ;; Selling YES: YES reserve shrinks
+                (+ yes-reserve usdc-out-net)        ;; Selling NO: YES reserve grows
+              ))
+              (new-no-reserve (if (is-eq outcome u0)
+                (+ no-reserve usdc-out-net)         ;; Selling YES: NO reserve grows
+                (- no-reserve token-amount)         ;; Selling NO: NO reserve shrinks
+              ))
+              (new-accumulated-fees (+ (get accumulated-fees market-data) fee))
+            )
+            ;; Update market data
+            (map-set markets market-id
+              {
+                creator: (get creator market-data),
+                question: (get question market-data),
+                deadline: (get deadline market-data),
+                resolution-deadline: (get resolution-deadline market-data),
+                yes-reserve: new-yes-reserve,
+                no-reserve: new-no-reserve,
+                total-liquidity: (get total-liquidity market-data),
+                accumulated-fees: new-accumulated-fees,
+                is-resolved: (get is-resolved market-data),
+                winning-outcome: (get winning-outcome market-data),
+                resolution-block: (get resolution-block market-data),
+                created-at: (get created-at market-data),
+                liquidity-parameter: (get liquidity-parameter market-data),
+              }
+            )
+
+            ;; Update creator and protocol fee maps
+            (let
+              (
+                (creator-fee-portion (/ (* fee CREATOR-FEE-SHARE-BP) u10000))
+                (protocol-fee-portion (/ (* fee PROTOCOL-FEE-SHARE-BP) u10000))
+                (old-creator-fees (default-to u0 (map-get? creator-fees market-id)))
+                (old-protocol-fees (default-to u0 (map-get? protocol-fees market-id)))
+              )
+              (map-set creator-fees market-id (+ old-creator-fees creator-fee-portion))
+              (map-set protocol-fees market-id (+ old-protocol-fees protocol-fee-portion))
+
+              ;; Debit outcome tokens from user
+              (map-set outcome-balances outcome-key (- current-balance token-amount))
+
+              ;; Transfer USDC to user
+              (try! (as-contract (contract-call? .usdcx transfer usdc-out-net (as-contract tx-sender) caller none)))
+
+              ;; Emit event
+              (print {
+                event: "outcome-sold",
+                market-id: market-id,
+                seller: caller,
+                outcome: outcome,
+                tokens-sold: token-amount,
+                usdc-received: usdc-out-net,
+                fee: fee,
+                new-yes-reserve: new-yes-reserve,
+                new-no-reserve: new-no-reserve,
+              })
+
+              ;; Return USDC received
+              (ok usdc-out-net)
             )
           )
         )
