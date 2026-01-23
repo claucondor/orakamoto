@@ -500,3 +500,88 @@
     )
   )
 )
+
+;; Add liquidity to an existing market
+;; @param market-id: The market to add liquidity to
+;; @param amount: USDCx amount to add (min 0.1 USDC)
+;; @returns (response uint uint): LP tokens minted on success, error code on failure
+(define-public (add-liquidity (market-id uint) (amount uint))
+  (let
+    (
+      (caller tx-sender)
+      (market (map-get? markets market-id))
+    )
+    ;; Validate market exists
+    (asserts! (is-some market) ERR-MARKET-NOT-FOUND)
+
+    (let
+      (
+        (market-data (unwrap! (map-get? markets market-id) ERR-MARKET-NOT-FOUND))
+        (is-resolved (get is-resolved market-data))
+      )
+      ;; Validate market is not resolved
+      (asserts! (not is-resolved) ERR-MARKET-ALREADY-RESOLVED)
+
+      ;; Validate amount is above minimum
+      (asserts! (>= amount MINIMUM-LIQUIDITY) ERR-INSUFFICIENT-LIQUIDITY)
+
+      ;; Transfer USDCx from user to contract
+      (try! (contract-call? .usdcx transfer amount caller (as-contract tx-sender) none))
+
+      ;; Split liquidity 50/50 for YES and NO reserves
+      (let
+        (
+          (split-amount (split-liquidity amount))
+          (yes-portion (get yes-portion split-amount))
+          (no-portion (get no-portion split-amount))
+          (old-yes-reserve (get yes-reserve market-data))
+          (old-no-reserve (get no-reserve market-data))
+          (old-total-liquidity (get total-liquidity market-data))
+        )
+
+        ;; Calculate LP tokens to mint (proportional)
+        (let
+          (
+            (lp-tokens (calculate-lp-tokens amount old-yes-reserve old-no-reserve old-total-liquidity))
+          )
+
+          ;; Update market reserves
+          (map-set markets market-id
+            {
+              creator: (get creator market-data),
+              question: (get question market-data),
+              deadline: (get deadline market-data),
+              resolution-deadline: (get resolution-deadline market-data),
+              yes-reserve: (+ old-yes-reserve yes-portion),
+              no-reserve: (+ old-no-reserve no-portion),
+              total-liquidity: (+ old-total-liquidity amount),
+              accumulated-fees: (get accumulated-fees market-data),
+              is-resolved: (get is-resolved market-data),
+              winning-outcome: (get winning-outcome market-data),
+              resolution-block: (get resolution-block market-data),
+              created-at: (get created-at market-data),
+              liquidity-parameter: (get liquidity-parameter market-data),
+            }
+          )
+
+          ;; Mint LP tokens to user
+          (try! (contract-call? .sip013-lp-token mint market-id lp-tokens caller))
+
+          ;; Emit event
+          (print {
+            event: "liquidity-added",
+            market-id: market-id,
+            provider: caller,
+            amount: amount,
+            lp-tokens: lp-tokens,
+            yes-portion: yes-portion,
+            no-portion: no-portion,
+          })
+
+          ;; Return LP tokens minted
+          (ok lp-tokens)
+        )
+      )
+    )
+  )
+)

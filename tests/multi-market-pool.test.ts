@@ -13,6 +13,7 @@ const DISPUTE_WINDOW = 1008n; // ~7 days in blocks
 
 // Error constants
 const ERR_MARKET_NOT_FOUND = 4000n;
+const ERR_MARKET_ALREADY_RESOLVED = 4002n;
 const ERR_INVALID_QUESTION = 4012n;
 const ERR_INVALID_DEADLINE = 4013n;
 const ERR_INSUFFICIENT_LIQUIDITY = 4006n;
@@ -664,6 +665,249 @@ describe('Multi-Market Pool - Create Market', () => {
         // 5,000,000 * 10,000,000 / 10,000,000 = 5,000,000
         expect(lpTokens.result).toBeOk(Cl.uint(5_000_000n));
       });
+    });
+  });
+});
+
+describe('Multi-Market Pool - Add Liquidity', () => {
+  let marketId: bigint;
+
+  beforeEach(() => {
+    simnet.blockHeight = 1000n;
+
+    // Fund deployer and create a market
+    fundWallet(deployer, 20_000_000n);
+    const result = simnet.callPublicFn(
+      'multi-market-pool',
+      'create-market',
+      [
+        Cl.stringUtf8('Will BTC reach $100k?'),
+        Cl.uint(2000),
+        Cl.uint(3000),
+        Cl.uint(10_000_000n),
+      ],
+      deployer
+    );
+    marketId = (result.result as any).value.value;
+  });
+
+  describe('add-liquidity', () => {
+    it('should add liquidity and mint LP tokens proportionally', () => {
+      const addAmount = 5_000_000n; // 5 USDC
+      fundWallet(wallet1, Number(addAmount));
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(addAmount)],
+        wallet1
+      );
+
+      // LP tokens should be proportional: (5000000 * 10000000) / 10000000 = 5000000
+      const expectedLpTokens = 5_000_000n;
+      expect(result.result).toBeOk(Cl.uint(expectedLpTokens));
+
+      // Verify LP tokens were minted to wallet1
+      const lpBalance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-lp-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1)],
+        deployer
+      );
+      expect(lpBalance.result).toBeOk(Cl.uint(expectedLpTokens));
+
+      // Verify reserves were updated
+      const reserves = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-reserves',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      expect(reserves.result).toBeOk(
+        Cl.tuple({
+          'yes-reserve': Cl.uint(7_500_000n), // 5M + 2.5M
+          'no-reserve': Cl.uint(7_500_000n), // 5M + 2.5M
+          'total-liquidity': Cl.uint(15_000_000n), // 10M + 5M
+        })
+      );
+    });
+
+    it('should reject adding liquidity to non-existent market', () => {
+      fundWallet(wallet1, 5_000_000n);
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(999), Cl.uint(5_000_000n)],
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_MARKET_NOT_FOUND));
+    });
+
+    it('should reject adding liquidity below minimum', () => {
+      fundWallet(wallet1, 100_000n);
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(50_000n)], // Less than MINIMUM_LIQUIDITY (100000)
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_INSUFFICIENT_LIQUIDITY));
+    });
+
+    it('should reject adding liquidity to resolved market', () => {
+      // First, resolve the market by mining past resolution deadline
+      simnet.blockHeight = 4000n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)], // YES wins
+        deployer
+      );
+
+      fundWallet(wallet1, 5_000_000n);
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(5_000_000n)],
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_MARKET_ALREADY_RESOLVED));
+    });
+
+    it('should allow multiple users to add liquidity', () => {
+      fundWallet(wallet1, 3_000_000n);
+      fundWallet(wallet2, 2_000_000n);
+
+      // Wallet 1 adds liquidity
+      const result1 = simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(3_000_000n)],
+        wallet1
+      );
+      expect(result1.result).toBeOk(Cl.uint(3_000_000n));
+
+      // Wallet 2 adds liquidity
+      const result2 = simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(2_000_000n)],
+        wallet2
+      );
+      expect(result2.result).toBeOk(Cl.uint(2_000_000n));
+
+      // Verify both users have LP tokens
+      const lp1 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-lp-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1)],
+        deployer
+      );
+      expect(lp1.result).toBeOk(Cl.uint(3_000_000n));
+
+      const lp2 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-lp-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet2)],
+        deployer
+      );
+      expect(lp2.result).toBeOk(Cl.uint(2_000_000n));
+    });
+
+    it('should split added liquidity 50/50 between YES and NO', () => {
+      const addAmount = 4_000_000n; // 4 USDC
+      fundWallet(wallet1, Number(addAmount));
+
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(addAmount)],
+        wallet1
+      );
+
+      const reserves = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-reserves',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const r = (reserves.result as any).value.value;
+
+      // YES and NO should each increase by 2M (half of 4M)
+      expect(Number((r['yes-reserve'] as any).value)).toBe(7_000_000n);
+      expect(Number((r['no-reserve'] as any).value)).toBe(7_000_000n);
+    });
+
+    it('should allow adding liquidity with minimum amount', () => {
+      const minAmount = 100_000n; // 0.1 USDC = MINIMUM_LIQUIDITY
+      fundWallet(wallet1, Number(minAmount));
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(minAmount)],
+        wallet1
+      );
+
+      expect(result.result).toBeOk(Cl.uint(minAmount));
+    });
+
+    it('should calculate LP tokens correctly for first addition', () => {
+      // Initial liquidity is 10M, adding 5M
+      const addAmount = 5_000_000n;
+      fundWallet(wallet1, Number(addAmount));
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(addAmount)],
+        wallet1
+      );
+
+      // (5M * 10M) / 10M = 5M LP tokens
+      expect(result.result).toBeOk(Cl.uint(5_000_000n));
+    });
+
+    it('should calculate LP tokens correctly for subsequent additions', () => {
+      // First addition: 10M -> 15M total
+      fundWallet(wallet1, 5_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(5_000_000n)],
+        wallet1
+      );
+
+      // Second addition: 15M -> 20M total
+      // LP tokens = (5M * 15M) / 15M = 5M
+      fundWallet(wallet2, 5_000_000n);
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(5_000_000n)],
+        wallet2
+      );
+
+      expect(result.result).toBeOk(Cl.uint(5_000_000n));
+    });
+
+    it('should reject adding liquidity without sufficient USDCx balance', () => {
+      // Don't fund wallet1
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(5_000_000n)],
+        wallet1
+      );
+
+      // The USDCx transfer will fail
+      expect(result.result.type).toBe('error');
     });
   });
 });

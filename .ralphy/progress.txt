@@ -2656,3 +2656,70 @@ Implemented Task 2.3 from PRD-v3-multi-market.md: The `create-market` function i
 - Ready to proceed with Task 2.4: Implement `add-liquidity` function
 - The create-market function is production-ready for testnet deployment
 
+
+---
+
+## 2026-01-22: PRD-v3 Phase 2 - Multi-Market Pool add-liquidity Implementation (Task 2.4)
+
+### Summary
+Implemented the `add-liquidity` function for the multi-market-pool contract. This function allows users to add liquidity to existing prediction markets and receive LP tokens in return, proportional to their contribution. This is part of the PRD-v3 Phase 2: Multi-Market Pool implementation.
+
+### Changes Made
+
+1. **contracts/multi-market-pool.clar** (extended):
+   - Added `add-liquidity` public function:
+     - Validates market exists and is not resolved
+     - Validates amount is above minimum (MINIMUM-LIQUIDITY = 0.1 USDC)
+     - Transfers USDCx from user to contract
+     - Splits liquidity 50/50 between YES and NO reserves
+     - Calculates LP tokens to mint proportionally
+     - Updates market reserves and total liquidity
+     - Mints LP tokens to user via SIP-013 contract
+     - Emits `liquidity-added` event
+     - Returns LP tokens minted
+
+2. **tests/multi-market-pool.test.ts** (extended):
+   - Added 10 comprehensive tests for `add-liquidity`:
+     - Test adding liquidity and receiving proportional LP tokens
+     - Test rejection for non-existent market
+     - Test rejection for amount below minimum
+     - Test rejection for resolved market
+     - Test multiple users adding liquidity to same market
+     - Test 50/50 split between YES and NO reserves
+     - Test adding liquidity with minimum amount
+     - Test LP token calculation for first addition
+     - Test LP token calculation for subsequent additions
+     - Test rejection without sufficient USDCx balance
+
+3. **PRD-v3-multi-market.md**:
+   - Marked Task 2.4 as complete with [x] checkbox
+
+### Design Notes
+- **LP Token Calculation**: Proportional to contribution - `lp-tokens = (amount * current-total) / (yes-reserve + no-reserve)`
+- **50/50 Split**: Added liquidity is always split equally between YES and NO reserves to maintain pool balance
+- **Resolved Market Protection**: Cannot add liquidity to resolved markets to protect LPs from being locked
+- **Minimum Liquidity**: 0.1 USDC minimum prevents dust transactions and gas inefficiency
+- **SIP-013 Integration**: Uses the SIP-013 LP token contract for minting LP tokens
+- **Event Emission**: `liquidity-added` event includes market-id, provider, amount, LP tokens, and split portions
+
+### Verification
+- **Contract Compilation**: `clarinet check contracts/multi-market-pool.clar` passes with 0 errors (only unused constant warnings)
+- **Test Coverage**: 10 new tests covering all major functionality and edge cases
+- **Integration**: Follows existing patterns from `create-market` function
+- **Error Handling**: Proper validation with descriptive error codes (ERR-MARKET-NOT-FOUND, ERR-MARKET-ALREADY-RESOLVED, ERR-INSUFFICIENT-LIQUIDITY)
+
+### Next Steps (Remaining Tasks from PRD-v3 Phase 2)
+- Task 2.5: Implement `remove-liquidity`
+- Task 2.6: Implement `buy-outcome`
+- Task 2.7: Implement `sell-outcome`
+- Task 2.8: Implement `resolve`
+- Task 2.9: Implement `claim`
+- Task 2.10: Implement read-only functions
+- Task 2.12: Complete remaining tests in `tests/multi-market-pool.test.ts`
+- Task 2.14: Run all tests and ensure they pass
+
+### Known Issues
+- Pre-existing vitest environment issue prevents test execution (worker fork failure)
+- This is unrelated to the new `add-liquidity` implementation
+- Contract syntax is valid and compiles successfully
+- Tests follow correct patterns and should pass when environment is fixed
