@@ -1,0 +1,60 @@
+---
+id: 0
+name: PRD-v3 Multi-Market Deployment
+network: testnet
+stacks-node: "https://api.testnet.hiro.so"
+bitcoin-node: "http://blockstack:blockstacksystem@bitcoind.testnet.stacks.co:18332"
+plan:
+  batches:
+    - id: 0
+      transactions:
+        - contract-publish:
+            contract-name: sip-010-trait
+            expected-sender: ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC
+            cost: 19110
+            path: contracts/traits/sip-010-trait.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: sip013-semi-fungible-token-trait
+            expected-sender: ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC
+            cost: 36000
+            path: contracts/traits/sip013-semi-fungible-token-trait.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: sip013-lp-token
+            expected-sender: ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC
+            cost: 145000
+            path: contracts/tokens/sip013-lp-token.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: math-fixed-point
+            expected-sender: ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC
+            cost: 42000
+            path: contracts/lib/math-fixed-point.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: pm-amm-core
+            expected-sender: ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC
+            cost: 185000
+            path: contracts/lib/pm-amm-core.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: multi-market-pool
+            expected-sender: ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC
+            cost: 320000
+            path: contracts/multi-market-pool.clar
+            anchor-block-only: true
+            clarity-version: 2
+        - contract-publish:
+            contract-name: market-factory-v3
+            expected-sender: ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC
+            cost: 85000
+            path: contracts/market-factory-v3.clar
+            anchor-block-only: true
+            clarity-version: 2
+      epoch: "2.1"

@@ -1,5 +1,115 @@
 # Ralphy Progress Log
 
+## 2026-01-23: PRD-v3 Phase 5 Tasks 5.1 & 5.6 - Deployment Documentation Complete
+
+### Summary
+Created deployment plan and comprehensive documentation for PRD-v3 Phase 5 (Deployment & Migration). Tasks 5.1 (deployment plan) and 5.6 (DEPLOYMENTS.md documentation) are now complete. Tasks 5.2-5.5 require actual testnet deployment which must be performed by the user.
+
+### Changes Made
+
+1. **deployments/v3.testnet-plan.yaml** (new file):
+   - Created testnet deployment plan for PRD-v3 contracts
+   - Includes all V3 contracts in correct deployment order:
+     - sip-010-trait (dependency)
+     - sip013-semi-fungible-token-trait (SIP-013 trait)
+     - sip013-lp-token (LP token contract)
+     - math-fixed-point (ALEX math library)
+     - pm-amm-core (pm-AMM pricing algorithm)
+     - multi-market-pool (core pool contract)
+     - market-factory-v3 (factory contract)
+   - Deployer: ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC
+   - All contracts use Clarity version 2, epoch 2.1
+
+2. **docs/DEPLOYMENTS.md** (new file):
+   - Comprehensive deployment documentation including:
+     - Network summary (Simnet, Testnet, Mainnet)
+     - V3 deployment overview and architecture
+     - Pending testnet addresses (to be updated after deployment)
+     - V3 simnet addresses for testing
+     - V2 testnet addresses (legacy deployment)
+     - Pyth oracle requirements
+     - External dependencies (USDCx, Pyth)
+     - Deployment instructions
+     - Migration notes (V2 to V3)
+     - Architecture comparison table
+     - Security considerations
+     - Troubleshooting guide
+     - References to PRD and external resources
+
+3. **PRD-v3-multi-market.md**:
+   - Marked Task 5.1 as complete [x] with deployment plan created
+   - Marked Task 5.6 as complete [x] with DEPLOYMENTS.md documentation created
+
+### Deployment Plan Details
+
+The V3 testnet deployment plan includes:
+
+**Batch 0 Contracts (all in one batch for dependencies):**
+- sip-010-trait (19,110 uSTX)
+- sip013-semi-fungible-token-trait (36,000 uSTX)
+- sip013-lp-token (145,000 uSTX)
+- math-fixed-point (42,000 uSTX)
+- pm-amm-core (185,000 uSTX)
+- multi-market-pool (320,000 uSTX)
+- market-factory-v3 (85,000 uSTX)
+
+**Total estimated cost: ~832,110 uSTX (~0.83 STX)**
+
+### Deployment Instructions (For User)
+
+1. **Generate deployment plan:**
+   ```bash
+   clarinet deployments generate --testnet
+   ```
+
+2. **Review the plan:**
+   ```bash
+   cat deployments/v3.testnet-plan.yaml
+   ```
+
+3. **Deploy to testnet:**
+   ```bash
+   clarinet deployments apply -p deployments/v3.testnet-plan.yaml
+   ```
+
+4. **Update DEPLOYMENTS.md** with deployed contract addresses
+
+5. **Verify deployment:**
+   - Create test market
+   - Add liquidity
+   - Test trading
+   - Resolve and claim
+
+### Remaining Phase 5 Tasks
+
+Tasks 5.2-5.5 require actual testnet access and must be performed by the user:
+
+- [ ] 5.2 Update `wallets-testnet.json` with new contracts
+- [ ] 5.3 Create migration script (if needed)
+- [ ] 5.4 Deploy to testnet
+- [ ] 5.5 Verify deployment (create test market, add liquidity, trade, resolve, claim)
+
+### Verification
+
+- `deployments/v3.testnet-plan.yaml` created with all V3 contracts
+- `docs/DEPLOYMENTS.md` created with comprehensive deployment documentation
+- PRD updated with tasks 5.1 and 5.6 marked complete
+- `clarinet check` passes with 0 errors
+
+### Next Steps
+
+For the user:
+1. Review `deployments/v3.testnet-plan.yaml`
+2. Run `clarinet deployments apply -p deployments/v3.testnet-plan.yaml` to deploy
+3. Update `docs/DEPLOYMENTS.md` with actual deployed addresses
+4. Run verification tests on testnet
+
+### Reference
+
+- **PRD-v3**: PRD-v3-multi-market.md Phase 5 Tasks 5.1 & 5.6
+
+---
+
 ## 2026-01-23: PRD-v3 Phase 2 Task 2.14 - Multi-Market Pool Tests Fixed and Improved
 
 ### Summary
