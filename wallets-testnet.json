@@ -1,0 +1,34 @@
+{
+  "network": "testnet",
+  "updated": "2026-01-22",
+  "wallets": [
+    {
+      "role": "deployer",
+      "description": "Contract deployer - owns all deployed contracts",
+      "address": "ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC",
+      "privateKey": "bfba61ee21e8e532f9c05c574fefffc8efc5936c0cec69107a0b29d6aacdf61c01",
+      "mnemonic": "canyon oyster pave grain heavy spice seek time smoke music bachelor february"
+    },
+    {
+      "role": "user1",
+      "description": "Test user 1 - for trading/betting",
+      "address": "ST23FF3CP9D662CJ5PG2TH8NJNAQ2Y0R002BF7QAK",
+      "privateKey": "751635ce09430b405825b3a1d97e5cf7a85129b028163adac3dfdcb870e03f7501",
+      "mnemonic": "turn ready gentle congress tube vote answer tragic base dizzy elbow isolate"
+    },
+    {
+      "role": "user2",
+      "description": "Test user 2 - for trading/betting",
+      "address": "ST14NQ2NWE26YVB4YR9Y82AY03KG00RTNSJNYHMW7",
+      "privateKey": "c895af1cee831526e728162c93a8615126cdae29bc9486efad04cba97c3525eb01",
+      "mnemonic": "second chest basic wave jungle pulse drum tag indicate maid manual maid swift patrol play kind problem expire world film race fiber because glance"
+    },
+    {
+      "role": "user3",
+      "description": "Test user 3 - NEW wallet for testing",
+      "address": "ST1DPEBJA5AZZGW958NMV8QRBY9H9E1B3P107YCBX",
+      "privateKey": "dea397522be459d4d6055be4651320bd57afc16945c376b6902971be2d256fd301",
+      "mnemonic": "quick senior can cactus turn deliver ugly marriage logic much visit peace"
+    }
+  ]
+}

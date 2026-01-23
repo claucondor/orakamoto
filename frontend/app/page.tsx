@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { UserSession, AppConfig } from '@stacks/connect';
 import WalletConnect from '@/components/WalletConnect';
 import USDCxBalance from '@/components/USDCxBalance';
+import Bridge from '@/components/Bridge';
 import Link from 'next/link';
 
 const appConfig = new AppConfig(['store_write', 'publish_data']);
@@ -32,6 +33,11 @@ export default function Home() {
         <div className="grid gap-6 md:grid-cols-2 mb-8">
           <WalletConnect />
           {address && <USDCxBalance address={address} />}
+        </div>
+
+        {/* Bridge Section */}
+        <div className="mb-8">
+          <Bridge stacksAddress={address} />
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow">

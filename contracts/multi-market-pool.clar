@@ -671,3 +671,136 @@
     )
   )
 )
+
+;; Buy outcome tokens from a market
+;; @param market-id: The market to buy from
+;; @param outcome: 0 = YES, 1 = NO
+;; @param amount: USDCx amount to spend
+;; @param min-tokens-out: Minimum tokens to receive (slippage protection)
+;; @returns (response uint uint): Tokens received on success, error code on failure
+(define-public (buy-outcome
+    (market-id uint)
+    (outcome uint)
+    (amount uint)
+    (min-tokens-out uint)
+  )
+  (let
+    (
+      (caller tx-sender)
+      (market (map-get? markets market-id))
+    )
+    ;; Validate market exists
+    (asserts! (is-some market) ERR-MARKET-NOT-FOUND)
+
+    (let
+      (
+        (market-data (unwrap! (map-get? markets market-id) ERR-MARKET-NOT-FOUND))
+        (is-resolved (get is-resolved market-data))
+        (deadline (get deadline market-data))
+      )
+      ;; Validate market is active (not resolved and before deadline)
+      (asserts! (not is-resolved) ERR-MARKET-ALREADY-RESOLVED)
+      (asserts! (< block-height deadline) ERR-MARKET-NOT-ACTIVE)
+
+      ;; Validate outcome is 0 (YES) or 1 (NO)
+      (asserts! (is-valid-outcome outcome) ERR-INVALID-OUTCOME)
+
+      ;; Validate amount is above zero
+      (asserts! (> amount u0) ERR-ZERO-AMOUNT)
+
+      ;; Get current reserves and liquidity parameter
+      (let
+        (
+          (yes-reserve (get yes-reserve market-data))
+          (no-reserve (get no-reserve market-data))
+          (liquidity-param (get liquidity-parameter market-data))
+
+          ;; Calculate trading fee
+          (fee (calculate-fee amount))
+          (amount-after-fee (- amount fee))
+
+          ;; Calculate tokens to receive using pm-AMM
+          ;; buy-yes = true when outcome is 0 (YES), false when outcome is 1 (NO)
+          (tokens-out (calculate-tokens-out-pmamm amount-after-fee yes-reserve no-reserve liquidity-param (is-eq outcome u0)))
+        )
+        ;; Validate slippage protection
+        (asserts! (>= tokens-out min-tokens-out) ERR-SLIPPAGE-TOO-HIGH)
+
+        ;; Transfer USDCx from user to contract
+        (try! (contract-call? .usdcx transfer amount caller (as-contract tx-sender) none))
+
+        ;; Calculate new reserves after the trade
+        ;; For buy-yes (outcome=0): YES reserve increases, NO reserve decreases by tokens-out
+        ;; For buy-no (outcome=1): NO reserve increases, YES reserve decreases by tokens-out
+        (let
+          (
+            (new-yes-reserve (if (is-eq outcome u0)
+              (+ yes-reserve amount-after-fee)  ;; Buying YES: YES reserve grows
+              (- yes-reserve tokens-out)         ;; Buying NO: YES reserve shrinks
+            ))
+            (new-no-reserve (if (is-eq outcome u0)
+              (- no-reserve tokens-out)          ;; Buying YES: NO reserve shrinks
+              (+ no-reserve amount-after-fee)   ;; Buying NO: NO reserve grows
+            ))
+            (new-accumulated-fees (+ (get accumulated-fees market-data) fee))
+          )
+          ;; Update market data
+          (map-set markets market-id
+            {
+              creator: (get creator market-data),
+              question: (get question market-data),
+              deadline: (get deadline market-data),
+              resolution-deadline: (get resolution-deadline market-data),
+              yes-reserve: new-yes-reserve,
+              no-reserve: new-no-reserve,
+              total-liquidity: (get total-liquidity market-data),
+              accumulated-fees: new-accumulated-fees,
+              is-resolved: (get is-resolved market-data),
+              winning-outcome: (get winning-outcome market-data),
+              resolution-block: (get resolution-block market-data),
+              created-at: (get created-at market-data),
+              liquidity-parameter: (get liquidity-parameter market-data),
+            }
+          )
+
+          ;; Update creator and protocol fee maps
+          (let
+            (
+              (creator-fee-portion (/ (* fee CREATOR-FEE-SHARE-BP) u10000))
+              (protocol-fee-portion (/ (* fee PROTOCOL-FEE-SHARE-BP) u10000))
+              (old-creator-fees (default-to u0 (map-get? creator-fees market-id)))
+              (old-protocol-fees (default-to u0 (map-get? protocol-fees market-id)))
+            )
+            (map-set creator-fees market-id (+ old-creator-fees creator-fee-portion))
+            (map-set protocol-fees market-id (+ old-protocol-fees protocol-fee-portion))
+
+            ;; Credit outcome tokens to user
+            (let
+              (
+                (outcome-key { market-id: market-id, owner: caller, outcome: outcome })
+                (current-balance (default-to u0 (map-get? outcome-balances outcome-key)))
+              )
+              (map-set outcome-balances outcome-key (+ current-balance tokens-out))
+
+              ;; Emit event
+              (print {
+                event: "outcome-bought",
+                market-id: market-id,
+                buyer: caller,
+                outcome: outcome,
+                amount-spent: amount,
+                tokens-received: tokens-out,
+                fee: fee,
+                new-yes-reserve: new-yes-reserve,
+                new-no-reserve: new-no-reserve,
+              })
+
+              ;; Return tokens received
+              (ok tokens-out)
+            )
+          )
+        )
+      )
+    )
+  )
+)

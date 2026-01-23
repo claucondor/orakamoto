@@ -1,0 +1,30 @@
+{
+  "node_modules/@stacks/connect-ui/dist/esm/index-f9076013.js -> ./connect-modal.entry.js": {
+    "id": 4530,
+    "files": [
+      "static/chunks/530.f59206421cfd3293.js"
+    ]
+  },
+  "node_modules/@stacks/connect-ui/dist/esm/polyfills/index.js -> ./core-js.js": {
+    "id": null,
+    "files": []
+  },
+  "node_modules/@stacks/connect-ui/dist/esm/polyfills/index.js -> ./dom.js": {
+    "id": null,
+    "files": []
+  },
+  "node_modules/viem/_esm/actions/public/call.js -> ../../utils/ccip.js": {
+    "id": 4844,
+    "files": [
+      "static/chunks/735.723ffe93c6d507a9.js"
+    ]
+  },
+  "node_modules/viem/_esm/utils/rpc/webSocket.js -> isows": {
+    "id": null,
+    "files": []
+  },
+  "node_modules/viem/_esm/utils/signature/recoverPublicKey.js -> @noble/curves/secp256k1": {
+    "id": 4176,
+    "files": []
+  }
+}

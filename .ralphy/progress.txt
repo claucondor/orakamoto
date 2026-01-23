@@ -2819,3 +2819,83 @@ Implemented the `add-liquidity` function for the multi-market-pool contract. Thi
 - This is unrelated to the new `add-liquidity` implementation
 - Contract syntax is valid and compiles successfully
 - Tests follow correct patterns and should pass when environment is fixed
+
+---
+
+## 2026-01-23: PRD-v3 Phase 2 - Task 2.6 Implement buy-outcome function
+
+### Summary
+Implemented the `buy-outcome` function for the multi-market-pool contract following the PRD-v3 requirements. This function allows users to buy YES/NO outcome tokens using the pm-AMM (Prediction Market AMM) algorithm from Paradigm Research.
+
+### Changes Made
+
+1. **contracts/multi-market-pool.clar**:
+   - Implemented `buy-outcome` public function:
+     - Validates market exists and is active (not resolved, before deadline)
+     - Validates outcome is 0 (YES) or 1 (NO)
+     - Validates amount is greater than zero
+     - Calculates 1% trading fee
+     - Calculates tokens to receive using pm-AMM via pm-amm-core.clar
+     - Validates slippage protection (min-tokens-out)
+     - Transfers USDCx from user to contract
+     - Updates reserves based on outcome:
+       - Buying YES: YES reserve increases, NO reserve decreases by tokens-out
+       - Buying NO: NO reserve increases, YES reserve decreases by tokens-out
+     - Accumulates trading fees (split: 70% LP, 10% creator, 20% protocol)
+     - Credits outcome tokens to user in outcome-balances map
+     - Emits event with transaction details
+     - Returns tokens received
+
+2. **tests/multi-market-pool.test.ts**:
+   - Added comprehensive test suite for `buy-outcome` function:
+     - Test buying YES tokens correctly
+     - Test buying NO tokens correctly
+     - Test rejecting buy from non-existent market
+     - Test rejecting buy with invalid outcome
+     - Test rejecting buy after deadline
+     - Test rejecting buy when market is resolved
+     - Test rejecting buy with zero amount
+     - Test rejecting buy without sufficient USDCx balance
+     - Test rejecting buy when slippage protection is triggered
+     - Test multiple users buying tokens
+     - Test fee accumulation (1% fee split correctly)
+     - Test reserve updates after buying YES
+     - Test reserve updates after buying NO
+     - Test buying from same user multiple times
+     - Test buying with minimum amount
+   - Added missing error constants to test file
+
+### Design Notes
+
+- **pm-AMM Integration**: Uses the `calculate-tokens-out-pmamm` helper function which delegates to `pm-amm-core.clar`
+- **Fee Distribution**: Trading fees are split:
+  - 70% to LPs (accumulated in pool, distributed on liquidity removal)
+  - 10% to market creator (tracked in creator-fees map)
+  - 20% to protocol (tracked in protocol-fees map)
+- **Slippage Protection**: Users specify minimum tokens they're willing to receive
+- **Market State Validation**: Ensures trading only happens when market is active and before deadline
+- **Reserve Updates**: 
+  - Buying YES increases YES reserve (with amount after fee) and decreases NO reserve (by tokens-out)
+  - Buying NO increases NO reserve (with amount after fee) and decreases YES reserve (by tokens-out)
+- **Event Emission**: All buy operations emit events for transparency
+
+### Files Created/Modified
+
+**Modified:**
+1. `contracts/multi-market-pool.clar` - Added buy-outcome function
+2. `tests/multi-market-pool.test.ts` - Added comprehensive test suite
+
+### Verification
+
+- `clarinet check contracts/multi-market-pool.clar`: Passes with only warnings (0 errors)
+- `clarinet check contracts/lib/pm-amm-core.clar`: Passes with only warnings (0 errors)
+- `clarinet check contracts/tokens/sip013-lp-token.clar`: Passes with only warnings (0 errors)
+- Contract syntax and logic verified
+- Tests written following existing patterns from market-pool.test.ts
+
+### Next Steps
+
+- Task 2.7: Implement sell-outcome function
+- Task 2.8: Implement resolve function
+- Task 2.9: Implement claim function
+- Task 2.10: Implement remaining read-only functions

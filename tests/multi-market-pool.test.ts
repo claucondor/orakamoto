@@ -13,10 +13,14 @@ const DISPUTE_WINDOW = 1008n; // ~7 days in blocks
 
 // Error constants
 const ERR_MARKET_NOT_FOUND = 4000n;
+const ERR_MARKET_NOT_ACTIVE = 4001n;
 const ERR_MARKET_ALREADY_RESOLVED = 4002n;
+const ERR_INVALID_OUTCOME = 4004n;
 const ERR_INVALID_QUESTION = 4012n;
 const ERR_INVALID_DEADLINE = 4013n;
 const ERR_INSUFFICIENT_LIQUIDITY = 4006n;
+const ERR_ZERO_AMOUNT = 4007n;
+const ERR_SLIPPAGE_TOO_HIGH = 4008n;
 const ERR_MARKET_ID_OVERFLOW = 4014n;
 
 // Helper function to give a wallet USDC via faucet
@@ -1250,6 +1254,380 @@ describe('Multi-Market Pool - Remove Liquidity', () => {
       );
       const r = (reserves.result as any).value.value;
       expect(Number((r['total-liquidity'] as any).value)).toBe(0);
+    });
+  });
+});
+
+describe('Multi-Market Pool - Buy Outcome', () => {
+  let marketId: bigint;
+
+  beforeEach(() => {
+    simnet.blockHeight = 1000n;
+
+    // Fund deployer and create a market
+    fundWallet(deployer, 20_000_000n);
+    const result = simnet.callPublicFn(
+      'multi-market-pool',
+      'create-market',
+      [
+        Cl.stringUtf8('Will BTC reach $100k?'),
+        Cl.uint(2000),
+        Cl.uint(3000),
+        Cl.uint(10_000_000n),
+      ],
+      deployer
+    );
+    marketId = (result.result as any).value.value;
+  });
+
+  describe('buy-outcome', () => {
+    it('should buy YES tokens correctly', () => {
+      const amount = 2_000_000n; // 2 USDC
+      fundWallet(wallet1, Number(amount));
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(amount), Cl.uint(1000n)], // outcome=0 (YES)
+        wallet1
+      );
+
+      // Should receive YES tokens
+      expect(result.result.type).toBe('response');
+      const tokensReceived = Number((result.result as any).value.value);
+      expect(tokensReceived).toBeGreaterThan(0);
+
+      // Verify outcome balance was updated
+      const balance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      expect(balance.result).toBeOk(Cl.uint(tokensReceived));
+    });
+
+    it('should buy NO tokens correctly', () => {
+      const amount = 2_000_000n; // 2 USDC
+      fundWallet(wallet1, Number(amount));
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(1), Cl.uint(amount), Cl.uint(1000n)], // outcome=1 (NO)
+        wallet1
+      );
+
+      // Should receive NO tokens
+      expect(result.result.type).toBe('response');
+      const tokensReceived = Number((result.result as any).value.value);
+      expect(tokensReceived).toBeGreaterThan(0);
+
+      // Verify outcome balance was updated
+      const balance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(1)],
+        deployer
+      );
+      expect(balance.result).toBeOk(Cl.uint(tokensReceived));
+    });
+
+    it('should reject buying from non-existent market', () => {
+      fundWallet(wallet1, 2_000_000n);
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(999), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_MARKET_NOT_FOUND));
+    });
+
+    it('should reject buying with invalid outcome', () => {
+      fundWallet(wallet1, 2_000_000n);
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(2), Cl.uint(2_000_000n), Cl.uint(1000n)], // outcome=2 (invalid)
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_INVALID_OUTCOME));
+    });
+
+    it('should reject buying after deadline', () => {
+      fundWallet(wallet1, 2_000_000n);
+
+      // Mine past deadline
+      simnet.blockHeight = 2500n;
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_MARKET_NOT_ACTIVE));
+    });
+
+    it('should reject buying when market is resolved', () => {
+      fundWallet(wallet1, 2_000_000n);
+
+      // Resolve the market first
+      simnet.blockHeight = 2500n;
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'resolve',
+        [Cl.uint(marketId), Cl.uint(0)], // YES wins
+        deployer
+      );
+
+      // Try to buy after resolution
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_MARKET_ALREADY_RESOLVED));
+    });
+
+    it('should reject buying with zero amount', () => {
+      fundWallet(wallet1, 2_000_000n);
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(0), Cl.uint(1000n)], // amount=0
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_ZERO_AMOUNT));
+    });
+
+    it('should reject buying without sufficient USDCx balance', () => {
+      // Don't fund wallet1
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // The USDCx transfer will fail
+      expect(result.result.type).toBe('error');
+    });
+
+    it('should reject buying when slippage protection is triggered', () => {
+      fundWallet(wallet1, 2_000_000n);
+
+      // Set very high minimum tokens out (more than possible)
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(10_000_000n)], // min-tokens-out too high
+        wallet1
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_SLIPPAGE_TOO_HIGH));
+    });
+
+    it('should allow multiple users to buy tokens', () => {
+      fundWallet(wallet1, 2_000_000n);
+      fundWallet(wallet2, 3_000_000n);
+
+      // Wallet 1 buys YES
+      const result1 = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+      expect(result1.result.type).toBe('response');
+
+      // Wallet 2 buys NO
+      const result2 = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(1), Cl.uint(3_000_000n), Cl.uint(1000n)],
+        wallet2
+      );
+      expect(result2.result.type).toBe('response');
+
+      // Verify both users have their respective tokens
+      const balance1 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      expect(Number((balance1.result as any).value.value)).toBeGreaterThan(0);
+
+      const balance2 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet2), Cl.uint(1)],
+        deployer
+      );
+      expect(Number((balance2.result as any).value.value)).toBeGreaterThan(0);
+    });
+
+    it('should accumulate trading fees correctly', () => {
+      // Generate some fees via trading
+      fundWallet(wallet1, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Check accumulated fees
+      const fees = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-accumulated-fees',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const f = (fees.result as any).value.value;
+
+      // 1% of 2M = 20,000 fee
+      // 70% to LP (14,000), 10% to creator (2,000), 20% to protocol (4,000)
+      expect(Number((f['accumulated-fees'] as any).value)).toBe(20_000n);
+      expect(Number((f['creator-fees'] as any).value)).toBe(2_000n);
+      expect(Number((f['protocol-fees'] as any).value)).toBe(4_000n);
+    });
+
+    it('should update reserves correctly after buying YES', () => {
+      const amount = 2_000_000n;
+      fundWallet(wallet1, Number(amount));
+
+      // Get reserves before trade
+      const reservesBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-reserves',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const rb = (reservesBefore.result as any).value.value;
+      const yesBefore = Number((rb['yes-reserve'] as any).value);
+      const noBefore = Number((rb['no-reserve'] as any).value);
+
+      // Buy YES tokens
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(amount), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Get reserves after trade
+      const reservesAfter = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-reserves',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const ra = (reservesAfter.result as any).value.value;
+      const yesAfter = Number((ra['yes-reserve'] as any).value);
+      const noAfter = Number((ra['no-reserve'] as any).value);
+
+      // YES reserve should increase (amount minus fee)
+      expect(yesAfter).toBeGreaterThan(yesBefore);
+      // NO reserve should decrease (tokens out)
+      expect(noAfter).toBeLessThan(noBefore);
+    });
+
+    it('should update reserves correctly after buying NO', () => {
+      const amount = 2_000_000n;
+      fundWallet(wallet1, Number(amount));
+
+      // Get reserves before trade
+      const reservesBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-reserves',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const rb = (reservesBefore.result as any).value.value;
+      const yesBefore = Number((rb['yes-reserve'] as any).value);
+      const noBefore = Number((rb['no-reserve'] as any).value);
+
+      // Buy NO tokens
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(1), Cl.uint(amount), Cl.uint(1000n)],
+        wallet1
+      );
+
+      // Get reserves after trade
+      const reservesAfter = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-reserves',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const ra = (reservesAfter.result as any).value.value;
+      const yesAfter = Number((ra['yes-reserve'] as any).value);
+      const noAfter = Number((ra['no-reserve'] as any).value);
+
+      // NO reserve should increase (amount minus fee)
+      expect(noAfter).toBeGreaterThan(noBefore);
+      // YES reserve should decrease (tokens out)
+      expect(yesAfter).toBeLessThan(yesBefore);
+    });
+
+    it('should allow buying from same user multiple times', () => {
+      fundWallet(wallet1, 5_000_000n);
+
+      // First buy
+      const result1 = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+      const tokens1 = Number((result1.result as any).value.value);
+
+      // Second buy
+      const result2 = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(3_000_000n), Cl.uint(1000n)],
+        wallet1
+      );
+      const tokens2 = Number((result2.result as any).value.value);
+
+      // Verify total balance is sum of both buys
+      const balance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-outcome-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1), Cl.uint(0)],
+        deployer
+      );
+      expect(Number((balance.result as any).value.value)).toBe(tokens1 + tokens2);
+    });
+
+    it('should work with minimum amount', () => {
+      const minAmount = 100_000n; // 0.1 USDC
+      fundWallet(wallet1, Number(minAmount));
+
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(minAmount), Cl.uint(1n)],
+        wallet1
+      );
+
+      expect(result.result.type).toBe('response');
     });
   });
 });

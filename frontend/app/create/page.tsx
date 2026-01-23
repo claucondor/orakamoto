@@ -2,25 +2,40 @@
 
 import { useState } from 'react';
 import { openContractCall } from '@stacks/connect';
-import { stringUtf8CV, uintCV } from '@stacks/transactions';
+import { stringUtf8CV, uintCV, noneCV } from '@stacks/transactions';
 import { StacksTestnet } from '@stacks/network';
 import Link from 'next/link';
 
-// TODO: Update with actual deployed contract address
-const MARKET_FACTORY_ADDRESS = 'ST7NF22X51JPBHWRDCM29FKFJ8NSWY4NEW7ZEMZF';
+// TODO: Update with your deployed market-factory contract address after deployment
+// This will be your deployer address + '.market-factory'
+// Example: 'STC5KHM41H6WHAST7MWWDD807YSPRQKJ68T330BQ.market-factory'
+const MARKET_FACTORY_ADDRESS = 'STC5KHM41H6WHAST7MWWDD807YSPRQKJ68T330BQ';
 const MARKET_FACTORY_NAME = 'market-factory';
 
 export default function CreateMarket() {
   const [question, setQuestion] = useState('');
   const [deadline, setDeadline] = useState('');
-  const [liquidity, setLiquidity] = useState('10');
+  const [liquidity, setLiquidity] = useState('50');
   const [txId, setTxId] = useState('');
   const [error, setError] = useState('');
 
   const createMarket = async () => {
     try {
       setError('');
-      const deadlineTimestamp = Math.floor(new Date(deadline).getTime() / 1000);
+
+      // Fetch current block height from Stacks API
+      const response = await fetch('https://api.testnet.hiro.so/v2/info');
+      const info = await response.json();
+      const currentBlockHeight = info.stacks_tip_height;
+
+      // Calculate deadline block height
+      // Stacks testnet: ~1 block per 2-5 minutes
+      // Convert deadline date to blocks from now
+      const now = new Date().getTime();
+      const deadlineTime = new Date(deadline).getTime();
+      const minutesUntilDeadline = Math.floor((deadlineTime - now) / (1000 * 60));
+      const blocksUntilDeadline = Math.floor(minutesUntilDeadline / 3); // ~3 min per block
+      const deadlineBlockHeight = currentBlockHeight + blocksUntilDeadline;
 
       await openContractCall({
         network: new StacksTestnet(),
@@ -29,9 +44,9 @@ export default function CreateMarket() {
         functionName: 'create-market',
         functionArgs: [
           stringUtf8CV(question),
-          stringUtf8CV(''),
-          uintCV(deadlineTimestamp),
-          uintCV(Number(liquidity) * 1_000_000),
+          uintCV(deadlineBlockHeight),
+          noneCV(), // resolution-deadline (optional, will use default)
+          uintCV(Number(liquidity) * 1_000_000), // Convert to 6 decimals
         ],
         onFinish: (data) => {
           setTxId(data.txId);
@@ -89,11 +104,11 @@ export default function CreateMarket() {
               value={liquidity}
               onChange={(e) => setLiquidity(e.target.value)}
               className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              min="1"
-              step="0.1"
+              min="50"
+              step="1"
             />
             <p className="text-sm text-gray-600 mt-1">
-              Minimum 50 USDCx required
+              Minimum 50 USDCx required (MINIMUM-COLLATERAL)
             </p>
           </div>
 
