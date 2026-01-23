@@ -2,7 +2,7 @@
 
 ## Problem Solved
 
-Ralphy's changes broke the contracts because hardcoded USDCx principal doesn't exist in simnet (local environment). Clarity doesn't support dynamic contract calls, so we can't use trait parameters at runtime.
+Hardcoded USDCx principal doesn't exist in simnet (local environment). Clarity doesn't support dynamic contract calls, so we can't use trait parameters at runtime.
 
 ## Solution: Configuration Constant
 

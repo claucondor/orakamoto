@@ -1,4 +1,4 @@
-# Claude Code Project Instructions - Orakamoto
+# Development Guide - Orakamoto
 
 ## Project Overview
 Prediction markets on Bitcoin (Stacks L2). Binary and multi-outcome markets with pm-AMM pricing.
