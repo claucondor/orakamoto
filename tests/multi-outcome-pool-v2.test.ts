@@ -51,37 +51,17 @@ const MULTI_OUTCOME_POOL_V2_PRINCIPAL = 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZ
 
 // Function to ensure LP token authorization
 function ensureLpTokenSetup() {
-  const checkResult = simnet.callReadOnlyFn(
+  // Always set the authorized minter to multi-outcome-pool-v2
+  simnet.callPublicFn(
     'sip013-lp-token',
-    'get-authorized-minter',
-    [],
+    'set-authorized-minter',
+    [Cl.contractPrincipal('ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM', 'multi-outcome-pool-v2')],
     deployer
   );
-
-  // If not already set to multi-outcome-pool-v2, set it
-  const currentMinter = (checkResult.result as any).value;
-  if (!currentMinter || currentMinter.value !== MULTI_OUTCOME_POOL_V2_PRINCIPAL) {
-    const authResult = simnet.callPublicFn(
-      'sip013-lp-token',
-      'set-authorized-minter',
-      [Cl.contractPrincipal('ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM', 'multi-outcome-pool-v2')],
-      deployer
-    );
-    console.log('LP token auth result for multi-outcome-pool-v2:', authResult.result);
-  }
 }
 
 beforeAll(() => {
   ensureLpTokenSetup();
-
-  // Verify it was set
-  const getMinterResult = simnet.callReadOnlyFn(
-    'sip013-lp-token',
-    'get-authorized-minter',
-    [],
-    deployer
-  );
-  console.log('Current authorized minter:', getMinterResult.result);
 });
 
 // Root-level beforeEach to ensure LP token setup before ALL tests
@@ -135,8 +115,8 @@ describe('Multi-Outcome Pool V2 - Create Market', () => {
 
       const marketData = (market.result as any).value;
       expect(marketData.value['question'].value).toBe('Will BTC reach $100k by end of 2025?');
-      expect(marketData.value['outcome-count'].value).toBe(outcomeCount);
-      expect(marketData.value['created-at'].value).toBeGreaterThan(0);
+      expect(marketData.value['outcome-count'].value).toBe(BigInt(outcomeCount));
+      expect(marketData.value['created-at'].value).toBeGreaterThan(0n);
 
       // Verify market count incremented
       const count = simnet.callReadOnlyFn('multi-outcome-pool-v2', 'get-market-count', [], deployer);
@@ -185,18 +165,18 @@ describe('Multi-Outcome Pool V2 - Create Market', () => {
         deployer
       );
 
-      expect(result.result).toBeOk(Cl.uint(2)); // Second market has ID 2
+      expect(result.result).toBeOk(Cl.uint(1)); // First market has ID 1
 
       // Verify outcome count
       const market = simnet.callReadOnlyFn(
         'multi-outcome-pool-v2',
         'get-market',
-        [Cl.uint(2)],
+        [Cl.uint(1)],
         deployer
       );
 
       const marketData = (market.result as any).value;
-      expect(marketData.value['outcome-count'].value).toBe(5);
+      expect(marketData.value['outcome-count'].value).toBe(5n);
     });
 
     it('should create market correctly with 10 outcomes (max)', () => {
@@ -230,17 +210,17 @@ describe('Multi-Outcome Pool V2 - Create Market', () => {
         deployer
       );
 
-      expect(result.result).toBeOk(Cl.uint(3));
+      expect(result.result).toBeOk(Cl.uint(1)); // First market has ID 1
 
       const market = simnet.callReadOnlyFn(
         'multi-outcome-pool-v2',
         'get-market',
-        [Cl.uint(3)],
+        [Cl.uint(1)],
         deployer
       );
 
       const marketData = (market.result as any).value;
-      expect(marketData.value['outcome-count'].value).toBe(10);
+      expect(marketData.value['outcome-count'].value).toBe(10n);
     });
 
     it('should reject creation with empty question', () => {
@@ -444,11 +424,12 @@ describe('Multi-Outcome Pool V2 - Read-Only Functions', () => {
         deployer
       );
 
-      expect(market.result).toBeOk();
+      expect((market.result as any).type).toBe('ok');
       const marketData = (market.result as any).value;
       expect(marketData.value['question'].value).toBe('Test Market');
-      expect(marketData.value['outcome-count'].value).toBe(3);
-      expect(marketData.value['is-resolved'].value).toBe(false);
+      expect(marketData.value['outcome-count'].value).toBe(3n);
+      // Clarity booleans: { type: 'false' } or { type: 'true' } (no .value property)
+      expect(marketData.value['is-resolved'].type).toBe('false');
     });
 
     it('should return error for non-existent market', () => {
@@ -479,7 +460,7 @@ describe('Multi-Outcome Pool V2 - Read-Only Functions', () => {
         deployer
       );
 
-      expect(prices.result).toBeOk();
+      expect((prices.result as any).type).toBe('ok');
       const pricesList = (prices.result as any).value.value;
       // With equal reserves, prices should be approximately equal (1/3 each with 3 outcomes)
       // Price is scaled by PRECISION (1000000)
@@ -496,7 +477,7 @@ describe('Multi-Outcome Pool V2 - Read-Only Functions', () => {
         deployer
       );
 
-      expect(reserves.result).toBeOk();
+      expect((reserves.result as any).type).toBe('ok');
       const reservesData = (reserves.result as any).value.value;
       // Initial liquidity is 10M, split equally among 3 outcomes = ~3.33M each
       expect(reservesData['reserve-0'].value).toBeGreaterThan(0);
@@ -551,11 +532,11 @@ describe('Multi-Outcome Pool V2 - Read-Only Functions', () => {
         deployer
       );
 
-      expect(fees.result).toBeOk();
+      expect((fees.result as any).type).toBe('ok');
       const feesData = (fees.result as any).value.value;
-      expect(feesData['accumulated-fees'].value).toBe(0);
-      expect(feesData['creator-fees'].value).toBe(0);
-      expect(feesData['protocol-fees'].value).toBe(0);
+      expect(feesData['accumulated-fees'].value).toBe(0n);
+      expect(feesData['creator-fees'].value).toBe(0n);
+      expect(feesData['protocol-fees'].value).toBe(0n);
     });
   });
 });
@@ -593,7 +574,7 @@ describe('Multi-Outcome Pool V2 - Add Liquidity', () => {
         wallet1
       );
 
-      expect(result.result).toBeOk();
+      expect((result.result as any).type).toBe('ok');
 
       // Verify LP tokens were minted
       const lpBalance = simnet.callReadOnlyFn(
@@ -602,7 +583,7 @@ describe('Multi-Outcome Pool V2 - Add Liquidity', () => {
         [Cl.uint(1), Cl.standardPrincipal(wallet1)],
         deployer
       );
-      expect(lpBalance.result).toBeOk();
+      expect((lpBalance.result as any).type).toBe('ok');
       expect((lpBalance.result as any).value.value).toBeGreaterThan(0);
     });
 
@@ -667,7 +648,7 @@ describe('Multi-Outcome Pool V2 - Buy Outcome', () => {
         wallet1
       );
 
-      expect(result.result).toBeOk();
+      expect((result.result as any).type).toBe('ok');
 
       // Verify outcome balance increased
       const balance = simnet.callReadOnlyFn(
@@ -676,7 +657,7 @@ describe('Multi-Outcome Pool V2 - Buy Outcome', () => {
         [Cl.uint(1), Cl.standardPrincipal(wallet1), Cl.uint(0)],
         deployer
       );
-      expect(balance.result).toBeOk();
+      expect((balance.result as any).type).toBe('ok');
       expect((balance.result as any).value.value).toBeGreaterThan(0);
     });
 
@@ -779,7 +760,7 @@ describe('Multi-Outcome Pool V2 - Sell Outcome', () => {
         wallet1
       );
 
-      expect(result.result).toBeOk();
+      expect((result.result as any).type).toBe('ok');
     });
 
     it('should reject selling from non-existent market', () => {
@@ -817,17 +798,22 @@ describe('Multi-Outcome Pool V2 - Sell Outcome', () => {
   });
 });
 
+// Store the deadline for use in resolve tests
+let resolveTestDeadline: number;
+
 describe('Multi-Outcome Pool V2 - Resolve Market', () => {
   beforeEach(() => {
-    // Create a test market with deadline at block 100
+    // Create a test market with deadline at currentBlock + 50
+    const currentBlock = simnet.blockHeight;
+    resolveTestDeadline = currentBlock + 50;
     fundWallet(deployer, 10_000_000);
     simnet.callPublicFn(
       'multi-outcome-pool-v2',
       'create-market',
       [
         Cl.stringUtf8('Test Market'),
-        Cl.uint(100),
-        Cl.uint(200),
+        Cl.uint(resolveTestDeadline),
+        Cl.uint(resolveTestDeadline + 100),
         Cl.uint(10_000_000n),
         Cl.uint(3),
         Cl.list([Cl.stringUtf8('A'), Cl.stringUtf8('B'), Cl.stringUtf8('C')]),
@@ -840,7 +826,7 @@ describe('Multi-Outcome Pool V2 - Resolve Market', () => {
   describe('resolve', () => {
     it('should allow creator to resolve after deadline', () => {
       // Mine blocks to pass deadline
-      mineToBlockHeight(101);
+      simnet.mineEmptyBlocks(resolveTestDeadline - simnet.blockHeight + 10);
 
       const result = simnet.callPublicFn(
         'multi-outcome-pool-v2',
@@ -859,8 +845,11 @@ describe('Multi-Outcome Pool V2 - Resolve Market', () => {
         deployer
       );
       const marketData = (market.result as any).value;
-      expect(marketData.value['is-resolved'].value).toBe(true);
-      expect(marketData.value['winning-outcome'].value.value).toBe(0);
+      // Clarity booleans: { type: 'true' } or { type: 'false' } (no .value property)
+      expect(marketData.value['is-resolved'].type).toBe('true');
+      // winning-outcome is (some u0), which is { type: 'some', value: { type: 'uint', value: 0n } }
+      expect(marketData.value['winning-outcome'].type).toBe('some');
+      expect(marketData.value['winning-outcome'].value.value).toBe(0n);
     });
 
     it('should reject resolving before deadline', () => {
@@ -876,7 +865,7 @@ describe('Multi-Outcome Pool V2 - Resolve Market', () => {
     });
 
     it('should reject resolving by non-creator', () => {
-      mineToBlockHeight(101);
+      simnet.mineEmptyBlocks(resolveTestDeadline - simnet.blockHeight + 10);
 
       const result = simnet.callPublicFn(
         'multi-outcome-pool-v2',
@@ -889,7 +878,7 @@ describe('Multi-Outcome Pool V2 - Resolve Market', () => {
     });
 
     it('should reject resolving already resolved market', () => {
-      mineToBlockHeight(101);
+      simnet.mineEmptyBlocks(resolveTestDeadline - simnet.blockHeight + 10);
 
       // First resolve
       simnet.callPublicFn(
@@ -911,7 +900,7 @@ describe('Multi-Outcome Pool V2 - Resolve Market', () => {
     });
 
     it('should reject resolving with invalid outcome', () => {
-      mineToBlockHeight(101);
+      simnet.mineEmptyBlocks(resolveTestDeadline - simnet.blockHeight + 10);
 
       const result = simnet.callPublicFn(
         'multi-outcome-pool-v2',
@@ -926,12 +915,16 @@ describe('Multi-Outcome Pool V2 - Resolve Market', () => {
 });
 
 describe('Multi-Outcome Pool V2 - Claim Winnings', () => {
+  beforeEach(() => {
+    ensureLpTokenSetup();
+  });
+
   describe('claim', () => {
     it('should allow winner to claim after dispute window', () => {
-      // Create a test market with deadline at current block + 10
+      // Create a test market with deadline at current block + 100
       const currentBlock = simnet.blockHeight;
-      const deadline = currentBlock + 10;
-      const resolutionDeadline = deadline + 10;
+      const deadline = currentBlock + 100;
+      const resolutionDeadline = deadline + 100;
 
       fundWallet(deployer, 10_000_000);
       const createResult = simnet.callPublicFn(
@@ -948,6 +941,7 @@ describe('Multi-Outcome Pool V2 - Claim Winnings', () => {
         ],
         deployer
       );
+      expect((createResult.result as any).type).toBe('ok');
       const marketId = (createResult.result as any).value.value;
 
       // Buy winning tokens for wallet1
@@ -960,26 +954,17 @@ describe('Multi-Outcome Pool V2 - Claim Winnings', () => {
       );
 
       // Mine past deadline and resolve
-      mineToBlockHeight(deadline + 1);
-      simnet.callPublicFn(
+      simnet.mineEmptyBlocks(deadline - simnet.blockHeight + 10);
+      const resolveResult = simnet.callPublicFn(
         'multi-outcome-pool-v2',
         'resolve',
         [Cl.uint(marketId), Cl.uint(0)],
         deployer
       );
-
-      // Verify market is resolved
-      const market = simnet.callReadOnlyFn(
-        'multi-outcome-pool-v2',
-        'get-market',
-        [Cl.uint(marketId)],
-        deployer
-      );
-      const marketData = (market.result as any).value;
-      expect(marketData.value['is-resolved'].value).toBe(true);
+      expect((resolveResult.result as any).type).toBe('ok');
 
       // Mine blocks to pass dispute window
-      mineToBlockHeight(deadline + 1 + Number(DISPUTE_WINDOW) + 1);
+      simnet.mineEmptyBlocks(Number(DISPUTE_WINDOW) + 10);
 
       const result = simnet.callPublicFn(
         'multi-outcome-pool-v2',
@@ -988,14 +973,15 @@ describe('Multi-Outcome Pool V2 - Claim Winnings', () => {
         wallet1
       );
 
-      expect(result.result).toBeOk();
-      expect((result.result as any).value.value).toBeGreaterThan(0);
+      expect((result.result as any).type).toBe('ok');
+      expect((result.result as any).value.value).toBeGreaterThan(0n);
     });
 
     it('should reject claiming during dispute window', () => {
       // Create a test market with a guaranteed future deadline
-      const deadline = 10000;
-      const resolutionDeadline = 10100;
+      const currentBlock = simnet.blockHeight;
+      const deadline = currentBlock + 100;
+      const resolutionDeadline = deadline + 100;
 
       fundWallet(deployer, 10_000_000);
       const createResult = simnet.callPublicFn(
@@ -1023,8 +1009,8 @@ describe('Multi-Outcome Pool V2 - Claim Winnings', () => {
         wallet1
       );
 
-      // Mine past deadline and resolve
-      mineToBlockHeight(deadline + 1);
+      // Mine past deadline and resolve (add extra blocks to account for transaction block consumption)
+      simnet.mineEmptyBlocks(deadline - simnet.blockHeight + 10);
       const resolveResult = simnet.callPublicFn(
         'multi-outcome-pool-v2',
         'resolve',
@@ -1032,7 +1018,7 @@ describe('Multi-Outcome Pool V2 - Claim Winnings', () => {
         deployer
       );
       // Verify resolve succeeded
-      expect(resolveResult.result).toBeOk();
+      expect((resolveResult.result as any).type).toBe('ok');
 
       // Try to claim while still within dispute window
       const result = simnet.callPublicFn(
@@ -1047,8 +1033,9 @@ describe('Multi-Outcome Pool V2 - Claim Winnings', () => {
 
     it('should reject claiming twice', () => {
       // Create a test market with a guaranteed future deadline
-      const deadline = 11000;
-      const resolutionDeadline = 11100;
+      const currentBlock = simnet.blockHeight;
+      const deadline = currentBlock + 100;
+      const resolutionDeadline = deadline + 100;
 
       fundWallet(deployer, 10_000_000);
       const createResult = simnet.callPublicFn(
@@ -1076,18 +1063,18 @@ describe('Multi-Outcome Pool V2 - Claim Winnings', () => {
         wallet1
       );
 
-      // Mine past deadline and resolve
-      mineToBlockHeight(deadline + 1);
+      // Mine past deadline and resolve (add extra blocks to account for transaction block consumption)
+      simnet.mineEmptyBlocks(deadline - simnet.blockHeight + 10);
       const resolveResult = simnet.callPublicFn(
         'multi-outcome-pool-v2',
         'resolve',
         [Cl.uint(marketId), Cl.uint(0)],
         deployer
       );
-      expect(resolveResult.result).toBeOk();
+      expect((resolveResult.result as any).type).toBe('ok');
 
       // Mine blocks to pass dispute window
-      mineToBlockHeight(deadline + 1 + Number(DISPUTE_WINDOW) + 1);
+      simnet.mineEmptyBlocks(Number(DISPUTE_WINDOW) + 10);
 
       // First claim
       const firstClaim = simnet.callPublicFn(
@@ -1096,7 +1083,7 @@ describe('Multi-Outcome Pool V2 - Claim Winnings', () => {
         [Cl.uint(marketId)],
         wallet1
       );
-      expect(firstClaim.result).toBeOk();
+      expect((firstClaim.result as any).type).toBe('ok');
 
       // Try to claim again
       const result = simnet.callPublicFn(
@@ -1142,8 +1129,8 @@ describe('Multi-Outcome Pool V2 - Claim Winnings', () => {
         wallet2
       );
 
-      // Mine to reach the deadline
-      mineToBlockHeight(deadline + 1);
+      // Mine to reach the deadline (add extra blocks to account for transaction block consumption)
+      simnet.mineEmptyBlocks(deadline - simnet.blockHeight + 10);
 
       const resolveResult = simnet.callPublicFn(
         'multi-outcome-pool-v2',
@@ -1151,10 +1138,10 @@ describe('Multi-Outcome Pool V2 - Claim Winnings', () => {
         [Cl.uint(marketId), Cl.uint(0)],
         deployer
       );
-      expect(resolveResult.result).toBeOk();
+      expect((resolveResult.result as any).type).toBe('ok');
 
       // Mine blocks to pass dispute window
-      mineToBlockHeight(deadline + 1 + Number(DISPUTE_WINDOW) + 1);
+      simnet.mineEmptyBlocks(Number(DISPUTE_WINDOW) + 10);
 
       // wallet2 bought outcome 1 tokens, which lost
       const result = simnet.callPublicFn(
@@ -1181,17 +1168,22 @@ describe('Multi-Outcome Pool V2 - Claim Winnings', () => {
 });
 
 describe('Multi-Outcome Pool V2 - Remove Liquidity', () => {
+  beforeEach(() => {
+    ensureLpTokenSetup();
+  });
+
   describe('remove-liquidity', () => {
     it('should remove liquidity and return USDC', () => {
       // Create a test market
+      const currentBlock = simnet.blockHeight;
       fundWallet(deployer, 10_000_000);
       const createResult = simnet.callPublicFn(
         'multi-outcome-pool-v2',
         'create-market',
         [
           Cl.stringUtf8('Test Market'),
-          Cl.uint(5000),
-          Cl.uint(6000),
+          Cl.uint(currentBlock + 5000),
+          Cl.uint(currentBlock + 6000),
           Cl.uint(10_000_000n),
           Cl.uint(3),
           Cl.list([Cl.stringUtf8('A'), Cl.stringUtf8('B'), Cl.stringUtf8('C')]),
@@ -1199,6 +1191,8 @@ describe('Multi-Outcome Pool V2 - Remove Liquidity', () => {
         ],
         deployer
       );
+      // Verify market was created successfully
+      expect((createResult.result as any).type).toBe('ok');
       const marketId = (createResult.result as any).value.value;
 
       // Get current LP balance
@@ -1208,6 +1202,7 @@ describe('Multi-Outcome Pool V2 - Remove Liquidity', () => {
         [Cl.uint(marketId), Cl.standardPrincipal(deployer)],
         deployer
       );
+      expect((lpBalance.result as any).type).toBe('ok');
       const lpAmount = (lpBalance.result as any).value.value / 2n; // Remove half
 
       const result = simnet.callPublicFn(
@@ -1217,20 +1212,26 @@ describe('Multi-Outcome Pool V2 - Remove Liquidity', () => {
         deployer
       );
 
-      expect(result.result).toBeOk();
-      expect((result.result as any).value.value).toBeGreaterThan(0);
+      // Debug: log the result if it's an error
+      if ((result.result as any).type === 'err') {
+        console.log('remove-liquidity error:', result.result);
+      }
+
+      expect((result.result as any).type).toBe('ok');
+      expect((result.result as any).value.value).toBeGreaterThan(0n);
     });
 
     it('should reject removing below minimum liquidity', () => {
       // Create a test market
+      const currentBlock = simnet.blockHeight;
       fundWallet(deployer, 10_000_000);
-      simnet.callPublicFn(
+      const createResult = simnet.callPublicFn(
         'multi-outcome-pool-v2',
         'create-market',
         [
           Cl.stringUtf8('Test Market'),
-          Cl.uint(5000),
-          Cl.uint(6000),
+          Cl.uint(currentBlock + 5000),
+          Cl.uint(currentBlock + 6000),
           Cl.uint(10_000_000n),
           Cl.uint(3),
           Cl.list([Cl.stringUtf8('A'), Cl.stringUtf8('B'), Cl.stringUtf8('C')]),
@@ -1238,11 +1239,12 @@ describe('Multi-Outcome Pool V2 - Remove Liquidity', () => {
         ],
         deployer
       );
+      const marketId = (createResult.result as any).value.value;
 
       const result = simnet.callPublicFn(
         'multi-outcome-pool-v2',
         'remove-liquidity',
-        [Cl.uint(1), Cl.uint(MINIMUM_LIQUIDITY - 1n)],
+        [Cl.uint(marketId), Cl.uint(MINIMUM_LIQUIDITY - 1n)],
         deployer
       );
 
@@ -1263,17 +1265,22 @@ describe('Multi-Outcome Pool V2 - Remove Liquidity', () => {
 });
 
 describe('Multi-Outcome Pool V2 - LP Token Composability', () => {
+  beforeEach(() => {
+    ensureLpTokenSetup();
+  });
+
   describe('SIP-013 LP Token Transfers', () => {
     it('should allow LP token transfer to another user', () => {
       // Create a test market
+      const currentBlock = simnet.blockHeight;
       fundWallet(deployer, 10_000_000);
       const createResult = simnet.callPublicFn(
         'multi-outcome-pool-v2',
         'create-market',
         [
           Cl.stringUtf8('Test Market'),
-          Cl.uint(5000),
-          Cl.uint(6000),
+          Cl.uint(currentBlock + 5000),
+          Cl.uint(currentBlock + 6000),
           Cl.uint(10_000_000n),
           Cl.uint(3),
           Cl.list([Cl.stringUtf8('A'), Cl.stringUtf8('B'), Cl.stringUtf8('C')]),
@@ -1281,6 +1288,8 @@ describe('Multi-Outcome Pool V2 - LP Token Composability', () => {
         ],
         deployer
       );
+      // Verify market was created successfully
+      expect((createResult.result as any).type).toBe('ok');
       const marketId = (createResult.result as any).value.value;
       const token_id = MULTI_OUTCOME_ID_OFFSET + BigInt(marketId);
 
@@ -1308,14 +1317,15 @@ describe('Multi-Outcome Pool V2 - LP Token Composability', () => {
 
     it('should allow new owner to remove liquidity', () => {
       // Create a test market
+      const currentBlock = simnet.blockHeight;
       fundWallet(deployer, 10_000_000);
       const createResult = simnet.callPublicFn(
         'multi-outcome-pool-v2',
         'create-market',
         [
           Cl.stringUtf8('Test Market'),
-          Cl.uint(5000),
-          Cl.uint(6000),
+          Cl.uint(currentBlock + 5000),
+          Cl.uint(currentBlock + 6000),
           Cl.uint(10_000_000n),
           Cl.uint(3),
           Cl.list([Cl.stringUtf8('A'), Cl.stringUtf8('B'), Cl.stringUtf8('C')]),
@@ -1323,6 +1333,8 @@ describe('Multi-Outcome Pool V2 - LP Token Composability', () => {
         ],
         deployer
       );
+      // Verify market was created successfully
+      expect((createResult.result as any).type).toBe('ok');
       const marketId = (createResult.result as any).value.value;
       const token_id = MULTI_OUTCOME_ID_OFFSET + BigInt(marketId);
 
@@ -1344,8 +1356,8 @@ describe('Multi-Outcome Pool V2 - LP Token Composability', () => {
         wallet1
       );
 
-      expect(result.result).toBeOk();
-      expect((result.result as any).value.value).toBeGreaterThan(0);
+      expect((result.result as any).type).toBe('ok');
+      expect((result.result as any).value.value).toBeGreaterThan(0n);
     });
   });
 });
