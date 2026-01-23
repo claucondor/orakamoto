@@ -65,8 +65,9 @@ path = 'contracts/deprecated/market-factory.clar'
 clarity_version = 2
 epoch = '2.1'
 
+# @deprecated - Needs V3 migration (multi-market integration)
 [contracts.market-fork]
-path = 'contracts/market-fork.clar'
+path = 'contracts/deprecated/market-fork.clar'
 clarity_version = 2
 epoch = '2.1'
 
@@ -91,10 +92,17 @@ path = 'contracts/mocks/mock-zest-vault.clar'
 clarity_version = 2
 epoch = '2.1'
 
+# @deprecated - Needs V3 migration (multi-market + SIP-013 LP)
 [contracts.multi-outcome-pool]
-path = 'contracts/multi-outcome-pool.clar'
+path = 'contracts/deprecated/multi-outcome-pool.clar'
 clarity_version = 2
 epoch = '2.1'
+
+[contracts.multi-outcome-pool-v2]
+path = 'contracts/multi-outcome-pool-v2.clar'
+clarity_version = 2
+epoch = '2.1'
+depends_on = ['usdcx', 'sip013-lp-token']
 
 [contracts.oracle-resolver]
 path = 'contracts/oracle-resolver.clar'
