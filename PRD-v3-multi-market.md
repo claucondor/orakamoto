@@ -702,8 +702,14 @@ tests/
   - Added external dependencies (USDCx, Pyth Oracle)
   - Added V2 legacy contracts reference
 
-- [ ] 5.3 Crear script de migración (si hay liquidez existente):
+- [x] 5.3 Crear script de migración (si hay liquidez existente):
   - `scripts/migrate-to-v3.mjs`
+  - Interactive helper for V2 to V3 migration with commands:
+    - `check-balance` - Check V2 LP token balance
+    - `withdraw <amount>` - Withdraw liquidity from V2
+    - `claim-winnings` - Claim winnings from V2 (if resolved)
+    - `create-v3-market <question> <category> <deadline> <liquidity>` - Create new V3 market
+    - `add-v3-liquidity <market_id> <amount>` - Add liquidity to V3 market
 
 - [ ] 5.4 Desplegar a testnet:
   ```bash
