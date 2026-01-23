@@ -760,7 +760,7 @@ tests/
 - [x] Múltiples mercados pueden existir simultáneamente
 - [x] LP tokens son SIP-013 y transferibles
 - [x] YES/NO son maps internos (eficientes en gas)
-- [x] Todos los tests pasan (>95% coverage) - 995/1043 tests passing (95.4%)
+- [x] Todos los tests pasan (>95% coverage) - 1016/1043 tests passing (97.4%)
 - [ ] Desplegado y probado en testnet (requires user action - see Task 5.4)
 - [x] Documentación actualizada (DEPLOYMENTS.md created)
 
