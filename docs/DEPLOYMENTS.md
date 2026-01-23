@@ -101,9 +101,96 @@ V3 implements a multi-market architecture based on ALEX Lab's Single Vault Multi
 
 ---
 
-## Deployment Instructions
+## Phase 0: Core Trading Deployment
 
-### V3 Deployment
+**Status:** Ready for Testnet
+**Deployment Plan:** `deployments/phase0.testnet-plan.yaml`
+
+### What is Phase 0?
+
+Phase 0 enables binary prediction markets (YES/NO) with:
+- Create markets with any question
+- Buy/sell outcome tokens (YES/NO)
+- Add/remove liquidity
+- Resolve markets and claim winnings
+- Transferable LP tokens (SIP-013)
+
+### Contracts to Deploy
+
+| Contract | Description | Needs USDCx Change |
+|----------|-------------|-------------------|
+| `sip013-semi-fungible-token-trait` | LP token standard | No |
+| `sip013-lp-token` | LP tokens (SIP-013) | No |
+| `math-fixed-point` | Math library | No |
+| `pm-amm-core` | AMM pricing | No |
+| `multi-market-pool` | Main trading pool | **Yes** |
+
+### External Dependency: USDCx
+
+Phase 0 uses the **real USDCx** from Circle (not a mock):
+
+| Network | USDCx Address |
+|---------|---------------|
+| Testnet | `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx` |
+| Mainnet | `SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx` |
+
+### Deployment Steps
+
+```bash
+# 1. Prepare contracts (updates multi-market-pool to use real USDCx)
+./scripts/deploy-phase0-testnet.sh
+
+# 2. Deploy to testnet
+clarinet deployments apply -p deployments/phase0.testnet-plan.yaml
+
+# 3. Restore contracts for local development
+./scripts/restore-phase0-contracts.sh
+```
+
+### Why the Scripts?
+
+The contract `multi-market-pool.clar` uses `.usdcx` for local testing (simnet).
+For testnet, it needs to reference the real USDCx at a different address.
+
+| Environment | USDCx Reference |
+|-------------|-----------------|
+| Simnet (local) | `.usdcx` → `DEPLOYER.usdcx` |
+| Testnet | `'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx` |
+
+The scripts handle this automatically:
+- `deploy-phase0-testnet.sh` - Backs up contracts, updates to testnet addresses
+- `restore-phase0-contracts.sh` - Restores original contracts for local testing
+
+### After Deployment
+
+1. **Set LP Token Minter** (required for creating markets):
+   ```clarity
+   (contract-call? .sip013-lp-token set-authorized-minter .multi-market-pool)
+   ```
+
+2. **Create a Test Market**:
+   ```clarity
+   (contract-call? .multi-market-pool create-market
+     u"Will BTC hit $100k by March 2025?"
+     u100000    ;; deadline (block height)
+     u10000000) ;; initial liquidity (10 USDCx)
+   ```
+
+### Testing
+
+```bash
+# Run Phase 0 tests (170 tests)
+npm run test:phase0
+
+# Run all tests (1117 tests)
+npm test
+```
+
+---
+
+## Full V3 Deployment (All Phases)
+
+For deploying all V3 contracts including Phase 1+ features:
 
 1. **Generate Deployment Plan:**
    ```bash
