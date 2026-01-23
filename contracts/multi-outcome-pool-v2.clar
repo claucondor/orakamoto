@@ -240,10 +240,9 @@
 )
 
 ;; Calculate LMSR cost function: Cost(q) = b * ln(sum(exp(q_i / b)))
-;; TODO: Implement proper LMSR cost calculation
-;; q is an array of "quantities" (outcome tokens held)
-;; b is the liquidity parameter
-;; Returns cost as a uint
+;; q is the outcome reserves (quantities of tokens in pool)
+;; b is the liquidity parameter (lmsr-b)
+;; Returns cost as a uint (scaled by PRECISION)
 (define-read-only (calculate-lmsr-cost (market-id uint) (b-arg uint))
   (let
     (
@@ -251,14 +250,41 @@
     )
     (match market
       some-market
-        u0  ;; TODO: Implement LMSR cost calculation
+        (let
+          (
+            (outcome-count (get outcome-count some-market))
+            ;; Build quantities list from outcome reserves
+            ;; For LMSR, q_i = reserve for outcome i
+            (q-0 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u0 })))
+            (q-1 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u1 })))
+            (q-2 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u2 })))
+            (q-3 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u3 })))
+            (q-4 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u4 })))
+            (q-5 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u5 })))
+            (q-6 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u6 })))
+            (q-7 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u7 })))
+            (q-8 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u8 })))
+            (q-9 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u9 })))
+            (quantities (list q-0 q-1 q-2 q-3 q-4 q-5 q-6 q-7 q-8 q-9))
+          )
+          ;; Calculate sum of exp(q_i / b)
+          (let
+            (
+              (exp-sum (fold + (map exp-approx (map / quantities (list b-arg b-arg b-arg b-arg b-arg b-arg b-arg b-arg b-arg b-arg))) u0))
+              ;; ln of the sum
+              (ln-sum (ln-approx exp-sum))
+              ;; Cost = b * ln(sum)
+              (cost (/ (* b-arg ln-sum) PRECISION))
+            )
+            cost
+          )
+        )
       u0  ;; Return 0 if market not found
     )
   )
 )
 
 ;; Calculate price for outcome i: Price_i = exp(q_i / b) / sum(exp(q_j / b))
-;; TODO: Implement proper LMSR price calculation
 ;; Returns price as a uint (scaled by PRECISION)
 (define-read-only (calculate-lmsr-price (market-id uint) (outcome uint))
   (let
@@ -267,14 +293,39 @@
     )
     (match market
       some-market
-        (/ PRECISION u2)  ;; TODO: Return 50% for now - implement LMSR pricing
+        (let
+          (
+            (b (get lmsr-b some-market))
+            ;; Get reserve for the outcome
+            (q-i (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: outcome })))
+            ;; Calculate exp(q_i / b)
+            (exp-q-i (exp-approx (/ q-i b)))
+            ;; Calculate sum of exp(q_j / b) for all j
+            (q-0 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u0 })))
+            (q-1 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u1 })))
+            (q-2 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u2 })))
+            (q-3 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u3 })))
+            (q-4 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u4 })))
+            (q-5 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u5 })))
+            (q-6 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u6 })))
+            (q-7 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u7 })))
+            (q-8 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u8 })))
+            (q-9 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u9 })))
+            (quantities (list q-0 q-1 q-2 q-3 q-4 q-5 q-6 q-7 q-8 q-9))
+            (exp-sum (fold + (map exp-approx (map / quantities (list b b b b b b b b b b))) u0))
+          )
+          (if (is-eq exp-sum u0)
+            (/ PRECISION (get outcome-count some-market))  ;; Equal probability if no reserves
+            (/ (* exp-q-i PRECISION) exp-sum)
+          )
+        )
       u0  ;; Return 0 if market not found
     )
   )
 )
 
 ;; Get all prices for all outcomes in a market
-;; TODO: Implement proper price list calculation
+;; Returns a list of prices (scaled by PRECISION)
 (define-read-only (get-outcome-prices (market-id uint))
   (let
     (
@@ -282,7 +333,35 @@
     )
     (match market
       some-market
-        (ok (list (/ PRECISION u2) (/ PRECISION u2)))  ;; TODO: Return 50/50 for now
+        (let
+          (
+            (outcome-count (get outcome-count some-market))
+            (b (get lmsr-b some-market))
+            (q-0 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u0 })))
+            (q-1 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u1 })))
+            (q-2 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u2 })))
+            (q-3 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u3 })))
+            (q-4 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u4 })))
+            (q-5 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u5 })))
+            (q-6 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u6 })))
+            (q-7 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u7 })))
+            (q-8 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u8 })))
+            (q-9 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u9 })))
+            (quantities (list q-0 q-1 q-2 q-3 q-4 q-5 q-6 q-7 q-8 q-9))
+            (exp-sum (fold + (map exp-approx (map / quantities (list b b b b b b b b b b))) u0))
+            (price-0 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-0 b)) PRECISION) exp-sum)))
+            (price-1 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-1 b)) PRECISION) exp-sum)))
+            (price-2 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-2 b)) PRECISION) exp-sum)))
+            (price-3 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-3 b)) PRECISION) exp-sum)))
+            (price-4 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-4 b)) PRECISION) exp-sum)))
+            (price-5 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-5 b)) PRECISION) exp-sum)))
+            (price-6 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-6 b)) PRECISION) exp-sum)))
+            (price-7 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-7 b)) PRECISION) exp-sum)))
+            (price-8 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-8 b)) PRECISION) exp-sum)))
+            (price-9 (if (is-eq exp-sum u0) (/ PRECISION outcome-count) (/ (* (exp-approx (/ q-9 b)) PRECISION) exp-sum)))
+          )
+          (ok (list price-0 price-1 price-2 price-3 price-4 price-5 price-6 price-7 price-8 price-9))
+        )
       ERR-MARKET-NOT-FOUND
     )
   )
@@ -322,8 +401,8 @@
 )
 
 ;; Calculate LP tokens to mint for adding liquidity
-;; TODO: Implement proper LP token calculation
-;; lp-tokens = (amount * current-total) / (sum of all reserves)
+;; lp-tokens = (amount * current-total) / (sum of all outcome reserves)
+;; For multi-outcome markets, we sum reserves across all outcomes
 (define-read-only (calculate-lp-tokens
     (amount uint)
     (market-id uint)
@@ -331,12 +410,28 @@
   )
   (if (is-eq total-liquidity u0)
     amount  ;; First deposit gets 1:1 LP tokens
-    amount  ;; TODO: Implement proper calculation
+    (let
+      (
+        ;; Calculate sum of all outcome reserves
+        (q-0 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u0 })))
+        (q-1 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u1 })))
+        (q-2 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u2 })))
+        (q-3 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u3 })))
+        (q-4 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u4 })))
+        (q-5 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u5 })))
+        (q-6 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u6 })))
+        (q-7 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u7 })))
+        (q-8 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u8 })))
+        (q-9 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u9 })))
+        (quantities (list q-0 q-1 q-2 q-3 q-4 q-5 q-6 q-7 q-8 q-9))
+        (total-reserves (fold + quantities u0))
+      )
+      (/ (* amount total-liquidity) total-reserves)
+    )
   )
 )
 
 ;; Calculate USDC to return when removing liquidity
-;; TODO: Implement proper removal calculation
 ;; Returns USDC from reserves + fee share
 (define-read-only (calculate-remove-liquidity-return
     (lp-amount uint)
@@ -344,7 +439,27 @@
     (total-liquidity uint)
     (accumulated-fees uint)
   )
-  lp-amount  ;; TODO: Implement proper calculation including fee share
+  (let
+    (
+      ;; Calculate sum of all outcome reserves
+      (q-0 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u0 })))
+      (q-1 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u1 })))
+      (q-2 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u2 })))
+      (q-3 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u3 })))
+      (q-4 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u4 })))
+      (q-5 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u5 })))
+      (q-6 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u6 })))
+      (q-7 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u7 })))
+      (q-8 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u8 })))
+      (q-9 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u9 })))
+      (quantities (list q-0 q-1 q-2 q-3 q-4 q-5 q-6 q-7 q-8 q-9))
+      (total-reserves (fold + quantities u0))
+      (usdc-from-reserves (/ (* total-reserves lp-amount) total-liquidity))
+      (lp-fee-pool (/ (* accumulated-fees LP-FEE-SHARE-BP) u10000))
+      (fee-share (/ (* lp-fee-pool lp-amount) total-liquidity))
+    )
+    (+ usdc-from-reserves fee-share)
+  )
 )
 
 ;; ============================================================================
@@ -387,7 +502,7 @@
 )
 
 ;; Get outcome reserves for a market
-;; TODO: Implement proper reserves list building
+;; Returns a list of reserves for all 10 possible outcomes
 (define-read-only (get-outcome-reserves (market-id uint))
   (let
     (
@@ -395,7 +510,18 @@
     )
     (match market
       some-market
-        (ok (list u0 u0))  ;; TODO: Return actual reserves
+        (ok {
+          reserve-0: (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u0 })),
+          reserve-1: (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u1 })),
+          reserve-2: (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u2 })),
+          reserve-3: (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u3 })),
+          reserve-4: (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u4 })),
+          reserve-5: (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u5 })),
+          reserve-6: (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u6 })),
+          reserve-7: (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u7 })),
+          reserve-8: (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u8 })),
+          reserve-9: (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u9 })),
+        })
       ERR-MARKET-NOT-FOUND
     )
   )
@@ -532,12 +658,17 @@
           (reserve-per-outcome (/ initial-liquidity outcome-count))
         )
         ;; Initialize outcome reserves for all outcomes
-        ;; TODO: Implement proper reserves initialization for all outcomes
+        ;; We set reserves for all 10 possible outcomes, but only outcome-count will be used
         (map-set outcome-reserves { market-id: market-id, outcome: u0 } reserve-per-outcome)
-        (if (>= outcome-count u2)
-          (map-set outcome-reserves { market-id: market-id, outcome: u1 } reserve-per-outcome)
-          true
-        )
+        (map-set outcome-reserves { market-id: market-id, outcome: u1 } reserve-per-outcome)
+        (map-set outcome-reserves { market-id: market-id, outcome: u2 } reserve-per-outcome)
+        (map-set outcome-reserves { market-id: market-id, outcome: u3 } reserve-per-outcome)
+        (map-set outcome-reserves { market-id: market-id, outcome: u4 } reserve-per-outcome)
+        (map-set outcome-reserves { market-id: market-id, outcome: u5 } reserve-per-outcome)
+        (map-set outcome-reserves { market-id: market-id, outcome: u6 } reserve-per-outcome)
+        (map-set outcome-reserves { market-id: market-id, outcome: u7 } reserve-per-outcome)
+        (map-set outcome-reserves { market-id: market-id, outcome: u8 } reserve-per-outcome)
+        (map-set outcome-reserves { market-id: market-id, outcome: u9 } reserve-per-outcome)
 
         ;; Create market entry
         (map-set markets market-id
@@ -625,18 +756,21 @@
         )
 
         ;; Distribute liquidity equally across all outcomes
-        ;; TODO: Implement proper reserves update for all outcomes
-        (begin
-          (let
-            (
-              (amount-per-outcome (/ amount outcome-count))
-            )
-            (map-set outcome-reserves { market-id: market-id, outcome: u0 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u0 })) amount-per-outcome))
-            (if (>= outcome-count u2)
-              (map-set outcome-reserves { market-id: market-id, outcome: u1 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u1 })) amount-per-outcome))
-              true
-            )
+        ;; Add to all outcome reserves (equal distribution)
+        (let
+          (
+            (amount-per-outcome (/ amount outcome-count))
           )
+          (map-set outcome-reserves { market-id: market-id, outcome: u0 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u0 })) amount-per-outcome))
+          (map-set outcome-reserves { market-id: market-id, outcome: u1 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u1 })) amount-per-outcome))
+          (map-set outcome-reserves { market-id: market-id, outcome: u2 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u2 })) amount-per-outcome))
+          (map-set outcome-reserves { market-id: market-id, outcome: u3 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u3 })) amount-per-outcome))
+          (map-set outcome-reserves { market-id: market-id, outcome: u4 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u4 })) amount-per-outcome))
+          (map-set outcome-reserves { market-id: market-id, outcome: u5 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u5 })) amount-per-outcome))
+          (map-set outcome-reserves { market-id: market-id, outcome: u6 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u6 })) amount-per-outcome))
+          (map-set outcome-reserves { market-id: market-id, outcome: u7 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u7 })) amount-per-outcome))
+          (map-set outcome-reserves { market-id: market-id, outcome: u8 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u8 })) amount-per-outcome))
+          (map-set outcome-reserves { market-id: market-id, outcome: u9 } (+ (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u9 })) amount-per-outcome))
         )
 
         ;; Update market total liquidity
@@ -698,23 +832,40 @@
         (try! (contract-call? .sip013-lp-token burn lp-token-id lp-amount caller))
 
         ;; Calculate proportional reduction for each outcome reserve
-        ;; TODO: Implement proper reserves update for all outcomes
+        ;; Each outcome reserve is reduced proportionally to lp-amount / total-liquidity
         (let
           (
             (reserve-0 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u0 })))
-            (portion (/ (* reserve-0 lp-amount) total-liquidity))
+            (portion-0 (/ (* reserve-0 lp-amount) total-liquidity))
+            (reserve-1 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u1 })))
+            (portion-1 (/ (* reserve-1 lp-amount) total-liquidity))
+            (reserve-2 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u2 })))
+            (portion-2 (/ (* reserve-2 lp-amount) total-liquidity))
+            (reserve-3 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u3 })))
+            (portion-3 (/ (* reserve-3 lp-amount) total-liquidity))
+            (reserve-4 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u4 })))
+            (portion-4 (/ (* reserve-4 lp-amount) total-liquidity))
+            (reserve-5 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u5 })))
+            (portion-5 (/ (* reserve-5 lp-amount) total-liquidity))
+            (reserve-6 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u6 })))
+            (portion-6 (/ (* reserve-6 lp-amount) total-liquidity))
+            (reserve-7 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u7 })))
+            (portion-7 (/ (* reserve-7 lp-amount) total-liquidity))
+            (reserve-8 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u8 })))
+            (portion-8 (/ (* reserve-8 lp-amount) total-liquidity))
+            (reserve-9 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u9 })))
+            (portion-9 (/ (* reserve-9 lp-amount) total-liquidity))
           )
-          (map-set outcome-reserves { market-id: market-id, outcome: u0 } (- reserve-0 portion))
-        )
-        (if (>= outcome-count u2)
-          (let
-            (
-              (reserve-1 (default-to u0 (map-get? outcome-reserves { market-id: market-id, outcome: u1 })))
-              (portion (/ (* reserve-1 lp-amount) total-liquidity))
-            )
-            (map-set outcome-reserves { market-id: market-id, outcome: u1 } (- reserve-1 portion))
-          )
-          true
+          (map-set outcome-reserves { market-id: market-id, outcome: u0 } (- reserve-0 portion-0))
+          (map-set outcome-reserves { market-id: market-id, outcome: u1 } (- reserve-1 portion-1))
+          (map-set outcome-reserves { market-id: market-id, outcome: u2 } (- reserve-2 portion-2))
+          (map-set outcome-reserves { market-id: market-id, outcome: u3 } (- reserve-3 portion-3))
+          (map-set outcome-reserves { market-id: market-id, outcome: u4 } (- reserve-4 portion-4))
+          (map-set outcome-reserves { market-id: market-id, outcome: u5 } (- reserve-5 portion-5))
+          (map-set outcome-reserves { market-id: market-id, outcome: u6 } (- reserve-6 portion-6))
+          (map-set outcome-reserves { market-id: market-id, outcome: u7 } (- reserve-7 portion-7))
+          (map-set outcome-reserves { market-id: market-id, outcome: u8 } (- reserve-8 portion-8))
+          (map-set outcome-reserves { market-id: market-id, outcome: u9 } (- reserve-9 portion-9))
         )
 
         ;; Calculate fee share to distribute
