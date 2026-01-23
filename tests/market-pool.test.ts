@@ -31,7 +31,7 @@ const ERR_DISPUTE_ALREADY_CLOSED = 1015n;
 // Helper function to initialize market for tests
 function initializeMarket(caller: string, deadline: number, resDeadline: number) {
   // First give the caller some USDC via faucet
-  simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(INITIAL_LIQUIDITY)], caller);
+  simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(INITIAL_LIQUIDITY)], caller);
 
   // Initialize the market
   return simnet.callPublicFn(
@@ -124,7 +124,7 @@ describe('Market Pool - Dispute Window', () => {
       initializeMarket(deployer, deadline, resDeadline);
 
       // Give wallet1 USDC and buy YES tokens
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(500_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(500_000_000n)], wallet1);
       simnet.callPublicFn(
         'market-pool',
         'buy-outcome',
@@ -149,7 +149,7 @@ describe('Market Pool - Dispute Window', () => {
       initializeMarket(deployer, deadline, resDeadline);
 
       // Give wallet1 USDC and buy YES tokens
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(500_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(500_000_000n)], wallet1);
       simnet.callPublicFn(
         'market-pool',
         'buy-outcome',
@@ -179,7 +179,7 @@ describe('Market Pool - Dispute Window', () => {
       initializeMarket(deployer, deadline, resDeadline);
 
       // Give wallet1 USDC and buy YES tokens
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(500_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(500_000_000n)], wallet1);
       const buyResult = simnet.callPublicFn(
         'market-pool',
         'buy-outcome',
@@ -257,7 +257,7 @@ describe('Market Pool - Dispute Window', () => {
       initializeMarket(deployer, deadline, resDeadline);
 
       // Give wallet1 USDC and buy YES tokens
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(500_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(500_000_000n)], wallet1);
       simnet.callPublicFn(
         'market-pool',
         'buy-outcome',
@@ -289,7 +289,7 @@ describe('Market Pool - Dispute Window', () => {
       initializeMarket(deployer, deadline, resDeadline);
 
       // Give wallet1 USDC and buy YES tokens
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(500_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(500_000_000n)], wallet1);
       simnet.callPublicFn(
         'market-pool',
         'buy-outcome',
@@ -323,8 +323,8 @@ describe('Market Pool - Dispute Window', () => {
       initializeMarket(deployer, deadline, resDeadline);
 
       // 2. Users buy outcome tokens
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(500_000_000n)], wallet1);
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(500_000_000n)], wallet2);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(500_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(500_000_000n)], wallet2);
 
       // wallet1 buys YES (outcome 0)
       simnet.callPublicFn(

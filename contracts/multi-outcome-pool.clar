@@ -13,12 +13,6 @@
 (define-constant MAX-OUTCOMES u10)              ;; Maximum 10 outcomes per market
 (define-constant LMSR-B-PRECISION u1000000)     ;; Precision for LMSR liquidity parameter b
 
-;; USDCx Contract (Circle xReserve - 1:1 backed by USDC on Ethereum)
-;; Testnet: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx
-;; Mainnet: SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx
-;; TODO: Update this principal when USDCx arrives
-(define-constant USDCX-CONTRACT 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx)
-
 ;; Error Constants
 (define-constant ERR-NOT-AUTHORIZED (err u2000))
 (define-constant ERR-MARKET-NOT-ACTIVE (err u2001))
@@ -209,7 +203,7 @@
     (asserts! (> b u0) ERR-ZERO-AMOUNT)
 
     ;; Transfer initial liquidity from creator
-    (try! (contract-call? USDCX-CONTRACT transfer initial-liquidity caller (as-contract tx-sender) none))
+    (try! (contract-call? .usdcx transfer initial-liquidity caller (as-contract tx-sender) none))
 
     ;; Set market parameters
     (var-set market-question question)
@@ -318,8 +312,8 @@
     (asserts! (not (var-get is-resolved)) ERR-MARKET-ALREADY-RESOLVED)
     (asserts! (> amount u0) ERR-ZERO-AMOUNT)
 
-    ;; Transfer USDCx from user to contract
-    (try! (contract-call? USDCX-CONTRACT transfer amount caller (as-contract tx-sender) none))
+    ;; Transfer USDC from user to contract
+    (try! (contract-call? .usdcx transfer amount caller (as-contract tx-sender) none))
 
     ;; Calculate LP tokens to mint
     (let
@@ -376,8 +370,8 @@
       ;; Burn LP tokens
       (map-set lp-balances caller (- current-lp-balance lp-amount))
 
-      ;; Transfer USDCx back to user
-      (try! (as-contract (contract-call? USDCX-CONTRACT transfer total-return tx-sender caller none)))
+      ;; Transfer USDC back to user
+      (try! (as-contract (contract-call? .usdcx transfer total-return tx-sender caller none)))
 
       (print {
         event: "liquidity-removed",
@@ -424,8 +418,8 @@
       )
       (asserts! (>= tokens-out min-tokens-out) ERR-SLIPPAGE-TOO-HIGH)
 
-      ;; Transfer USDCx from user to contract
-      (try! (contract-call? USDCX-CONTRACT transfer amount caller (as-contract tx-sender) none))
+      ;; Transfer USDC from user to contract
+      (try! (contract-call? .usdcx transfer amount caller (as-contract tx-sender) none))
 
       ;; Accumulate fees
       (var-set accumulated-fees (+ (var-get accumulated-fees) fee))
@@ -483,8 +477,8 @@
       ;; Debit outcome tokens from user
       (map-set outcome-balances { owner: caller, outcome: outcome } (- current-balance token-amount))
 
-      ;; Transfer USDCx back to user
-      (try! (as-contract (contract-call? USDCX-CONTRACT transfer usdc-out-net tx-sender caller none)))
+      ;; Transfer USDC back to user
+      (try! (as-contract (contract-call? .usdcx transfer usdc-out-net tx-sender caller none)))
 
       (print { event: "outcome-sold", seller: caller, outcome: outcome, tokens-sold: token-amount, usdc-received: usdc-out-net, fee: fee })
       (ok usdc-out-net)
@@ -545,7 +539,7 @@
       (map-set outcome-balances { owner: caller, outcome: win-outcome } u0)
 
       ;; Transfer winnings (1:1 with winning tokens)
-      (try! (as-contract (contract-call? USDCX-CONTRACT transfer winner-balance tx-sender caller none)))
+      (try! (as-contract (contract-call? .usdcx transfer winner-balance tx-sender caller none)))
 
       (print { event: "winnings-claimed", winner: caller, amount: winner-balance })
       (ok winner-balance)
@@ -702,8 +696,8 @@
       (
         ;; Get the contract's zUSDC balance from the vault
         (contract-shares (unwrap! (contract-call? .mock-zest-vault get-balance (as-contract tx-sender)) ERR-INSUFFICIENT-LIQUIDITY))
-        ;; Withdraw all shares - use as-contract so multi-outcome-pool becomes tx-sender
-        (usdc-returned (try! (as-contract (contract-call? .mock-zest-vault withdraw contract-shares tx-sender))))
+        ;; Withdraw all shares
+        (usdc-returned (try! (contract-call? .mock-zest-vault withdraw contract-shares (as-contract tx-sender))))
       )
       ;; Update total liquidity - add back the returned amount
       (var-set total-liquidity (+ current-liquidity usdc-returned))
@@ -729,19 +723,20 @@
   (ok (var-get deposited-to-yield))
 )
 
-;; Read-only: Get available liquidity
-;; Note: total-liquidity is already reduced when funds are deposited to yield
-;; so available-liquidity equals total-liquidity
+;; Read-only: Get available liquidity (on-hand liquidity after any deposits)
+;; After deposit-idle-funds, total-liquidity is reduced to the remaining amount
+;; So available-liquidity equals total-liquidity (what's on-hand)
+;; And we calculate original total as on-hand + deposited
 (define-read-only (get-available-liquidity)
   (let
     (
-      (total-liq (var-get total-liquidity))
+      (on-hand (var-get total-liquidity))
       (deposited (var-get deposited-to-yield))
     )
     (ok {
-      total-liquidity: total-liq,
+      total-liquidity: (+ on-hand deposited),
       deposited-to-yield: deposited,
-      available-liquidity: total-liq
+      available-liquidity: on-hand
     })
   )
 )

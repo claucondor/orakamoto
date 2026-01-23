@@ -9,8 +9,8 @@ const wallet2 = accounts.get('wallet_2')!;
 describe('Yield Vault', () => {
   beforeEach(() => {
     // Mint USDC to wallets for testing
-    simnet.callPublicFn('mock-usdc', 'mint', [Cl.uint(1000000000), Cl.standardPrincipal(wallet1)], deployer);
-    simnet.callPublicFn('mock-usdc', 'mint', [Cl.uint(1000000000), Cl.standardPrincipal(wallet2)], deployer);
+    simnet.callPublicFn('usdcx', 'mint', [Cl.uint(1000000000), Cl.standardPrincipal(wallet1)], deployer);
+    simnet.callPublicFn('usdcx', 'mint', [Cl.uint(1000000000), Cl.standardPrincipal(wallet2)], deployer);
   });
 
   describe('Constants', () => {
@@ -33,7 +33,7 @@ describe('Yield Vault', () => {
   describe('Supply (Deposit)', () => {
     it('should allow user to supply USDC and receive yUSDC shares', () => {
       // Approve USDC transfer first
-      simnet.callPublicFn('mock-usdc', 'transfer',
+      simnet.callPublicFn('usdcx', 'transfer',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1), Cl.contractPrincipal(deployer, 'yield-vault'), Cl.none()],
         wallet1
       );
@@ -74,7 +74,7 @@ describe('Yield Vault', () => {
 
     it('should allow supply on behalf of another user (shares go to owner)', () => {
       // wallet1 supplies USDC, but shares go to wallet2
-      simnet.callPublicFn('mock-usdc', 'transfer',
+      simnet.callPublicFn('usdcx', 'transfer',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1), Cl.contractPrincipal(deployer, 'yield-vault'), Cl.none()],
         wallet1
       );
@@ -102,7 +102,7 @@ describe('Yield Vault', () => {
 
     it('should calculate correct shares for subsequent deposits', () => {
       // First deposit: 100 USDC
-      simnet.callPublicFn('mock-usdc', 'transfer',
+      simnet.callPublicFn('usdcx', 'transfer',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1), Cl.contractPrincipal(deployer, 'yield-vault'), Cl.none()],
         wallet1
       );
@@ -112,7 +112,7 @@ describe('Yield Vault', () => {
       );
 
       // Second deposit: 200 USDC by wallet2
-      simnet.callPublicFn('mock-usdc', 'transfer',
+      simnet.callPublicFn('usdcx', 'transfer',
         [Cl.uint(200000000), Cl.standardPrincipal(wallet2), Cl.contractPrincipal(deployer, 'yield-vault'), Cl.none()],
         wallet2
       );
@@ -140,7 +140,7 @@ describe('Yield Vault', () => {
   describe('Withdraw', () => {
     beforeEach(() => {
       // Setup: wallet1 supplies 100 USDC
-      simnet.callPublicFn('mock-usdc', 'transfer',
+      simnet.callPublicFn('usdcx', 'transfer',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1), Cl.contractPrincipal(deployer, 'yield-vault'), Cl.none()],
         wallet1
       );
@@ -228,7 +228,7 @@ describe('Yield Vault', () => {
   describe('Withdraw for Trade', () => {
     beforeEach(() => {
       // Setup: wallet1 supplies 100 USDC
-      simnet.callPublicFn('mock-usdc', 'transfer',
+      simnet.callPublicFn('usdcx', 'transfer',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1), Cl.contractPrincipal(deployer, 'yield-vault'), Cl.none()],
         wallet1
       );
@@ -390,7 +390,7 @@ describe('Yield Vault', () => {
 
     it('should harvest yield after blocks pass', () => {
       // Setup: wallet1 supplies 100 USDC
-      simnet.callPublicFn('mock-usdc', 'transfer',
+      simnet.callPublicFn('usdcx', 'transfer',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1), Cl.contractPrincipal(deployer, 'yield-vault'), Cl.none()],
         wallet1
       );
@@ -410,7 +410,7 @@ describe('Yield Vault', () => {
 
     it('should distribute yield as additional shares', () => {
       // Setup: wallet1 supplies 100 USDC
-      simnet.callPublicFn('mock-usdc', 'transfer',
+      simnet.callPublicFn('usdcx', 'transfer',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1), Cl.contractPrincipal(deployer, 'yield-vault'), Cl.none()],
         wallet1
       );
@@ -442,7 +442,7 @@ describe('Yield Vault', () => {
   describe('Read-only Helper Functions', () => {
     beforeEach(() => {
       // Setup: wallet1 supplies 100 USDC
-      simnet.callPublicFn('mock-usdc', 'transfer',
+      simnet.callPublicFn('usdcx', 'transfer',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1), Cl.contractPrincipal(deployer, 'yield-vault'), Cl.none()],
         wallet1
       );
@@ -598,7 +598,7 @@ describe('Yield Vault', () => {
   describe('Integration: Supply -> Yield -> Withdraw', () => {
     it('should successfully withdraw after yield accrual', () => {
       // wallet1 supplies 100 USDC
-      simnet.callPublicFn('mock-usdc', 'transfer',
+      simnet.callPublicFn('usdcx', 'transfer',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1), Cl.contractPrincipal(deployer, 'yield-vault'), Cl.none()],
         wallet1
       );

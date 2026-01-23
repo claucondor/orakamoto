@@ -9,8 +9,8 @@ const wallet2 = accounts.get('wallet_2')!;
 describe('Yield Distributor Contract', () => {
   beforeEach(() => {
     // Setup: deploy contracts and mint USDC
-    simnet.callPublicFn('mock-usdc', 'mint', [Cl.uint(100000000), Cl.standardPrincipal(wallet1)], deployer);
-    simnet.callPublicFn('mock-usdc', 'mint', [Cl.uint(100000000), Cl.standardPrincipal(wallet2)], deployer);
+    simnet.callPublicFn('usdcx', 'mint', [Cl.uint(100000000), Cl.standardPrincipal(wallet1)], deployer);
+    simnet.callPublicFn('usdcx', 'mint', [Cl.uint(100000000), Cl.standardPrincipal(wallet2)], deployer);
   });
 
   describe('Constants', () => {

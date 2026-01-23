@@ -31,7 +31,7 @@ describe('Multi-Outcome Market Factory', () => {
       const deadline = currentBlock + 100;
       const resDeadline = deadline + 100;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       // Try to create market with 11 outcomes (should fail - exceeds MAX_OUTCOMES)
       const result = simnet.callPublicFn(
@@ -79,7 +79,7 @@ describe('Multi-Outcome Market Factory', () => {
       );
       const expectedMarketId = (countBefore.result as any).value.value + 1n;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       const result = simnet.callPublicFn(
         'market-factory',
@@ -117,7 +117,7 @@ describe('Multi-Outcome Market Factory', () => {
       const deadline = currentBlock + 100;
       const resDeadline = deadline + 100;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       const result = simnet.callPublicFn(
         'market-factory',
@@ -153,7 +153,7 @@ describe('Multi-Outcome Market Factory', () => {
       const deadline = currentBlock + 100;
       const resDeadline = deadline + 100;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       const result = simnet.callPublicFn(
         'market-factory',
@@ -180,7 +180,7 @@ describe('Multi-Outcome Market Factory', () => {
       const deadline = currentBlock + 100;
       const resDeadline = deadline + 100;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       const result = simnet.callPublicFn(
         'market-factory',
@@ -209,7 +209,7 @@ describe('Multi-Outcome Market Factory', () => {
       const deadline = currentBlock + 100;
       const resDeadline = deadline + 100;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       const result = simnet.callPublicFn(
         'market-factory',
@@ -238,7 +238,7 @@ describe('Multi-Outcome Market Factory', () => {
       const deadline = currentBlock + 100;
       const resDeadline = deadline + 100;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       const result = simnet.callPublicFn(
         'market-factory',
@@ -268,7 +268,7 @@ describe('Multi-Outcome Market Factory', () => {
       const resDeadline = deadline + 100;
       const insufficientCollateral = MINIMUM_COLLATERAL - 1n;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(insufficientCollateral)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(insufficientCollateral)], wallet1);
 
       const result = simnet.callPublicFn(
         'market-factory',
@@ -305,7 +305,7 @@ describe('Multi-Outcome Market Factory', () => {
       );
       const expectedMarketId = (countBefore.result as any).value.value + 1n;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       const result = simnet.callPublicFn(
         'market-factory',
@@ -345,7 +345,7 @@ describe('Multi-Outcome Market Factory', () => {
       );
       const expectedMarketId = (countBefore.result as any).value.value + 1n;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       simnet.callPublicFn(
         'market-factory',
         'create-market',
@@ -382,7 +382,7 @@ describe('Multi-Outcome Market Factory', () => {
       );
       const expectedMarketId = (countBefore.result as any).value.value + 1n;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       simnet.callPublicFn(
         'market-factory',
         'create-multi-outcome-market',
@@ -439,7 +439,7 @@ describe('Multi-Outcome Market Factory', () => {
       );
       const expectedMarketId = (countBefore.result as any).value.value + 1n;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       simnet.callPublicFn(
         'market-factory',
         'create-market',
@@ -489,7 +489,7 @@ describe('Multi-Outcome Market Factory', () => {
       );
       const expectedMarketId = (countBefore.result as any).value.value + 1n;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       simnet.callPublicFn(
         'market-factory',
         'create-multi-outcome-market',
@@ -541,7 +541,7 @@ describe('Multi-Outcome Market Factory', () => {
       );
       const expectedMarketId = (countBefore.result as any).value.value + 1n;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       simnet.callPublicFn(
         'market-factory',
         'create-market',
@@ -579,7 +579,7 @@ describe('Multi-Outcome Market Factory', () => {
       );
       const expectedMarketId = (countBefore.result as any).value.value + 1n;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       simnet.callPublicFn(
         'market-factory',
         'create-multi-outcome-market',
@@ -628,11 +628,11 @@ describe('Multi-Outcome Market Factory', () => {
       const resDeadline = deadline + 100;
 
       // Give wallet1 exactly minimum collateral
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       // Check wallet1 balance before
       const balanceBefore = simnet.callReadOnlyFn(
-        'mock-usdc',
+        'usdcx',
         'get-balance',
         [Cl.standardPrincipal(wallet1)],
         wallet1
@@ -661,7 +661,7 @@ describe('Multi-Outcome Market Factory', () => {
 
       // Check wallet1 balance after (should be 0)
       const balanceAfter = simnet.callReadOnlyFn(
-        'mock-usdc',
+        'usdcx',
         'get-balance',
         [Cl.standardPrincipal(wallet1)],
         wallet1
@@ -686,7 +686,7 @@ describe('Multi-Outcome Market Factory', () => {
       );
       const expectedMarketId = (countBefore.result as any).value.value + 1n;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       simnet.callPublicFn(
         'market-factory',
         'create-multi-outcome-market',

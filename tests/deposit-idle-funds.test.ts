@@ -30,7 +30,7 @@ const ERR_MULTI_INSUFFICIENT_IDLE_LIQUIDITY = 2019n;
 // Helper function to initialize market-pool for tests
 function initializeMarketPool(caller: string, deadline: number, resDeadline: number) {
   // First give the caller some USDC via faucet
-  simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(INITIAL_LIQUIDITY)], caller);
+  simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(INITIAL_LIQUIDITY)], caller);
 
   // Initialize the market
   return simnet.callPublicFn(
@@ -49,7 +49,7 @@ function initializeMarketPool(caller: string, deadline: number, resDeadline: num
 // Helper function to initialize multi-outcome-pool for tests
 function initializeMultiOutcomePool(caller: string, deadline: number, resDeadline: number) {
   // First give the caller some USDC via faucet
-  simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(INITIAL_LIQUIDITY)], caller);
+  simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(INITIAL_LIQUIDITY)], caller);
 
   // Initialize the multi-outcome market
   return simnet.callPublicFn(
@@ -396,10 +396,12 @@ describe('Deposit Idle Funds - Multi-Outcome Pool', () => {
         deployer
       );
 
-      // Total liquidity should be 100M (10% remaining)
+      // Total liquidity = on-hand + deposited = 1000M (original total)
+      // Deposited = 900M (90%)
+      // Available = 100M (10% on-hand)
       expect(available.result).toBeOk(
         Cl.tuple({
-          'total-liquidity': Cl.uint(100000000n), // 100M (10% remaining)
+          'total-liquidity': Cl.uint(1000000000n), // 1000M (original total)
           'deposited-to-yield': Cl.uint(900000000n), // 900M
           'available-liquidity': Cl.uint(100000000n), // 100M
         })

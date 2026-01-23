@@ -11,6 +11,13 @@
 (define-constant TOKEN-SYMBOL "zUSDC")
 (define-constant TOKEN-DECIMALS u6)
 
+;; Token Contract Configuration
+;; IMPORTANT: Change this before deployment to testnet/mainnet
+;; Simnet/Devnet: .mock-usdc (local reference for testing)
+;; Testnet: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx
+;; Mainnet: 'SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx
+(define-constant TOKEN-CONTRACT .mock-usdc)
+
 ;; Error constants
 (define-constant ERR-NOT-AUTHORIZED (err u100))
 (define-constant ERR-NOT-TOKEN-OWNER (err u101))
@@ -76,7 +83,7 @@
 
     ;; Transfer USDC from caller (contract-caller) to this vault contract
     ;; When market-pool calls supply, it transfers its own USDC
-    (try! (contract-call? .mock-usdc transfer amount caller (as-contract tx-sender) none))
+    (try! (contract-call? .usdcx transfer amount caller (as-contract tx-sender) none))
 
     ;; Calculate shares to mint
     ;; If first deposit: 1:1 ratio
@@ -138,7 +145,7 @@
       (try! (ft-burn? z-usdc amount owner))
 
       ;; Transfer USDC back to user
-      (try! (as-contract (contract-call? .mock-usdc transfer usdc-out tx-sender owner none)))
+      (try! (as-contract (contract-call? .usdcx transfer usdc-out tx-sender owner none)))
 
       (print {event: "withdraw", withdrawer: caller, owner: owner, shares-burned: amount, usdc-returned: usdc-out})
       (ok usdc-out)

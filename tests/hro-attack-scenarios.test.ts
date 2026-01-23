@@ -738,7 +738,7 @@ describe('HRO Attack Scenario Simulation Tests', () => {
           Cl.uint(51_200_000_000n), // total-supply
           Cl.uint(0),           // original-resolution (YES)
           Cl.uint(1),           // disputed-resolution (NO)
-          Cl.contractPrincipal(deployerAddr, 'mock-usdc') // token
+          Cl.contractPrincipal(deployerAddr, 'usdcx') // token
         ],
         deployer
       );

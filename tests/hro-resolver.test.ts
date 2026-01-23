@@ -8,7 +8,7 @@ const wallet2 = accounts.get('wallet_2')!;
 const wallet3 = accounts.get('wallet_3')!;
 
 // Contract addresses (constructed manually since getContractAddress is not available in newer SDK)
-const MOCK_USDC_CONTRACT = `${deployer}.mock-usdc`;
+const USDCX_CONTRACT = `${deployer}.usdcx`;
 
 // Error constants
 const ERR_NOT_AUTHORIZED = 1200n;
@@ -32,7 +32,7 @@ describe('HRO Resolver Contract', () => {
   describe('Initiate Escalation', () => {
     it('should allow creator to initiate escalation with minimum bond', () => {
       // Give wallet1 USDC for the bond
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(200_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(200_000_000n)], wallet1);
 
       const initialBond = 100_000_000n; // 100 USDC (must be > 50 USDC minimum)
       const result = simnet.callPublicFn(
@@ -42,7 +42,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1), // market-id
           Cl.uint(0), // outcome (YES)
           Cl.uint(initialBond),
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -58,7 +58,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(40_000_000n), // Below 50 USDC minimum
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -68,7 +68,7 @@ describe('HRO Resolver Contract', () => {
 
     it('should reject invalid outcome', () => {
       // Give wallet1 USDC for the bond
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(200_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(200_000_000n)], wallet1);
 
       // Bond must be > MINIMUM_DISPUTE_BOND (51 USDC > 50 USDC)
       const result = simnet.callPublicFn(
@@ -78,7 +78,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(2), // Invalid outcome (only 0 or 1 allowed)
           Cl.uint(51_000_000n), // Must be > 50 USDC minimum
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -90,8 +90,8 @@ describe('HRO Resolver Contract', () => {
       const initialBond = 51_000_000n; // Must be > 50 USDC minimum
 
       // Give both wallets USDC
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(200_000_000n)], wallet1);
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(200_000_000n)], wallet2);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(200_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(200_000_000n)], wallet2);
 
       // First initiation
       simnet.callPublicFn(
@@ -101,7 +101,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(initialBond),
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -114,7 +114,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(1),
           Cl.uint(initialBond),
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet2
       );
@@ -126,9 +126,9 @@ describe('HRO Resolver Contract', () => {
   describe('Initiate Dispute (Bond Escalation)', () => {
     beforeEach(() => {
       // Give wallets USDC for bonds
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(1_000_000_000n)], wallet1);
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(1_000_000_000n)], wallet2);
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(1_000_000_000n)], wallet3);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(1_000_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(1_000_000_000n)], wallet2);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(1_000_000_000n)], wallet3);
 
       // Setup: Initiate escalation first (bond must be > 50 USDC)
       simnet.callPublicFn(
@@ -138,7 +138,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0), // YES
           Cl.uint(51_000_000n), // 51 USDC - must be > MINIMUM_DISPUTE_BOND
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -153,7 +153,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1), // market-id
           Cl.uint(1), // claimed-outcome (NO, opposite of current)
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet2
       );
@@ -168,7 +168,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(0), // Same outcome as leading (YES)
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet2
       );
@@ -183,7 +183,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(2), // Invalid outcome
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet2
       );
@@ -198,7 +198,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(1),
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet2
       );
@@ -226,7 +226,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(1),
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet2
       );
@@ -238,7 +238,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(0), // Back to YES
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet3
       );
@@ -267,7 +267,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(1),
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet2
       );
@@ -298,7 +298,7 @@ describe('HRO Resolver Contract', () => {
 
     it('should calculate 2x bond for next round', () => {
       // Give wallet1 USDC
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(200_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(200_000_000n)], wallet1);
 
       // Initiate escalation with initial bond (must be > 50 USDC)
       const initialBond = 51_000_000n;
@@ -309,7 +309,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(initialBond),
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -332,7 +332,7 @@ describe('HRO Resolver Contract', () => {
   describe('Can Finalize Escalation', () => {
     beforeEach(() => {
       // Give wallet1 USDC
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(200_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(200_000_000n)], wallet1);
 
       simnet.callPublicFn(
         'hro-resolver',
@@ -341,7 +341,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(51_000_000n), // Must be > 50 USDC minimum
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -382,7 +382,7 @@ describe('HRO Resolver Contract', () => {
   describe('Is Bond Threshold Reached', () => {
     it('should return false when below threshold', () => {
       // Give wallet1 USDC
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(100_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(100_000_000n)], wallet1);
 
       // Initiate with minimum bond (must be > 50 USDC)
       simnet.callPublicFn(
@@ -392,7 +392,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(51_000_000n),
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -413,7 +413,7 @@ describe('HRO Resolver Contract', () => {
       // For now, let's just verify the function works with what we can get
 
       // Give wallet1 max USDC from faucet
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(10_000_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(10_000_000_000n)], wallet1);
 
       // Initiate with whatever we can (won't reach threshold with faucet limit)
       simnet.callPublicFn(
@@ -423,7 +423,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(1_000_000_000n), // 1000 USDC - below threshold
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -444,7 +444,7 @@ describe('HRO Resolver Contract', () => {
   describe('Is Ready For Escalation', () => {
     it('should return false when threshold not reached', () => {
       // Give wallet1 USDC
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(100_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(100_000_000n)], wallet1);
 
       // Initiate with small bond (below escalation threshold)
       simnet.callPublicFn(
@@ -454,7 +454,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(51_000_000n), // 51 USDC - well below 51,200 USDC threshold
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -474,7 +474,7 @@ describe('HRO Resolver Contract', () => {
   describe('Finalize Escalation', () => {
     beforeEach(() => {
       // Give wallet1 USDC
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(200_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(200_000_000n)], wallet1);
 
       simnet.callPublicFn(
         'hro-resolver',
@@ -483,7 +483,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(51_000_000n), // Must be > 50 USDC minimum
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -493,7 +493,7 @@ describe('HRO Resolver Contract', () => {
       const result = simnet.callPublicFn(
         'hro-resolver',
         'finalize-escalation',
-        [Cl.uint(1), Cl.principal(MOCK_USDC_CONTRACT)],
+        [Cl.uint(1), Cl.principal(USDCX_CONTRACT)],
         deployer
       );
 
@@ -507,7 +507,7 @@ describe('HRO Resolver Contract', () => {
       const result = simnet.callPublicFn(
         'hro-resolver',
         'finalize-escalation',
-        [Cl.uint(1), Cl.principal(MOCK_USDC_CONTRACT)],
+        [Cl.uint(1), Cl.principal(USDCX_CONTRACT)],
         deployer
       );
 
@@ -533,7 +533,7 @@ describe('HRO Resolver Contract', () => {
       simnet.callPublicFn(
         'hro-resolver',
         'finalize-escalation',
-        [Cl.uint(1), Cl.principal(MOCK_USDC_CONTRACT)],
+        [Cl.uint(1), Cl.principal(USDCX_CONTRACT)],
         deployer
       );
 
@@ -541,7 +541,7 @@ describe('HRO Resolver Contract', () => {
       const result = simnet.callPublicFn(
         'hro-resolver',
         'finalize-escalation',
-        [Cl.uint(1), Cl.principal(MOCK_USDC_CONTRACT)],
+        [Cl.uint(1), Cl.principal(USDCX_CONTRACT)],
         deployer
       );
 
@@ -552,7 +552,7 @@ describe('HRO Resolver Contract', () => {
   describe('Trigger Voting', () => {
     it('should reject when bond threshold not reached (faucet limit prevents reaching threshold)', () => {
       // Give wallet1 max USDC from faucet
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(10_000_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(10_000_000_000n)], wallet1);
 
       // Initiate with what we can (below threshold due to faucet limit)
       simnet.callPublicFn(
@@ -562,7 +562,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(1_000_000_000n), // 1000 USDC - below 51,200 USDC threshold
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -596,7 +596,7 @@ describe('HRO Resolver Contract', () => {
 
     beforeEach(() => {
       // Give wallet1 USDC for bonds
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(200_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(200_000_000n)], wallet1);
 
       // Setup: Initiate escalation, dispute, and finalize
       simnet.callPublicFn(
@@ -606,7 +606,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(initialBond),
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -616,7 +616,7 @@ describe('HRO Resolver Contract', () => {
       simnet.callPublicFn(
         'hro-resolver',
         'finalize-escalation',
-        [Cl.uint(1), Cl.principal(MOCK_USDC_CONTRACT)],
+        [Cl.uint(1), Cl.principal(USDCX_CONTRACT)],
         deployer
       );
     });
@@ -629,7 +629,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0), // Winning outcome
           Cl.standardPrincipal(wallet1),
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         deployer
       );
@@ -648,7 +648,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.standardPrincipal(wallet1),
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet2
       );
@@ -658,7 +658,7 @@ describe('HRO Resolver Contract', () => {
 
     it('should reject distributing before resolution', () => {
       // Give wallet1 more USDC for second market
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(200_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(200_000_000n)], wallet1);
 
       // Setup new market without finalizing
       simnet.callPublicFn(
@@ -668,7 +668,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(2),
           Cl.uint(0),
           Cl.uint(51_000_000n), // Must be > 50 USDC minimum
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -680,7 +680,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(2),
           Cl.uint(0),
           Cl.standardPrincipal(wallet1),
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         deployer
       );
@@ -692,7 +692,7 @@ describe('HRO Resolver Contract', () => {
   describe('Reset Escalation', () => {
     beforeEach(() => {
       // Give wallet1 USDC
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(200_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(200_000_000n)], wallet1);
 
       simnet.callPublicFn(
         'hro-resolver',
@@ -701,7 +701,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(51_000_000n), // Must be > 50 USDC minimum
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -743,7 +743,7 @@ describe('HRO Resolver Contract', () => {
   describe('Read-Only Functions', () => {
     beforeEach(() => {
       // Give wallet1 USDC for the bond
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(100_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(100_000_000n)], wallet1);
 
       // Initiate escalation with bond > minimum
       simnet.callPublicFn(
@@ -753,7 +753,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0),
           Cl.uint(51_000_000n), // 51 USDC - must be > 50 USDC minimum
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -836,9 +836,9 @@ describe('HRO Resolver Contract', () => {
   describe('Integration: Full Escalation Flow', () => {
     beforeEach(() => {
       // Give wallets USDC for bonds
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(1_000_000_000n)], wallet1);
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(1_000_000_000n)], wallet2);
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(1_000_000_000n)], wallet3);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(1_000_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(1_000_000_000n)], wallet2);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(1_000_000_000n)], wallet3);
     });
 
     it('should handle complete escalation cycle with multiple rounds', () => {
@@ -850,7 +850,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(1),
           Cl.uint(0), // YES
           Cl.uint(51_000_000n), // 51 USDC - must be > 50 USDC minimum
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );
@@ -863,7 +863,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(1), // NO
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet2
       );
@@ -875,7 +875,7 @@ describe('HRO Resolver Contract', () => {
         [
           Cl.uint(1),
           Cl.uint(0), // Back to YES
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet3
       );
@@ -904,7 +904,7 @@ describe('HRO Resolver Contract', () => {
 
     it('should trigger voting when bond threshold exceeded', () => {
       // Give wallet1 enough USDC for the large bond
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(10_000_000_000n)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(10_000_000_000n)], wallet1);
 
       // Initiate with bond above threshold
       const initResult = simnet.callPublicFn(
@@ -914,7 +914,7 @@ describe('HRO Resolver Contract', () => {
           Cl.uint(2), // Different market-id to avoid conflict with other tests
           Cl.uint(0),
           Cl.uint(ESCALATION_THRESHOLD + 1n),
-          Cl.principal(MOCK_USDC_CONTRACT)
+          Cl.principal(USDCX_CONTRACT)
         ],
         wallet1
       );

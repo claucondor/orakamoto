@@ -64,7 +64,7 @@ describe('Market Factory', () => {
       const resDeadline = deadline + 100;
 
       // Give wallet1 enough USDC
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       const result = simnet.callPublicFn(
         'market-factory',
@@ -95,7 +95,7 @@ describe('Market Factory', () => {
       const deadline = currentBlock + 100;
 
       // Give wallet1 enough USDC
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       const result = simnet.callPublicFn(
         'market-factory',
@@ -127,7 +127,7 @@ describe('Market Factory', () => {
       const deadline = currentBlock + 100;
       const resDeadline = deadline + 100;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       const result = simnet.callPublicFn(
         'market-factory',
@@ -149,7 +149,7 @@ describe('Market Factory', () => {
       const deadline = currentBlock - 1;
       const resDeadline = currentBlock + 100;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       const result = simnet.callPublicFn(
         'market-factory',
@@ -171,7 +171,7 @@ describe('Market Factory', () => {
       const deadline = currentBlock + 100;
       const resDeadline = deadline - 1;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       const result = simnet.callPublicFn(
         'market-factory',
@@ -194,7 +194,7 @@ describe('Market Factory', () => {
       const resDeadline = deadline + 100;
       const insufficientCollateral = MINIMUM_COLLATERAL - 1n;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(insufficientCollateral)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(insufficientCollateral)], wallet1);
 
       const result = simnet.callPublicFn(
         'market-factory',
@@ -217,7 +217,7 @@ describe('Market Factory', () => {
       const resDeadline = deadline + 100;
 
       // Create first market
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       const result1 = simnet.callPublicFn(
         'market-factory',
         'create-market',
@@ -232,7 +232,7 @@ describe('Market Factory', () => {
       expect(result1.result).toBeOk(Cl.uint(1));
 
       // Create second market
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       const result2 = simnet.callPublicFn(
         'market-factory',
         'create-market',
@@ -263,7 +263,7 @@ describe('Market Factory', () => {
       const deadline = currentBlock + 100;
       const resDeadline = deadline + 100;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       simnet.callPublicFn(
         'market-factory',
         'create-market',
@@ -327,7 +327,7 @@ describe('Market Factory', () => {
       const resDeadline = deadline + 100;
 
       // Create two markets for wallet1
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       simnet.callPublicFn(
         'market-factory',
         'create-market',
@@ -340,7 +340,7 @@ describe('Market Factory', () => {
         wallet1
       );
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       simnet.callPublicFn(
         'market-factory',
         'create-market',
@@ -370,7 +370,7 @@ describe('Market Factory', () => {
       const deadline = currentBlock + 100;
       const resDeadline = deadline + 100;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       simnet.callPublicFn(
         'market-factory',
         'create-market',
@@ -411,7 +411,7 @@ describe('Market Factory', () => {
       const deadline = currentBlock + 100;
       const resDeadline = deadline + 100;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       simnet.callPublicFn(
         'market-factory',
         'create-market',
@@ -440,7 +440,7 @@ describe('Market Factory', () => {
       const deadline = currentBlock + 100;
       const resDeadline = deadline + 100;
 
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
       simnet.callPublicFn(
         'market-factory',
         'create-market',
@@ -491,11 +491,11 @@ describe('Market Factory', () => {
       const resDeadline = deadline + 100;
 
       // Give wallet1 exactly minimum collateral
-      simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+      simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
       // Check wallet1 balance before
       const balanceBefore = simnet.callReadOnlyFn(
-        'mock-usdc',
+        'usdcx',
         'get-balance',
         [Cl.standardPrincipal(wallet1)],
         wallet1
@@ -517,7 +517,7 @@ describe('Market Factory', () => {
 
       // Check wallet1 balance after (should be 0)
       const balanceAfter = simnet.callReadOnlyFn(
-        'mock-usdc',
+        'usdcx',
         'get-balance',
         [Cl.standardPrincipal(wallet1)],
         wallet1

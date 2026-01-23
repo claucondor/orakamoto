@@ -9,6 +9,16 @@ cache_dir = './.cache'
 [[project.requirements]]
 contract_id = 'SP1CGXWEAMG6P6FT04W66NVGJ7PQWMDAC19R7PJ0Y.pyth-oracle-v4'
 
+# USDCx (Circle xReserve - bridged USDC on Stacks)
+# Simnet: uses local usdcx.clar mock (deployed at ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx)
+# Testnet: real USDCx at ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx
+# Mainnet: change contracts to SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx
+
+[contracts.usdcx]
+path = 'contracts/usdcx.clar'
+clarity_version = 2
+epoch = '2.1'
+
 [contracts.ai-oracle-council]
 path = 'contracts/ai-oracle-council.clar'
 clarity_version = 2

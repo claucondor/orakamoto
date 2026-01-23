@@ -54,7 +54,7 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should initialize a 3-outcome market successfully', () => {
       // First, mint USDC to wallet1
       const mintResult = simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],  // 100 USDC
         deployer
@@ -111,7 +111,7 @@ describe('Multi-Outcome Pool Contract', () => {
 
       // Mint USDC first
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
@@ -142,7 +142,7 @@ describe('Multi-Outcome Pool Contract', () => {
 
       // Mint USDC first
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(200000000), Cl.standardPrincipal(wallet1)],
         deployer
@@ -186,7 +186,7 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should return correct market info after initialization', () => {
       // Mint USDC first
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
@@ -235,7 +235,7 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should add liquidity to initialized market', () => {
       // Mint USDC to wallet1
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
@@ -274,7 +274,7 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should fail to add liquidity after market resolved', () => {
       // Mint USDC
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
@@ -326,13 +326,13 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should buy outcome tokens successfully', () => {
       // Mint USDC to both wallet1 (liquidity provider) and wallet2 (buyer)
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
       );
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet2)],
         deployer
@@ -381,13 +381,13 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should fail to buy with invalid outcome', () => {
       // Mint USDC
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
       );
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet2)],
         deployer
@@ -430,13 +430,13 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should fail to buy after deadline', () => {
       // Mint USDC
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
       );
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet2)],
         deployer
@@ -482,13 +482,13 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should sell outcome tokens successfully', () => {
       // Mint USDC
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
       );
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet2)],
         deployer
@@ -552,13 +552,13 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should fail to sell without balance', () => {
       // Mint USDC
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
       );
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet2)],
         deployer
@@ -603,7 +603,7 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should resolve market successfully', () => {
       // Mint USDC
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
@@ -656,7 +656,7 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should fail to resolve with invalid outcome', () => {
       // Mint USDC
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
@@ -697,7 +697,7 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should fail to resolve before deadline', () => {
       // Mint USDC
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
@@ -736,13 +736,13 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should fail if non-creator tries to resolve', () => {
       // Mint USDC
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
       );
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet2)],
         deployer
@@ -785,13 +785,13 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should claim winnings after dispute window passes', () => {
       // Mint USDC to wallet1 (creator/liquidity provider) and wallet2 (trader)
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
       );
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet2)],
         deployer
@@ -840,7 +840,7 @@ describe('Multi-Outcome Pool Contract', () => {
 
       // Check balance before claim
       const usdcBalanceBefore = simnet.callReadOnlyFn(
-        'mock-usdc',
+        'usdcx',
         'get-balance',
         [Cl.standardPrincipal(wallet2)],
         wallet2
@@ -861,7 +861,7 @@ describe('Multi-Outcome Pool Contract', () => {
 
       // Check balance increased
       const usdcBalanceAfter = simnet.callReadOnlyFn(
-        'mock-usdc',
+        'usdcx',
         'get-balance',
         [Cl.standardPrincipal(wallet2)],
         wallet2
@@ -876,13 +876,13 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should fail to claim during dispute window', () => {
       // Mint USDC
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
       );
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet2)],
         deployer
@@ -937,13 +937,13 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should fail to claim twice', () => {
       // Mint USDC
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
       );
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet2)],
         deployer
@@ -1007,7 +1007,7 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should allow creator to open dispute', () => {
       // Mint USDC
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
@@ -1053,7 +1053,7 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should fail to open dispute twice', () => {
       // Mint USDC
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer
@@ -1109,7 +1109,7 @@ describe('Multi-Outcome Pool Contract', () => {
     it('should return correct dispute window info', () => {
       // Mint USDC
       simnet.callPublicFn(
-        'mock-usdc',
+        'usdcx',
         'mint',
         [Cl.uint(100000000), Cl.standardPrincipal(wallet1)],
         deployer

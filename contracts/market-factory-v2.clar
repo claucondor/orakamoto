@@ -2,7 +2,7 @@
 ;; Creates and manages prediction market pools on StackPredict Protocol
 
 ;; Constants
-(define-constant MINIMUM-COLLATERAL u50000000)     ;; 50 USDC (6 decimals)
+(define-constant MINIMUM-COLLATERAL u1000000)      ;; 1 USDC (6 decimals) - lowered for testnet
 (define-constant DEFAULT-RESOLUTION-WINDOW u1008)  ;; ~7 days in blocks (144 blocks/day * 7)
 (define-constant CONTRACT-OWNER tx-sender)
 

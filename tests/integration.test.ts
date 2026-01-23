@@ -8,7 +8,7 @@ const wallet2 = accounts.get('wallet_2')!;
 const wallet3 = accounts.get('wallet_3')!;
 
 // Contract addresses (constructed manually since getContractAddress is not available in newer SDK)
-const MOCK_USDC_CONTRACT = `${deployer}.mock-usdc`;
+const USDCX_CONTRACT = `${deployer}.usdcx`;
 
 // Constants
 const MINIMUM_COLLATERAL = 50_000_000n; // 50 USDC with 6 decimals
@@ -33,7 +33,7 @@ describe('Integration - Complete Market Lifecycle', () => {
     // STEP 1: Create Market via Factory
     // ========================================================================
     // Give wallet1 enough USDC for collateral
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
     // Create market using factory
     const createResult = simnet.callPublicFn(
@@ -62,7 +62,7 @@ describe('Integration - Complete Market Lifecycle', () => {
 
     // Give wallet1 USDC for initial liquidity (wallet1 already has collateral in factory)
     // Need additional USDC for pool initialization
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
     // Initialize market pool (simulating what factory would do after deployment)
     // Must be called by wallet1 since they are the market creator
@@ -89,7 +89,7 @@ describe('Integration - Complete Market Lifecycle', () => {
     // ========================================================================
     // Give wallet2 USDC to add liquidity
     const liquidityAmount = 100_000_000n; // 100 USDC
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(liquidityAmount)], wallet2);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(liquidityAmount)], wallet2);
 
     const addLiquidityResult = simnet.callPublicFn(
       'market-pool',
@@ -108,7 +108,7 @@ describe('Integration - Complete Market Lifecycle', () => {
     // STEP 4: Buy YES Tokens (wallet1)
     // ========================================================================
     const buyAmount = 50_000_000n; // 50 USDC
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(buyAmount)], wallet1);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(buyAmount)], wallet1);
 
     const buyYesResult = simnet.callPublicFn(
       'market-pool',
@@ -134,7 +134,7 @@ describe('Integration - Complete Market Lifecycle', () => {
     const buyNoAmount = 30_000_000n; // 30 USDC
 
     // Give wallet2 more USDC
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(50_000_000n)], wallet2);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(50_000_000n)], wallet2);
 
     const buyNoResult = simnet.callPublicFn(
       'market-pool',
@@ -193,7 +193,7 @@ describe('Integration - Complete Market Lifecycle', () => {
     // STEP 9: Claim Winnings (Winner)
     // ========================================================================
     const wallet1BalanceBefore = simnet.callReadOnlyFn(
-      'mock-usdc',
+      'usdcx',
       'get-balance',
       [Cl.standardPrincipal(wallet1)],
       wallet1
@@ -206,7 +206,7 @@ describe('Integration - Complete Market Lifecycle', () => {
 
     // Verify wallet1 received winnings
     const wallet1BalanceAfter = simnet.callReadOnlyFn(
-      'mock-usdc',
+      'usdcx',
       'get-balance',
       [Cl.standardPrincipal(wallet1)],
       wallet1
@@ -232,7 +232,7 @@ describe('Integration - Complete Market Lifecycle', () => {
     const resDeadline = deadline + 100;
 
     // Initialize market
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], deployer);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], deployer);
     simnet.callPublicFn(
       'market-pool',
       'initialize',
@@ -246,8 +246,8 @@ describe('Integration - Complete Market Lifecycle', () => {
     );
 
     // Users buy tokens
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(100_000_000n)], wallet1);
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(100_000_000n)], wallet2);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(100_000_000n)], wallet1);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(100_000_000n)], wallet2);
 
     // wallet1 buys NO (betting ETH won't hit $5k)
     simnet.callPublicFn(
@@ -289,7 +289,7 @@ describe('Integration - Complete Market Lifecycle', () => {
     const resDeadline = deadline + 100;
 
     // Initialize market with initial liquidity
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], deployer);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], deployer);
     simnet.callPublicFn(
       'market-pool',
       'initialize',
@@ -304,7 +304,7 @@ describe('Integration - Complete Market Lifecycle', () => {
 
     // LP adds liquidity
     const lpAmount = 200_000_000n; // 200 USDC
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(lpAmount)], wallet1);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(lpAmount)], wallet1);
     simnet.callPublicFn('market-pool', 'add-liquidity', [Cl.uint(lpAmount)], wallet1);
 
     // Check LP balance
@@ -347,7 +347,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     const resDeadline = deadline + 100;
 
     // Give wallet1 USDC for collateral
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
 
     // Initialize market pool
     simnet.callPublicFn(
@@ -371,7 +371,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     // ========================================================================
     // Give wallet1 more USDC for the bond
     const initialBond = 100_000_000n; // 100 USDC
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(initialBond)], wallet1);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(initialBond)], wallet1);
 
     const initiateResult = simnet.callPublicFn(
       'hro-resolver',
@@ -380,7 +380,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1), // market-id
         Cl.uint(0), // outcome (YES)
         Cl.uint(initialBond),
-        Cl.principal(MOCK_USDC_CONTRACT)
+        Cl.principal(USDCX_CONTRACT)
       ],
       wallet1
     );
@@ -400,7 +400,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     // STEP 2: Disputer challenges with 2x bond (200 USDC)
     // ========================================================================
     const challengeBond = 200_000_000n; // 2x initial bond
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(challengeBond)], wallet2);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(challengeBond)], wallet2);
 
     const disputeResult = simnet.callPublicFn(
       'hro-resolver',
@@ -408,7 +408,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
       [
         Cl.uint(1), // market-id
         Cl.uint(1), // outcome (NO - opposite of creator's claim)
-        Cl.contractPrincipal(deployer.split('.')[0], 'mock-usdc')
+        Cl.contractPrincipal(deployer.split('.')[0], 'usdcx')
       ],
       wallet2
     );
@@ -428,7 +428,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     // STEP 3: Creator counter-disputes with 4x bond (400 USDC)
     // ========================================================================
     const counterBond = 400_000_000n; // 2x challenge bond
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(counterBond)], wallet1);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(counterBond)], wallet1);
 
     const counterResult = simnet.callPublicFn(
       'hro-resolver',
@@ -436,7 +436,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
       [
         Cl.uint(1), // market-id
         Cl.uint(0), // outcome (YES - back to original)
-        Cl.contractPrincipal(deployer.split('.')[0], 'mock-usdc')
+        Cl.contractPrincipal(deployer.split('.')[0], 'usdcx')
       ],
       wallet1
     );
@@ -456,7 +456,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     // STEP 4: Disputer escalates again with 8x bond (800 USDC)
     // ========================================================================
     const escalateBond = 800_000_000n; // 2x counter bond
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(escalateBond)], wallet2);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(escalateBond)], wallet2);
 
     const escalateResult = simnet.callPublicFn(
       'hro-resolver',
@@ -464,7 +464,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
       [
         Cl.uint(1), // market-id
         Cl.uint(1), // outcome (NO)
-        Cl.contractPrincipal(deployer.split('.')[0], 'mock-usdc')
+        Cl.contractPrincipal(deployer.split('.')[0], 'usdcx')
       ],
       wallet2
     );
@@ -499,7 +499,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     const finalizeResult = simnet.callPublicFn(
       'hro-resolver',
       'finalize-escalation',
-      [Cl.uint(1), Cl.contractPrincipal(deployer.split('.')[0], 'mock-usdc')],
+      [Cl.uint(1), Cl.contractPrincipal(deployer.split('.')[0], 'usdcx')],
       wallet1
     );
 
@@ -527,7 +527,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     const resDeadline = deadline + 100;
 
     // Give wallet1 USDC for collateral (using different wallet for market creation)
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet3);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet3);
 
     // Initialize market pool with wallet3
     simnet.callPublicFn(
@@ -552,7 +552,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     // ========================================================================
 
     // Round 0: wallet1 initiates with 51 USDC (must be > MINIMUM-DISPUTE-BOND of 50 USDC)
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(51_000_000n)], wallet1);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(51_000_000n)], wallet1);
     const initEscalationResult = simnet.callPublicFn(
       'hro-resolver',
       'initiate-escalation',
@@ -560,21 +560,21 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1),
         Cl.uint(0),
         Cl.uint(51_000_000n),
-        Cl.principal(MOCK_USDC_CONTRACT)
+        Cl.principal(USDCX_CONTRACT)
       ],
       wallet1
     );
     expect(initEscalationResult.result).toBeOk(Cl.uint(1)); // bond-id 1
 
     // Round 1: wallet2 disputes with NO (102 USDC = 51 * 2)
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(102_000_000n)], wallet2);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(102_000_000n)], wallet2);
     const round1Result = simnet.callPublicFn(
       'hro-resolver',
       'initiate-dispute',
       [
         Cl.uint(1), // market-id
         Cl.uint(1), // outcome (NO)
-        Cl.contractPrincipal(deployer.split('.')[0], 'mock-usdc')
+        Cl.contractPrincipal(deployer.split('.')[0], 'usdcx')
       ],
       wallet2
     );
@@ -590,14 +590,14 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     expect(leadingAfterRound1.result).toBeOk(Cl.some(Cl.uint(1))); // NO is leading
 
     // Round 2: wallet1 disputes with YES (204 USDC = 102 * 2)
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(204_000_000n)], wallet1);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(204_000_000n)], wallet1);
     const round2Result = simnet.callPublicFn(
       'hro-resolver',
       'initiate-dispute',
       [
         Cl.uint(1), // market-id
         Cl.uint(0), // outcome (YES)
-        Cl.contractPrincipal(deployer.split('.')[0], 'mock-usdc')
+        Cl.contractPrincipal(deployer.split('.')[0], 'usdcx')
       ],
       wallet1
     );
@@ -613,14 +613,14 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     expect(leadingAfterRound2.result).toBeOk(Cl.some(Cl.uint(0))); // YES is leading
 
     // Round 3: wallet2 disputes with NO (408 USDC = 204 * 2)
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(408_000_000n)], wallet2);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(408_000_000n)], wallet2);
     const round3Result = simnet.callPublicFn(
       'hro-resolver',
       'initiate-dispute',
       [
         Cl.uint(1), // market-id
         Cl.uint(1), // outcome (NO)
-        Cl.contractPrincipal(deployer.split('.')[0], 'mock-usdc')
+        Cl.contractPrincipal(deployer.split('.')[0], 'usdcx')
       ],
       wallet2
     );
@@ -732,7 +732,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     const createSessionResult = simnet.callPublicFn(
       'quadratic-voting',
       'create-voting-session',
-      [Cl.uint(marketId), Cl.contractPrincipal(deployer.split('.')[0], 'mock-usdc')],
+      [Cl.uint(marketId), Cl.contractPrincipal(deployer.split('.')[0], 'usdcx')],
       deployer
     );
 
@@ -813,7 +813,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(10000_000_000n),                                        // total-supply (10000 USDC)
         Cl.uint(0),                                                     // original-resolution (YES)
         Cl.uint(1),                                                     // disputed-resolution (NO)
-        Cl.contractPrincipal(deployer.split('.')[0], 'mock-usdc')       // token
+        Cl.contractPrincipal(deployer.split('.')[0], 'usdcx')       // token
       ],
       deployer
     );
@@ -847,7 +847,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     // ========================================================================
     // STEP 1: Create and resolve market
     // ========================================================================
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(MINIMUM_COLLATERAL)], wallet1);
     simnet.callPublicFn(
       'market-pool',
       'initialize',
@@ -866,7 +866,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     // ========================================================================
     // STEP 2: Initiate HRO escalation
     // ========================================================================
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(100_000_000n)], wallet1);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(100_000_000n)], wallet1);
     simnet.callPublicFn(
       'hro-resolver',
       'initiate-escalation',
@@ -874,7 +874,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
         Cl.uint(1),
         Cl.uint(0),
         Cl.uint(100_000_000n),
-        Cl.principal(MOCK_USDC_CONTRACT)
+        Cl.principal(USDCX_CONTRACT)
       ],
       wallet1
     );
@@ -882,14 +882,14 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     // ========================================================================
     // STEP 3: Dispute with bond escalation
     // ========================================================================
-    simnet.callPublicFn('mock-usdc', 'faucet', [Cl.uint(200_000_000n)], wallet2);
+    simnet.callPublicFn('usdcx', 'faucet', [Cl.uint(200_000_000n)], wallet2);
     simnet.callPublicFn(
       'hro-resolver',
       'initiate-dispute',
       [
         Cl.uint(1), // market-id
         Cl.uint(1), // outcome
-        Cl.contractPrincipal(deployer.split('.')[0], 'mock-usdc')
+        Cl.contractPrincipal(deployer.split('.')[0], 'usdcx')
       ],
       wallet2
     );
@@ -952,7 +952,7 @@ describe('Integration - HRO (Hybrid Reputation Oracle) Full Flow', () => {
     const finalizeResult = simnet.callPublicFn(
       'hro-resolver',
       'finalize-escalation',
-      [Cl.uint(1), Cl.contractPrincipal(deployer.split('.')[0], 'mock-usdc')],
+      [Cl.uint(1), Cl.contractPrincipal(deployer.split('.')[0], 'usdcx')],
       wallet1
     );
     expect(finalizeResult.result.type).toBe('ok');

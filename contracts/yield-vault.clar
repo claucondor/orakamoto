@@ -34,6 +34,13 @@
 (define-constant TOKEN-SYMBOL "yUSDC")
 (define-constant TOKEN-DECIMALS u6)
 
+;; Token Contract Configuration
+;; IMPORTANT: Change this before deployment to testnet/mainnet
+;; Simnet/Devnet: .mock-usdc
+;; Testnet: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx
+;; Mainnet: 'SP120SBRBQJ00MCWS7TM5R8WJNTTKD5K0HFRC2CNE.usdcx
+(define-constant TOKEN-CONTRACT 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx)
+
 ;; Error constants
 (define-constant ERR-NOT-AUTHORIZED (err u200))
 (define-constant ERR-NOT-TOKEN-OWNER (err u201))
@@ -102,7 +109,7 @@
 
     ;; Transfer USDC from caller to this vault contract
     ;; Note: caller must have USDC to deposit
-    (try! (contract-call? .mock-usdc transfer amount caller (as-contract tx-sender) none))
+    (try! (contract-call? .usdcx transfer amount caller (as-contract tx-sender) none))
 
     ;; Calculate shares to mint
     ;; If first deposit: 1:1 ratio
@@ -165,7 +172,7 @@
       (try! (ft-burn? y-usdc amount owner))
 
       ;; Transfer USDC back to user
-      (try! (as-contract (contract-call? .mock-usdc transfer usdc-out tx-sender owner none)))
+      (try! (as-contract (contract-call? .usdcx transfer usdc-out tx-sender owner none)))
 
       (print {event: "withdraw", withdrawer: caller, owner: owner, shares-burned: amount, usdc-returned: usdc-out})
       (ok usdc-out)
@@ -205,7 +212,7 @@
 
       ;; Transfer USDC back to user (without burning shares for efficiency)
       ;; This is a "withdrawal on behalf" - the shares remain but deposits decrease
-      (try! (as-contract (contract-call? .mock-usdc transfer usdc-out tx-sender owner none)))
+      (try! (as-contract (contract-call? .usdcx transfer usdc-out tx-sender owner none)))
 
       (print {event: "withdraw-for-trade", caller: caller, owner: owner, amount-requested: amount, usdc-returned: usdc-out})
       (ok usdc-out)
