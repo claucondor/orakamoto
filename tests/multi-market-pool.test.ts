@@ -911,3 +911,345 @@ describe('Multi-Market Pool - Add Liquidity', () => {
     });
   });
 });
+
+describe('Multi-Market Pool - Remove Liquidity', () => {
+  let marketId: bigint;
+
+  beforeEach(() => {
+    simnet.blockHeight = 1000n;
+
+    // Fund deployer and create a market
+    fundWallet(deployer, 20_000_000n);
+    const result = simnet.callPublicFn(
+      'multi-market-pool',
+      'create-market',
+      [
+        Cl.stringUtf8('Will BTC reach $100k?'),
+        Cl.uint(2000),
+        Cl.uint(3000),
+        Cl.uint(10_000_000n),
+      ],
+      deployer
+    );
+    marketId = (result.result as any).value.value;
+  });
+
+  describe('remove-liquidity', () => {
+    it('should remove liquidity and return USDC + fee share', () => {
+      // First add some liquidity to accumulate fees
+      fundWallet(wallet1, 5_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(5_000_000n)],
+        wallet1
+      );
+
+      // Simulate some trades to generate fees
+      fundWallet(wallet2, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet2
+      );
+
+      // Get LP balance before removal
+      const lpBalanceBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-lp-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(deployer)],
+        deployer
+      );
+      const lpBefore = (lpBalanceBefore.result as any).value.value;
+      const lpAmount = Number((lpBefore as any).value);
+
+      // Remove liquidity
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'remove-liquidity',
+        [Cl.uint(marketId), Cl.uint(10_000_000n)],
+        deployer
+      );
+
+      // Should return USDC from reserves + fee share
+      expect(result.result.type).toBe('response');
+      const returnedAmount = Number((result.result as any).value.value);
+      expect(returnedAmount).toBeGreaterThan(0);
+
+      // Verify LP tokens were burned
+      const lpBalanceAfter = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-lp-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(deployer)],
+        deployer
+      );
+      const lpAfter = (lpBalanceAfter.result as any).value.value;
+      expect(Number((lpAfter as any).value)).toBe(0);
+    });
+
+    it('should reject removing liquidity from non-existent market', () => {
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'remove-liquidity',
+        [Cl.uint(999), Cl.uint(5_000_000n)],
+        deployer
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_MARKET_NOT_FOUND));
+    });
+
+    it('should reject removing liquidity below minimum', () => {
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'remove-liquidity',
+        [Cl.uint(marketId), Cl.uint(50_000n)], // Less than MINIMUM_LIQUIDITY (100000)
+        deployer
+      );
+
+      expect(result.result).toBeErr(Cl.uint(ERR_INSUFFICIENT_LIQUIDITY));
+    });
+
+    it('should reject removing more LP tokens than owned', () => {
+      // Try to remove more than deployer owns
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'remove-liquidity',
+        [Cl.uint(marketId), Cl.uint(20_000_000n)], // More than 10M LP tokens
+        deployer
+      );
+
+      // The burn function in sip013-lp-token will fail with insufficient balance
+      expect(result.result.type).toBe('error');
+    });
+
+    it('should allow partial liquidity removal', () => {
+      // Add more liquidity
+      fundWallet(wallet1, 5_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(5_000_000n)],
+        wallet1
+      );
+
+      // Remove partial liquidity (5M out of 10M LP tokens)
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'remove-liquidity',
+        [Cl.uint(marketId), Cl.uint(5_000_000n)],
+        deployer
+      );
+
+      expect(result.result.type).toBe('response');
+
+      // Verify remaining LP tokens
+      const lpBalance = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-lp-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(deployer)],
+        deployer
+      );
+      const lp = (lpBalance.result as any).value.value;
+      expect(Number((lp as any).value)).toBe(5_000_000n);
+
+      // Verify reserves decreased proportionally
+      const reserves = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-reserves',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const r = (reserves.result as any).value.value;
+      expect(Number((r['total-liquidity'] as any).value)).toBe(10_000_000n); // 15M - 5M removed
+    });
+
+    it('should calculate correct USDC return without fees', () => {
+      // Remove half of initial liquidity
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'remove-liquidity',
+        [Cl.uint(marketId), Cl.uint(5_000_000n)],
+        deployer
+      );
+
+      // Should return ~5M USDC (50% of reserves)
+      // With equal reserves, should return 2.5M from YES and 2.5M from NO
+      const returnedAmount = Number((result.result as any).value.value);
+      expect(returnedAmount).toBeGreaterThan(4_900_000n);
+      expect(returnedAmount).toBeLessThan(5_100_000n);
+    });
+
+    it('should reset accumulated fees after liquidity removal', () => {
+      // Add liquidity to increase total
+      fundWallet(wallet1, 5_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(5_000_000n)],
+        wallet1
+      );
+
+      // Generate some fees via trading
+      fundWallet(wallet2, 2_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'buy-outcome',
+        [Cl.uint(marketId), Cl.uint(0), Cl.uint(2_000_000n), Cl.uint(1000n)],
+        wallet2
+      );
+
+      // Get fees before removal
+      const feesBefore = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-accumulated-fees',
+        [Cl.uint(marketId)],
+        deployer
+      );
+
+      // Remove liquidity
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'remove-liquidity',
+        [Cl.uint(marketId), Cl.uint(10_000_000n)],
+        deployer
+      );
+
+      // Get fees after removal - should be reset to 0
+      const feesAfter = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-accumulated-fees',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const f = (feesAfter.result as any).value.value;
+      expect(Number((f['accumulated-fees'] as any).value)).toBe(0);
+    });
+
+    it('should split liquidity removal proportionally from YES and NO', () => {
+      // Remove half of liquidity
+      const removeAmount = 5_000_000n;
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'remove-liquidity',
+        [Cl.uint(marketId), Cl.uint(removeAmount)],
+        deployer
+      );
+
+      // Get reserves after removal
+      const reserves = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-reserves',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const r = (reserves.result as any).value.value;
+
+      // Should have removed 2.5M from each reserve (50% of 5M)
+      expect(Number((r['yes-reserve'] as any).value)).toBe(2_500_000n);
+      expect(Number((r['no-reserve'] as any).value)).toBe(2_500_000n);
+    });
+
+    it('should allow removing liquidity with minimum amount', () => {
+      // First add small amount to have more LP tokens
+      fundWallet(wallet1, 1_000_000n);
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(1_000_000n)],
+        wallet1
+      );
+
+      // Remove minimum amount
+      const minAmount = 100_000n; // 0.1 USDC = MINIMUM_LIQUIDITY
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'remove-liquidity',
+        [Cl.uint(marketId), Cl.uint(minAmount)],
+        deployer
+      );
+
+      expect(result.result.type).toBe('response');
+    });
+
+    it('should allow multiple users to remove liquidity independently', () => {
+      // Add liquidity from multiple users
+      fundWallet(wallet1, 3_000_000n);
+      fundWallet(wallet2, 2_000_000n);
+
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(3_000_000n)],
+        wallet1
+      );
+
+      simnet.callPublicFn(
+        'multi-market-pool',
+        'add-liquidity',
+        [Cl.uint(marketId), Cl.uint(2_000_000n)],
+        wallet2
+      );
+
+      // Remove liquidity from wallet1
+      const result1 = simnet.callPublicFn(
+        'multi-market-pool',
+        'remove-liquidity',
+        [Cl.uint(marketId), Cl.uint(3_000_000n)],
+        wallet1
+      );
+      expect(result1.result.type).toBe('response');
+
+      // Remove liquidity from wallet2
+      const result2 = simnet.callPublicFn(
+        'multi-market-pool',
+        'remove-liquidity',
+        [Cl.uint(marketId), Cl.uint(2_000_000n)],
+        wallet2
+      );
+      expect(result2.result.type).toBe('response');
+
+      // Verify both users have 0 LP tokens
+      const lp1 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-lp-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet1)],
+        deployer
+      );
+      expect(Number(((lp1.result as any).value.value as any).value)).toBe(0);
+
+      const lp2 = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-lp-balance',
+        [Cl.uint(marketId), Cl.standardPrincipal(wallet2)],
+        deployer
+      );
+      expect(Number(((lp2.result as any).value.value as any).value)).toBe(0);
+    });
+
+    it('should return correct amount when all liquidity is removed', () => {
+      // Remove all liquidity
+      const result = simnet.callPublicFn(
+        'multi-market-pool',
+        'remove-liquidity',
+        [Cl.uint(marketId), Cl.uint(10_000_000n)],
+        deployer
+      );
+
+      // Should return close to initial 10M USDC (minus small fees if any)
+      const returnedAmount = Number((result.result as any).value.value);
+      expect(returnedAmount).toBeGreaterThan(9_900_000n);
+      expect(returnedAmount).toBeLessThan(10_100_000n);
+
+      // Verify total liquidity is 0
+      const reserves = simnet.callReadOnlyFn(
+        'multi-market-pool',
+        'get-reserves',
+        [Cl.uint(marketId)],
+        deployer
+      );
+      const r = (reserves.result as any).value.value;
+      expect(Number((r['total-liquidity'] as any).value)).toBe(0);
+    });
+  });
+});

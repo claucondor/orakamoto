@@ -399,6 +399,92 @@
   )
 )
 
+;; Remove liquidity from a market
+;; @param market-id: The market to remove liquidity from
+;; @param lp-amount: LP tokens to burn (min 0.1 USDC equivalent)
+;; @returns (response uint uint): USDC returned to user on success, error code on failure
+(define-public (remove-liquidity (market-id uint) (lp-amount uint))
+  (let
+    (
+      (caller tx-sender)
+      (market (map-get? markets market-id))
+    )
+    ;; Validate market exists
+    (asserts! (is-some market) ERR-MARKET-NOT-FOUND)
+
+    (let
+      (
+        (market-data (unwrap! (map-get? markets market-id) ERR-MARKET-NOT-FOUND))
+        (yes-reserve (get yes-reserve market-data))
+        (no-reserve (get no-reserve market-data))
+        (total-liquidity (get total-liquidity market-data))
+        (accumulated-fees (get accumulated-fees market-data))
+      )
+
+      ;; Validate LP amount is above minimum
+      (asserts! (>= lp-amount MINIMUM-LIQUIDITY) ERR-INSUFFICIENT-LIQUIDITY)
+
+      ;; Calculate USDC to return (reserves + fee share)
+      (let
+        (
+          (usdc-return (calculate-remove-liquidity-return lp-amount yes-reserve no-reserve total-liquidity accumulated-fees))
+        )
+
+        ;; Burn LP tokens from caller
+        (try! (contract-call? .sip013-lp-token burn market-id lp-amount caller))
+
+        ;; Calculate new reserves after removal
+        (let
+          (
+            (total-reserves (+ yes-reserve no-reserve))
+            (yes-portion (/ (* yes-reserve lp-amount) total-liquidity))
+            (no-portion (/ (* no-reserve lp-amount) total-liquidity))
+            (new-yes-reserve (- yes-reserve yes-portion))
+            (new-no-reserve (- no-reserve no-portion))
+            (new-total-liquidity (- total-liquidity lp-amount))
+          )
+
+          ;; Update market data
+          (map-set markets market-id
+            {
+              creator: (get creator market-data),
+              question: (get question market-data),
+              deadline: (get deadline market-data),
+              resolution-deadline: (get resolution-deadline market-data),
+              yes-reserve: new-yes-reserve,
+              no-reserve: new-no-reserve,
+              total-liquidity: new-total-liquidity,
+              accumulated-fees: u0, ;; Reset accumulated fees after liquidity removal
+              is-resolved: (get is-resolved market-data),
+              winning-outcome: (get winning-outcome market-data),
+              resolution-block: (get resolution-block market-data),
+              created-at: (get created-at market-data),
+              liquidity-parameter: (get liquidity-parameter market-data),
+            }
+          )
+
+          ;; Transfer USDC to caller
+          (try! (as-contract (contract-call? .usdcx transfer usdc-return tx-sender caller none)))
+
+          ;; Emit event
+          (print {
+            event: "liquidity-removed",
+            market-id: market-id,
+            provider: caller,
+            lp-amount: lp-amount,
+            usdc-returned: usdc-return,
+            yes-portion: yes-portion,
+            no-portion: no-portion,
+          })
+
+          ;; Return USDC amount
+          (ok usdc-return)
+        )
+      )
+    )
+  )
+)
+
 ;; ============================================================================
 ;; PUBLIC FUNCTIONS - Market Management
 ;; ============================================================================
