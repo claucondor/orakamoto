@@ -7,9 +7,11 @@ export const CONTRACTS = {
   USDCX_DEPLOYER: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
 
   // Contract names
-  // V2 uses stacks-block-height (Clarity 3) and includes guardian recovery mechanism
-  MULTI_MARKET_POOL: 'multi-market-pool-v2',
-  // @deprecated - Use multi-market-pool-v2 instead (block-height bug in Nakamoto)
+  // V3 uses pm-amm-core-v2, exponential fees (3% → 20%), and dynamic liquidity
+  MULTI_MARKET_POOL: 'multi-market-pool-v3',
+  // @deprecated - Use multi-market-pool-v3 instead
+  MULTI_MARKET_POOL_V2: 'multi-market-pool-v2',
+  // @deprecated - Use multi-market-pool-v3 instead (block-height bug in Nakamoto)
   MULTI_MARKET_POOL_V1: 'multi-market-pool',
   USDCX: 'usdcx',
   LP_TOKEN: 'sip013-lp-token',

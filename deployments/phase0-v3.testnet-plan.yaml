@@ -1,11 +1,11 @@
 ---
 id: 0
-name: Phase 0 V3 - Exponential Fees + Dynamic Liquidity + pm-AMM
+name: Phase 0 V3 - Binary Markets MVP
 network: testnet
 stacks-node: "https://api.testnet.hiro.so"
 bitcoin-node: "http://blockstack:blockstacksystem@bitcoind.testnet.stacks.co:18332"
 #
-# Phase 0 V3 - Production-Ready MVP
+# Phase 0 V3 - Binary Markets Only (YES/NO)
 #
 # Prerequisites (already deployed):
 # - ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC.sip013-semi-fungible-token-trait
@@ -17,7 +17,10 @@ bitcoin-node: "http://blockstack:blockstacksystem@bitcoind.testnet.stacks.co:183
 # - pm-AMM Gaussian invariant for LP protection
 # - Exponential time-based fees (3% → 20%)
 # - Dynamic liquidity: L(t) = L0 × sqrt((T-t)/T)
-# - Fixed ArithmeticUnderflow in pm-amm-core
+# - Fixed ArithmeticUnderflow in pm-amm-core-v2
+#
+# Note: market-factory-v3 and market-fork-v2 NOT included
+#       (they require multi-outcome-pool-v2 which is NOT in Phase 0)
 #
 # Before deploying, run:
 #   ./scripts/deploy-phase0-v3-testnet.sh
@@ -51,21 +54,3 @@ plan:
             clarity-version: 3
       epoch: "3.0"
 
-    # Batch 2: Factory and Fork Contracts
-    - id: 2
-      transactions:
-        - contract-publish:
-            contract-name: market-factory-v3
-            expected-sender: ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC
-            cost: 90000
-            path: contracts/market-factory-v3.clar
-            anchor-block-only: true
-            clarity-version: 3
-        - contract-publish:
-            contract-name: market-fork-v2
-            expected-sender: ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC
-            cost: 85000
-            path: contracts/market-fork-v2.clar
-            anchor-block-only: true
-            clarity-version: 3
-      epoch: "3.0"

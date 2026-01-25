@@ -87,8 +87,8 @@ export default function Home() {
                 <p className="text-sm text-text-muted">Markets</p>
               </div>
               <div>
-                <p className="text-3xl font-bold text-brand-secondary">1%</p>
-                <p className="text-sm text-text-muted">Trading Fee</p>
+                <p className="text-3xl font-bold text-brand-secondary">3-20%</p>
+                <p className="text-sm text-text-muted">Exponential Fees</p>
               </div>
               <div>
                 <p className="text-3xl font-bold text-yes">AI</p>

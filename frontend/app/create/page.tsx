@@ -206,7 +206,7 @@ export default function CreateMarketPage() {
         <div className="card">
           <h1 className="text-2xl font-bold mb-2">Create Prediction Market</h1>
           <p className="text-text-muted mb-8">
-            Create a new market for others to trade on. You'll earn 10% of all trading fees.
+            Create a new binary (YES/NO) market. You'll earn 10% of all trading fees (3% → 20% exponential).
           </p>
 
           {/* Question Input */}
