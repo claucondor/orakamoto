@@ -5,8 +5,6 @@ set -e
 
 CONTRACTS=(
   "contracts/multi-market-pool-v3.clar"
-  "contracts/market-factory-v3.clar"
-  "contracts/market-fork-v2.clar"
 )
 
 echo "Restoring Phase 0 V3 contracts from backups..."
