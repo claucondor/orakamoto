@@ -187,7 +187,7 @@
 
     (let
       (
-        (result (contract-call? .multi-market-pool create-market question deadline res-deadline initial-liquidity))
+        (result (contract-call? .multi-market-pool-v3 create-market question deadline res-deadline initial-liquidity))
         (market-id (unwrap! result ERR-MARKET-NOT-FOUND))
       )
       ;; Validate tags inline using if statements
@@ -239,7 +239,7 @@
           tags: tags,
           featured: false,
           active: true,
-          created-at: block-height,
+          created-at: stacks-block-height,
         }
       )
 
@@ -346,7 +346,7 @@
           tags: tags,
           featured: false,
           active: true,
-          created-at: block-height,
+          created-at: stacks-block-height,
         }
       )
 

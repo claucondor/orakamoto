@@ -241,7 +241,7 @@
           fork-a-market-id: fork-a-market-id,
           fork-b-market-id: fork-b-market-id,
           initiated-by: caller,
-          initiated-at: block-height,
+          initiated-at: stacks-block-height,
           settled-at: none,
           canonical-fork: none,
           total-liquidity-a: u0,
@@ -264,8 +264,8 @@
           fork-a-market-id: fork-a-market-id,
           fork-b-market-id: fork-b-market-id,
           initiated-by: caller,
-          initiated-at: block-height,
-          settlement-end: (+ block-height FORK-SETTLEMENT-PERIOD),
+          initiated-at: stacks-block-height,
+          settlement-end: (+ stacks-block-height FORK-SETTLEMENT-PERIOD),
           disputed-liquidity: disputed-liquidity,
           total-liquidity: total-liquidity,
           original-resolution: original-resolution,
@@ -311,9 +311,9 @@
         ;; Binary pool migration
         (let
           (
-            (lp-balance (unwrap! (contract-call? .multi-market-pool get-lp-balance original-market-id caller) ERR-NO-POSITION-FOUND))
-            (outcome-0 (unwrap-panic (contract-call? .multi-market-pool get-outcome-balance original-market-id caller u0)))
-            (outcome-1 (unwrap-panic (contract-call? .multi-market-pool get-outcome-balance original-market-id caller u1)))
+            (lp-balance (unwrap! (contract-call? .multi-market-pool-v3 get-lp-balance original-market-id caller) ERR-NO-POSITION-FOUND))
+            (outcome-0 (unwrap-panic (contract-call? .multi-market-pool-v3 get-outcome-balance original-market-id caller u0)))
+            (outcome-1 (unwrap-panic (contract-call? .multi-market-pool-v3 get-outcome-balance original-market-id caller u1)))
             (outcome-balances (list outcome-0 outcome-1 u0 u0 u0 u0 u0 u0 u0 u0))
             (total-position (+ lp-balance outcome-0 outcome-1))
           )
@@ -327,7 +327,7 @@
               lp-balance: lp-balance,
               outcome-balances: outcome-balances,
               migrated-to: (some fork-choice),
-              migrated-at: (some block-height)
+              migrated-at: (some stacks-block-height)
             }
           )
 
@@ -376,7 +376,7 @@
               lp-balance: lp-balance,
               outcome-balances: outcome-balances,
               total-position: total-position,
-              block-height: block-height
+              stacks-block-height: stacks-block-height
             }
           )
 
@@ -409,7 +409,7 @@
               lp-balance: lp-balance,
               outcome-balances: outcome-balances,
               migrated-to: (some fork-choice),
-              migrated-at: (some block-height)
+              migrated-at: (some stacks-block-height)
             }
           )
 
@@ -458,7 +458,7 @@
               lp-balance: lp-balance,
               outcome-balances: outcome-balances,
               total-position: total-position,
-              block-height: block-height
+              stacks-block-height: stacks-block-height
             }
           )
 
@@ -478,7 +478,7 @@
       (settlement-end (+ (get initiated-at fork-state) FORK-SETTLEMENT-PERIOD))
     )
     ;; Check if settlement period has ended
-    (asserts! (>= block-height settlement-end) ERR-FORK-NOT-SETTLED)
+    (asserts! (>= stacks-block-height settlement-end) ERR-FORK-NOT-SETTLED)
 
     ;; Check if already settled
     (asserts! (is-none (get settled-at fork-state)) ERR-FORK-NOT-SETTLED)
@@ -499,7 +499,7 @@
         fork-id
         (merge fork-state
           {
-            settled-at: (some block-height),
+            settled-at: (some stacks-block-height),
             canonical-fork: (some canonical-fork)
           }
         )
@@ -509,7 +509,7 @@
         {
           event: "fork-settled",
           fork-id: fork-id,
-          settled-at: block-height,
+          settled-at: stacks-block-height,
           canonical-fork: canonical-fork,
           total-liquidity-a: total-a,
           total-liquidity-b: total-b,
