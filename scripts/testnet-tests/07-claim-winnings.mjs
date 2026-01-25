@@ -33,7 +33,7 @@ async function main() {
   // Build transaction
   const txOptions = {
     contractAddress: DEPLOYER,
-    contractName: 'multi-market-pool-v2',
+    contractName: 'multi-market-pool-v3',
     functionName: 'claim',
     functionArgs: [
       uintCV(marketId),

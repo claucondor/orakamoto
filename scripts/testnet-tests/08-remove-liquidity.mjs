@@ -101,7 +101,7 @@ async function main() {
   // Build transaction to remove all liquidity
   const txOptions = {
     contractAddress: DEPLOYER,
-    contractName: 'multi-market-pool-v2',
+    contractName: 'multi-market-pool-v3',
     functionName: 'remove-liquidity',
     functionArgs: [
       uintCV(marketId),

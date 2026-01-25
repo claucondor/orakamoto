@@ -70,7 +70,7 @@ async function main() {
 
   // Get prices
   console.log('--- Prices ---');
-  const pricesResult = await callReadOnly('multi-market-pool-v2', 'get-prices', [marketIdArg]);
+  const pricesResult = await callReadOnly('multi-market-pool-v3', 'get-prices', [marketIdArg]);
   const yesPrice = extractUint(pricesResult, 'yes-price');
   const noPrice = extractUint(pricesResult, 'no-price');
   const totalLiq = extractUint(pricesResult, 'total-liquidity');
@@ -84,7 +84,7 @@ async function main() {
 
   // Get reserves
   console.log('--- Reserves ---');
-  const reservesResult = await callReadOnly('multi-market-pool-v2', 'get-reserves', [marketIdArg]);
+  const reservesResult = await callReadOnly('multi-market-pool-v3', 'get-reserves', [marketIdArg]);
   const yesReserve = extractUint(reservesResult, 'yes-reserve');
   const noReserve = extractUint(reservesResult, 'no-reserve');
 
@@ -96,7 +96,7 @@ async function main() {
 
   // Get market info
   console.log('--- Market Info ---');
-  const marketResult = await callReadOnly('multi-market-pool-v2', 'get-market', [marketIdArg]);
+  const marketResult = await callReadOnly('multi-market-pool-v3', 'get-market', [marketIdArg]);
   const deadline = extractUint(marketResult, 'deadline');
   const isResolved = marketResult.includes('69732d7265736f6c76656404'); // is-resolved + false
 
@@ -109,7 +109,7 @@ async function main() {
 
   // Check if market is active
   console.log('--- Status ---');
-  const activeResult = await callReadOnly('multi-market-pool-v2', 'is-market-active', [marketIdArg]);
+  const activeResult = await callReadOnly('multi-market-pool-v3', 'is-market-active', [marketIdArg]);
   const isActive = activeResult === '0x0703'; // (ok true)
   console.log(`Market active: ${isActive}`);
 
