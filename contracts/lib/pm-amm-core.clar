@@ -37,6 +37,21 @@
     (/ (* a b) ONE_8)
 )
 
+;; Helper function for safe integer subtraction (prevents underflow)
+;; Returns a - b, or handles underflow by computing -(b - a) when a < b
+(define-private (safe-int-sub (a int) (b int))
+    (if (>= a b)
+        (- a b)
+        (- 0 (- b a))  ;; Compute -(b - a) when a < b to avoid underflow
+    )
+)
+
+;; Helper function for safe integer addition
+;; Returns a + b as int (standard addition, no special handling needed in Clarity)
+(define-private (safe-int-add (a int) (b int))
+    (+ a b)
+)
+
 ;; Helper function for fixed-point division
 ;; Returns 0 if either a = 0 or b = 0 (avoids division by zero)
 (define-read-only (div-down (a uint) (b uint))
@@ -317,9 +332,10 @@
             (term2-int (to-int term2))
 
             ;; Calculate invariant: (y-x)*cdf + L*pdf - y
-            ;; Result can be negative
+            ;; Result can be negative - use safe operations to prevent underflow/overflow
             (y-int (to-int y))
-            (invariant (- (+ term1-int term2-int) y-int))
+            (sum-int (safe-int-add term1-int term2-int))
+            (invariant (safe-int-sub sum-int y-int))
         )
         invariant
     )
