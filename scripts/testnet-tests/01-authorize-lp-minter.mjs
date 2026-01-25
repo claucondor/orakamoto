@@ -3,6 +3,10 @@
  *
  * This is REQUIRED before creating any markets.
  * Only needs to be run once after deployment.
+ *
+ * Usage:
+ *   node 01-authorize-lp-minter.mjs          # Authorize v3
+ *   node 01-authorize-lp-minter.mjs v3.1     # Authorize v3.1
  */
 import {
   makeContractCall,
@@ -14,8 +18,14 @@ import { generateWallet } from '@stacks/wallet-sdk';
 import { DEPLOYER, MNEMONIC, NETWORK, CONTRACTS, waitForTx } from './config.mjs';
 
 async function main() {
+  // Check if we should use v3.1
+  const useV3_1 = process.argv[2] === 'v3.1';
+
+  const lpTokenContract = useV3_1 ? 'sip013-lp-token-v1-1' : 'sip013-lp-token';
+  const poolContract = useV3_1 ? CONTRACTS.poolV3_1 : CONTRACTS.pool;
+
   console.log('===========================================');
-  console.log('Step 1: Authorize LP Token Minter');
+  console.log(`Step 1: Authorize LP Token Minter (${useV3_1 ? 'V3.1' : 'V3'})`);
   console.log('===========================================\n');
 
   // Generate wallet from mnemonic
@@ -24,16 +34,16 @@ async function main() {
   const privateKey = account.stxPrivateKey;
 
   console.log('Deployer:', DEPLOYER);
-  console.log('LP Token:', CONTRACTS.lpToken);
-  console.log('Pool:', CONTRACTS.pool);
+  console.log('LP Token:', `${DEPLOYER}.${lpTokenContract}`);
+  console.log('Pool:', poolContract);
   console.log('');
 
   // Build transaction
   const txOptions = {
     contractAddress: DEPLOYER,
-    contractName: 'sip013-lp-token',
+    contractName: lpTokenContract,
     functionName: 'set-authorized-minter',
-    functionArgs: [principalCV(CONTRACTS.pool)],
+    functionArgs: [principalCV(poolContract)],
     senderKey: privateKey,
     network: NETWORK,
     postConditionMode: PostConditionMode.Allow,

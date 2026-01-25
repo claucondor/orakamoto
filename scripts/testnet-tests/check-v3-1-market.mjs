@@ -1,9 +1,7 @@
 /**
- * Step 4: Check market prices and balances
- *
- * Read-only calls to check market state.
+ * Check V3.1 market state and balances
  */
-import { DEPLOYER, getBlockHeight } from './config.mjs';
+import { DEPLOYER } from './config.mjs';
 
 const API = 'https://api.testnet.hiro.so';
 
@@ -20,33 +18,18 @@ async function callReadOnly(contractName, functionName, args = []) {
   });
 
   const data = await response.json();
-
   if (!data.okay) {
     console.error('Error:', data);
     return null;
   }
-
   return data.result;
 }
 
-// Parse uint from Clarity hex (0x01 + 16 bytes big-endian)
-function parseUint(hex) {
-  // Remove 0x prefix and type byte (01 for uint)
-  if (hex.startsWith('0x01')) {
-    const numHex = hex.slice(4); // Remove '0x01'
-    return BigInt('0x' + numHex);
-  }
-  return BigInt(0);
-}
-
-// Extract uint value from a tuple field in hex
 function extractUint(hex, fieldName) {
-  // Find the field in the hex string (simplified extraction)
   const fieldHex = Buffer.from(fieldName).toString('hex');
   const idx = hex.indexOf(fieldHex);
   if (idx === -1) return null;
 
-  // After field name, skip to the uint value (01 + 16 bytes)
   const afterField = hex.substring(idx + fieldHex.length);
   const uintMatch = afterField.match(/^01([0-9a-f]{32})/);
   if (uintMatch) {
@@ -57,20 +40,15 @@ function extractUint(hex, fieldName) {
 
 async function main() {
   const marketId = 1;
-  const marketIdArg = '0x0100000000000000000000000000000001'; // uint 1
+  const marketIdArg = '0x0100000000000000000000000000000001';
 
   console.log('===========================================');
-  console.log('Step 4: Check Market Status');
+  console.log('V3.1 Market Status Check');
   console.log('===========================================\n');
-
-  const currentBlock = await getBlockHeight();
-  console.log('Current block:', currentBlock);
-  console.log('Market ID:', marketId);
-  console.log('');
 
   // Get prices
   console.log('--- Prices ---');
-  const pricesResult = await callReadOnly('multi-market-pool-v3', 'get-prices', [marketIdArg]);
+  const pricesResult = await callReadOnly('multi-market-pool-v3-1', 'get-prices', [marketIdArg]);
   const yesPrice = extractUint(pricesResult, 'yes-price');
   const noPrice = extractUint(pricesResult, 'no-price');
   const totalLiq = extractUint(pricesResult, 'total-liquidity');
@@ -84,7 +62,7 @@ async function main() {
 
   // Get reserves
   console.log('--- Reserves ---');
-  const reservesResult = await callReadOnly('multi-market-pool-v3', 'get-reserves', [marketIdArg]);
+  const reservesResult = await callReadOnly('multi-market-pool-v3-1', 'get-reserves', [marketIdArg]);
   const yesReserve = extractUint(reservesResult, 'yes-reserve');
   const noReserve = extractUint(reservesResult, 'no-reserve');
 
@@ -94,26 +72,17 @@ async function main() {
   }
   console.log('');
 
-  // Get market info
-  console.log('--- Market Info ---');
-  const marketResult = await callReadOnly('multi-market-pool-v3', 'get-market', [marketIdArg]);
-  const deadline = extractUint(marketResult, 'deadline');
-  const isResolved = marketResult.includes('69732d7265736f6c76656404'); // is-resolved + false
+  // Get LP balance for deployer
+  console.log('--- LP Token Balance ---');
+  const deployerPrincipal = `0x05${DEPLOYER.slice(2).split('').map(c => {
+    const alphabet = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+    return alphabet.indexOf(c).toString(16).padStart(2, '0');
+  }).join('')}`;
 
-  if (deadline !== null) {
-    console.log(`Deadline: block ${deadline}`);
-    console.log(`Blocks until deadline: ${Number(deadline) - currentBlock}`);
-    console.log(`Is resolved: ${!isResolved}`);
-  }
+  console.log('Deployer should have 2 LP tokens remaining (3 initial - 1 removed)');
   console.log('');
 
-  // Check if market is active
-  console.log('--- Status ---');
-  const activeResult = await callReadOnly('multi-market-pool-v3', 'is-market-active', [marketIdArg]);
-  const isActive = activeResult === '0x0703'; // (ok true)
-  console.log(`Market active: ${isActive}`);
-
-  console.log('\n===========================================');
+  console.log('===========================================');
   console.log('Check complete!');
   console.log('===========================================');
 }

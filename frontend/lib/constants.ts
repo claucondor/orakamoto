@@ -7,14 +7,19 @@ export const CONTRACTS = {
   USDCX_DEPLOYER: 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM',
 
   // Contract names
-  // V3 uses pm-amm-core-v2, exponential fees (3% → 20%), and dynamic liquidity
-  MULTI_MARKET_POOL: 'multi-market-pool-v3',
-  // @deprecated - Use multi-market-pool-v3 instead
+  // V3.1 uses dedicated sip013-lp-token-v1-1 (fixes LP accounting issues from v2/v3 conflicts)
+  MULTI_MARKET_POOL: 'multi-market-pool-v3-1',
+  // @deprecated - V3 has LP token accounting issues (shares sip013-lp-token with v2)
+  MULTI_MARKET_POOL_V3: 'multi-market-pool-v3',
+  // @deprecated - Use multi-market-pool-v3-1 instead
   MULTI_MARKET_POOL_V2: 'multi-market-pool-v2',
-  // @deprecated - Use multi-market-pool-v3 instead (block-height bug in Nakamoto)
+  // @deprecated - Use multi-market-pool-v3-1 instead (block-height bug in Nakamoto)
   MULTI_MARKET_POOL_V1: 'multi-market-pool',
   USDCX: 'usdcx',
-  LP_TOKEN: 'sip013-lp-token',
+  // V1.1 dedicated LP token for v3.1 (no conflicts with v2/v3)
+  LP_TOKEN: 'sip013-lp-token-v1-1',
+  // @deprecated - Shared by v2/v3, has accounting conflicts
+  LP_TOKEN_V1: 'sip013-lp-token',
 
   // Full contract identifiers
   get POOL_CONTRACT() {

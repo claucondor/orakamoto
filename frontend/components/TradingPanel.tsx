@@ -43,19 +43,47 @@ export default function TradingPanel({ market, onTradeComplete }: TradingPanelPr
   const amountValue = parseFloat(amount) || 0;
   const amountInMicro = parseTokenAmount(amountValue);
 
-  // Rough estimate: tokens = amount / price
-  // Price is in 6 decimals (1000000 = 100%)
-  const currentPrice = outcome === 'yes' ? prices?.yesPrice : prices?.noPrice;
-  const estimatedTokens = currentPrice && currentPrice > 0
-    ? (amountValue * 1000000) / currentPrice
-    : 0;
+  // Simple approximation using constant product formula (x * y = k)
+  // More accurate than price-based, accounts for slippage
+  const calculateApproximateTokens = () => {
+    if (amountValue <= 0 || !market) return 0;
 
-  // Calculate min tokens with slippage
-  const minTokensOut = Math.floor(estimatedTokens * (1 - slippage / 100));
+    // Get reserves for the outcome we're buying
+    const yesReserve = Number(market.yesReserve);
+    const noReserve = Number(market.noReserve);
 
-  // Fee calculation (1% trading fee)
-  const fee = amountValue * 0.01;
-  const netAmount = amountValue - fee;
+    // Amount after 3% minimum fee
+    const amountAfterFee = amountValue * 0.97;
+    const amountAfterFeeMicro = amountAfterFee * 1000000;
+
+    // Constant product: (x + dx) * (y - dy) = x * y
+    // Solving for dy (tokens out)
+    if (outcome === 'yes') {
+      // Buying YES: add to NO reserve, remove from YES reserve
+      const newNoReserve = noReserve + amountAfterFeeMicro;
+      const k = yesReserve * noReserve;
+      const newYesReserve = k / newNoReserve;
+      const tokensOut = yesReserve - newYesReserve;
+      return tokensOut / 1000000; // Convert to tokens
+    } else {
+      // Buying NO: add to YES reserve, remove from NO reserve
+      const newYesReserve = yesReserve + amountAfterFeeMicro;
+      const k = yesReserve * noReserve;
+      const newNoReserve = k / newYesReserve;
+      const tokensOut = noReserve - newNoReserve;
+      return tokensOut / 1000000; // Convert to tokens
+    }
+  };
+
+  const estimatedTokens = calculateApproximateTokens();
+  const calculatedFee = amountValue * 0.03; // Conservative 3% minimum
+
+  // Calculate min tokens with slippage (in micro-tokens for contract)
+  const minTokensOutMicro = Math.floor(estimatedTokens * 1000000 * (1 - slippage / 100));
+
+  // Check if trade is too large relative to liquidity
+  const tradePercentage = (Number(amountInMicro) / Number(market.totalLiquidity)) * 100;
+  const isLargeTrade = tradePercentage > 10;
 
   const handleTrade = async () => {
     if (!isConnected || !address) {
@@ -73,6 +101,18 @@ export default function TradingPanel({ market, onTradeComplete }: TradingPanelPr
       return;
     }
 
+    // Warn about very low liquidity
+    if (Number(market.totalLiquidity) < 5_000_000n) {
+      setError('Market has very low liquidity (< $5). Trades may fail due to slippage.');
+      return;
+    }
+
+    // Block trades that are too large (prevent catastrophic slippage)
+    if (tradePercentage > 50) {
+      setError(`Trade too large (${tradePercentage.toFixed(0)}% of liquidity). Max 50%. Add liquidity first.`);
+      return;
+    }
+
     setError(null);
     setIsSubmitting(true);
 
@@ -86,7 +126,7 @@ export default function TradingPanel({ market, onTradeComplete }: TradingPanelPr
           uintCV(market.marketId),
           uintCV(outcome === 'yes' ? 0 : 1), // 0 = YES, 1 = NO
           uintCV(Number(amountInMicro)),
-          uintCV(minTokensOut > 0 ? Math.floor(minTokensOut * 1000000) : 0),
+          uintCV(minTokensOutMicro), // Already in micro-tokens
         ],
         postConditionMode: PostConditionMode.Allow,
         onFinish: (data) => {
@@ -200,6 +240,20 @@ export default function TradingPanel({ market, onTradeComplete }: TradingPanelPr
         </div>
       </div>
 
+      {/* Liquidity Warning */}
+      {isLargeTrade && amountValue > 0 && (
+        <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-start gap-2 text-yellow-500 text-sm">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold">High Slippage Warning</p>
+            <p className="text-xs mt-1 text-yellow-500/80">
+              You're buying {tradePercentage.toFixed(1)}% of total liquidity (${formatTokenAmount(market.totalLiquidity)}).
+              Expect significant price impact. Consider adding liquidity first or reducing trade size.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Trade Summary */}
       {amountValue > 0 && (
         <div className="mb-6 p-4 bg-dark-hover rounded-lg space-y-2">
@@ -208,19 +262,23 @@ export default function TradingPanel({ market, onTradeComplete }: TradingPanelPr
             <span>${amountValue.toFixed(2)} USDCx</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Trading fee (1%)</span>
-            <span className="text-text-muted">-${fee.toFixed(2)}</span>
+            <span className="text-text-muted">Trading fee (~3%+)</span>
+            <span className="text-text-muted">~${calculatedFee.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-text-muted">Market liquidity</span>
+            <span className="text-text-muted">${formatTokenAmount(market.totalLiquidity)}</span>
           </div>
           <div className="flex justify-between text-sm pt-2 border-t border-dark-border">
             <span className="text-text-muted">Est. tokens received</span>
             <span className={outcome === 'yes' ? 'text-yes' : 'text-no'}>
-              ~{estimatedTokens.toFixed(2)} {outcome.toUpperCase()}
+              ~{estimatedTokens.toFixed(4)} {outcome.toUpperCase()}
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Min. tokens (slippage)</span>
+            <span className="text-text-muted">Min. tokens ({slippage}% slippage)</span>
             <span className="text-text-muted">
-              {minTokensOut.toFixed(2)} {outcome.toUpperCase()}
+              {(minTokensOutMicro / 1000000).toFixed(4)} {outcome.toUpperCase()}
             </span>
           </div>
         </div>

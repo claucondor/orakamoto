@@ -231,10 +231,85 @@ Layer 5: Fork (Phase 7)
 
 ---
 
+## Phase 0.5: Market Quality Improvements (PRIORITY)
+
+**Status:** Planned for immediate deployment
+
+### Problem Identified
+Phase 0 markets can launch with only 1 USDC minimum liquidity, causing:
+- Markets too illiquid to trade
+- High slippage on small trades
+- Poor user experience
+- Spam markets
+
+### Immediate Fixes (Quick Wins)
+
+#### 1. Increase Minimum Liquidity
+- Change `MINIMUM-INITIAL-LIQUIDITY` from 1 → **10 USDC**
+- Deploy as `multi-market-pool-v3-2`
+- Frontend already has warnings for <$5 liquidity
+
+#### 2. Market Proposals & Crowdfunding (Hybrid Model)
+
+**Inspired by:** Compound Governance + Kickstarter
+
+**Phase A: Proposal**
+```clarity
+- Stake 10 USDC to propose market
+- Community votes (quorum: 100 votes)
+- If rejected: stake → treasury
+- If approved: → crowdfunding
+```
+
+**Phase B: Liquidity Crowdfunding**
+```clarity
+- Target: 100 USDC minimum
+- Duration: 7 days
+- LPs pre-commit funds
+- If fails: automatic refund
+- If succeeds: market launches
+```
+
+**Incentive Structure:**
+- Proposer: 10% of all market fees
+- Early LPs (48hr): 2x rewards
+- Protocol: Never funds markets
+
+**Benefits:**
+- ✅ Filters spam markets
+- ✅ Guarantees tradeable liquidity
+- ✅ Community-driven curation
+- ✅ Aligns incentives
+
+**New Contracts Needed:**
+- `market-proposal.clar` - Proposal voting
+- `liquidity-crowdfund.clar` - LP bootstrapping
+- Integration with `market-factory-v3`
+
+**Similar Protocols:**
+- Polymarket: Professional market makers (centralized)
+- Augur: Permissionless but 90% illiquid markets
+- Kalshi: Pre-approved events only
+- **Ours**: Hybrid decentralized curation + crowdfunding
+
+#### 3. Liquidity Mining Incentives
+- Governance token rewards for LPs
+- Higher APY for new markets
+- Time-locked staking bonuses
+
+### Timeline
+- **Week 1**: Deploy v3-2 with 10 USDC minimum
+- **Week 2-4**: Design proposal system
+- **Week 5-8**: Implement crowdfunding
+- **Week 9**: Launch on testnet
+- **Week 10-12**: Test and iterate
+
+---
+
 ## Security Milestones
 
-- [ ] Internal testing (devnet)
-- [ ] Testnet deployment
+- [x] Internal testing (devnet) - Phase 0
+- [x] Testnet deployment - Phase 0 (v3-1)
 - [ ] Security audit
 - [ ] Bug bounty program
 - [ ] Mainnet launch

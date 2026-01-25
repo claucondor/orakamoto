@@ -1,28 +1,21 @@
-import * as P from 'micro-packed';
-import { hex } from '@scure/base';
 import { pad, toHex, type Hex } from 'viem';
 
 // Stacks address encoding for xReserve
-export const remoteRecipientCoder = P.wrap<string>({
-  encodeStream(w: P.Writer, value: string) {
-    // Parse Stacks address
-    const version = value.startsWith('ST') ? 26 : 22; // testnet vs mainnet
-    const addressBody = value.slice(2); // Remove ST/SP prefix
+function encodeStacksAddress(address: string): Uint8Array {
+  // Parse Stacks address
+  const version = address.startsWith('ST') ? 26 : 22; // testnet vs mainnet
+  const addressBody = address.slice(2); // Remove ST/SP prefix
 
-    // Decode c32 to get hash160
-    const hash160 = c32ToHash160(addressBody);
+  // Decode c32 to get hash160
+  const hash160 = c32ToHash160(addressBody);
 
-    P.bytes(11).encodeStream(w, new Uint8Array(11).fill(0));
-    P.U8.encodeStream(w, version);
-    P.bytes(20).encodeStream(w, hash160);
-  },
-  decodeStream(r: P.Reader) {
-    P.bytes(11).decodeStream(r);
-    const version = P.U8.decodeStream(r);
-    const hash = P.bytes(20).decodeStream(r);
-    return ''; // Not needed for encoding
-  },
-});
+  // Build 32-byte array: 11 zero bytes + 1 version byte + 20 hash bytes
+  const result = new Uint8Array(32);
+  result[11] = version;
+  result.set(hash160, 12);
+
+  return result;
+}
 
 // C32 alphabet
 const C32_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -57,11 +50,12 @@ function c32ToHash160(c32Address: string): Uint8Array {
 }
 
 export function bytes32FromBytes(bytes: Uint8Array): Hex {
-  return toHex(pad(bytes, { size: 32 }));
+  return toHex(bytes);
 }
 
 export function encodeStacksRecipient(stacksAddress: string): Hex {
-  return bytes32FromBytes(remoteRecipientCoder.encode(stacksAddress));
+  const encoded = encodeStacksAddress(stacksAddress);
+  return bytes32FromBytes(encoded);
 }
 
 // Contract addresses

@@ -1,5 +1,6 @@
 **/settings/Mainnet.toml
 **/settings/Testnet.toml
+**/settings/Devnet.toml
 .cache/**
 history.txt
 SESSION-CONTEXT.md
@@ -26,3 +27,21 @@ docs/LP-PROTECTION-RESEARCH.md
 frontend/.next/
 frontend/out/
 frontend/.env*.local
+
+# SECURITY: Environment files with secrets
+.env
+.env.*
+!.env.example
+
+# SECURITY: Wallet configuration files
+wallets-*.json
+*-wallet.json
+*-wallets.json
+keys.json
+*.key
+*.pem
+*.p12
+
+# SECURITY: Any file with private keys or mnemonics
+**/private-keys/**
+**/secrets/**

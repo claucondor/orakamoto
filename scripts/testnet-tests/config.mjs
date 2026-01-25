@@ -21,12 +21,24 @@ export const NETWORK = STACKS_TESTNET;
 export const USDCX = 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx';
 
 // Contract references
+// NOTE: Use V3_1 contracts to avoid LP token accounting issues from v2/v3 sharing same LP token
 export const CONTRACTS = {
+  // V3 (original - shares LP token with v2, has accounting issues)
   lpToken: `${DEPLOYER}.sip013-lp-token`,
-  pool: `${DEPLOYER}.multi-market-pool-v3`,  // V3 with exponential fees + dynamic liquidity
+  pool: `${DEPLOYER}.multi-market-pool-v3`,
+
+  // V3.1 (dedicated LP token - recommended for new markets)
+  lpTokenV3_1: `${DEPLOYER}.sip013-lp-token-v1-1`,
+  poolV3_1: `${DEPLOYER}.multi-market-pool-v3-1`,
+
+  // Shared dependencies
   mathFixedPoint: `${DEPLOYER}.math-fixed-point`,
-  pmAmmCore: `${DEPLOYER}.pm-amm-core-v2`,  // V2 with safe-int-add fix
+  pmAmmCore: `${DEPLOYER}.pm-amm-core-v2`,
 };
+
+// Default to V3.1 for new scripts (change this to switch versions)
+export const POOL_CONTRACT = CONTRACTS.poolV3_1;
+export const LP_TOKEN_CONTRACT = CONTRACTS.lpTokenV3_1;
 
 // Helper to wait for transaction confirmation
 export async function waitForTx(txId, maxAttempts = 30) {

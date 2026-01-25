@@ -1,5 +1,9 @@
-;; Multi-Market Pool Contract V2 - Binary Prediction Markets
+;; Multi-Market Pool Contract V3.1 - Binary Prediction Markets
 ;; Implements pm-AMM (Prediction Market AMM) for multiple simultaneous markets
+;;
+;; VERSION 3.1 CHANGES:
+;; - Uses dedicated sip013-lp-token-v1-1 to avoid conflicts with v2 markets
+;; - Fixes LP token accounting issues from shared token contract
 ;;
 ;; VERSION 3 CHANGES:
 ;; - Fixed block-height to stacks-block-height for Clarity 3 Nakamoto compatibility
@@ -60,9 +64,9 @@
 ;; IMPORTANT: Contract References
 ;; ============================================================================
 ;; DO NOT use constants for contract references - causes Unchecked(ContractCallExpectName)
-;; Use direct references in contract-call?: .usdcx, .sip013-lp-token, .pm-amm-core
+;; Use direct references in contract-call?: .usdcx, .sip013-lp-token-v1-1, .pm-amm-core
 ;;
-;; Simnet/Devnet: Use local contract references (.usdcx, .sip013-lp-token)
+;; Simnet/Devnet: Use local contract references (.usdcx, .sip013-lp-token-v1-1)
 ;; Testnet: Update to deployed principals
 ;; Mainnet: Update to deployed principals
 ;; ============================================================================
@@ -314,7 +318,7 @@
 ;; Get LP balance for a user in a market
 ;; Delegates to SIP-013 LP token contract
 (define-read-only (get-lp-balance (market-id uint) (owner principal))
-  (contract-call? .sip013-lp-token get-balance market-id owner)
+  (contract-call? .sip013-lp-token-v1-1 get-balance market-id owner)
 )
 
 ;; Get accumulated fees for a market
@@ -648,7 +652,7 @@
         )
 
         ;; Burn LP tokens from caller
-        (try! (contract-call? .sip013-lp-token burn market-id lp-amount caller))
+        (try! (contract-call? .sip013-lp-token-v1-1 burn market-id lp-amount caller))
 
         ;; Calculate new reserves after removal
         (let
@@ -799,7 +803,7 @@
       ;; Get user's LP balance
       (let
         (
-          (lp-balance-result (contract-call? .sip013-lp-token get-balance market-id caller))
+          (lp-balance-result (contract-call? .sip013-lp-token-v1-1 get-balance market-id caller))
           (lp-balance (unwrap! lp-balance-result ERR-INSUFFICIENT-BALANCE))
         )
 
@@ -821,7 +825,7 @@
           (map-set emergency-withdrawn { market-id: market-id, owner: caller } true)
 
           ;; Burn LP tokens from caller
-          (try! (contract-call? .sip013-lp-token burn market-id lp-balance caller))
+          (try! (contract-call? .sip013-lp-token-v1-1 burn market-id lp-balance caller))
 
           ;; Calculate new reserves after removal
           (let
@@ -953,7 +957,7 @@
         (map-set protocol-fees market-id u0)
 
         ;; Mint LP tokens to creator
-        (try! (contract-call? .sip013-lp-token mint market-id initial-liquidity caller))
+        (try! (contract-call? .sip013-lp-token-v1-1 mint market-id initial-liquidity caller))
 
         ;; Increment market count
         (var-set market-count market-id)
@@ -1041,7 +1045,7 @@
           )
 
           ;; Mint LP tokens to user
-          (try! (contract-call? .sip013-lp-token mint market-id lp-tokens caller))
+          (try! (contract-call? .sip013-lp-token-v1-1 mint market-id lp-tokens caller))
 
           ;; Emit event
           (print {

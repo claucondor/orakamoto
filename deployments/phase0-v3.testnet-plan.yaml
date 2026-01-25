@@ -30,20 +30,9 @@ bitcoin-node: "http://blockstack:blockstacksystem@bitcoind.testnet.stacks.co:183
 #
 plan:
   batches:
-    # Batch 0: Core Library V2 (with safe-int-add fix)
+    # Batch 0: Multi-Market Pool V3 (exponential fees + dynamic liquidity)
+    # Note: pm-amm-core-v2 already deployed
     - id: 0
-      transactions:
-        - contract-publish:
-            contract-name: pm-amm-core-v2
-            expected-sender: ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC
-            cost: 185000
-            path: contracts/lib/pm-amm-core-v2.clar
-            anchor-block-only: true
-            clarity-version: 2
-      epoch: "2.1"
-
-    # Batch 1: Multi-Market Pool V3 (exponential fees + dynamic liquidity)
-    - id: 1
       transactions:
         - contract-publish:
             contract-name: multi-market-pool-v3
