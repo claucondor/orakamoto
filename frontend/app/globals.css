@@ -2,6 +2,151 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-gray-50 text-gray-900;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@layer base {
+  :root {
+    --brand-primary: #F7931A;
+    --brand-secondary: #5546FF;
+    --brand-accent: #00D4AA;
+    --dark-bg: #0D0D0F;
+    --dark-card: #16161A;
+    --dark-border: #242429;
+    --dark-hover: #1E1E24;
+  }
+
+  * {
+    @apply border-dark-border;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-dark-bg text-white antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  /* Card component */
+  .card {
+    @apply bg-dark-card border border-dark-border rounded-xl p-6;
+  }
+
+  /* Button variants */
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-primary text-white hover:bg-brand-primary/90;
+  }
+
+  .btn-secondary {
+    @apply btn bg-brand-secondary text-white hover:bg-brand-secondary/90;
+  }
+
+  .btn-outline {
+    @apply btn border border-dark-border bg-transparent hover:bg-dark-hover;
+  }
+
+  .btn-yes {
+    @apply btn bg-yes/10 text-yes border border-yes/30 hover:bg-yes/20;
+  }
+
+  .btn-no {
+    @apply btn bg-no/10 text-no border border-no/30 hover:bg-no/20;
+  }
+
+  /* Input styles */
+  .input {
+    @apply w-full px-4 py-3 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-text-muted focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-colors;
+  }
+
+  /* Label styles */
+  .label {
+    @apply block text-sm font-medium text-text-secondary mb-2;
+  }
+
+  /* Price badge */
+  .price-badge {
+    @apply px-3 py-1 rounded-full text-sm font-semibold;
+  }
+
+  .price-badge-yes {
+    @apply price-badge bg-yes/10 text-yes;
+  }
+
+  .price-badge-no {
+    @apply price-badge bg-no/10 text-no;
+  }
+
+  /* Stat card */
+  .stat-card {
+    @apply flex flex-col items-center justify-center p-4 bg-dark-hover rounded-lg;
+  }
+
+  .stat-value {
+    @apply text-2xl font-bold text-white;
+  }
+
+  .stat-label {
+    @apply text-sm text-text-muted;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-primary to-brand-secondary bg-clip-text text-transparent;
+  }
+
+  /* Glow effect */
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(247, 147, 26, 0.3);
+  }
+
+  .glow-secondary {
+    box-shadow: 0 0 20px rgba(85, 70, 255, 0.3);
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--dark-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--dark-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dark-hover);
+}
+
+/* Selection styling */
+::selection {
+  background: rgba(247, 147, 26, 0.3);
+  color: white;
+}
+
+/* Animation for loading states */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  @apply bg-gradient-to-r from-dark-card via-dark-hover to-dark-card bg-[length:200%_100%];
+  animation: shimmer 1.5s infinite;
 }

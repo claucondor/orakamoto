@@ -19,9 +19,9 @@ const config = {
 
   // Stacks testnet
   STACKS_DOMAIN: 10003,
-  STACKS_RECIPIENT: "ST3TMC22Q2VGZA6T13TA5D1VMF3EW24R8J5G9ARFC", // Tu wallet de deployment
+  STACKS_RECIPIENT: "ST586FMJ5ZFHWCF3YSYVABAS9KRE9Y8QXB0HAVMT", // Nueva wallet del user
 
-  DEPOSIT_AMOUNT: "25.00", // 25 USDC - todo lo disponible
+  DEPOSIT_AMOUNT: "10.00", // 10 USDC
   MAX_FEE: "0",
 };
 

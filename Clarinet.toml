@@ -164,10 +164,24 @@ path = 'contracts/vote-escrow.clar'
 clarity_version = 2
 epoch = '2.1'
 
+# @deprecated - Use multi-market-pool-v2 instead (block-height bug)
 [contracts.multi-market-pool]
-path = 'contracts/multi-market-pool.clar'
+path = 'contracts/deprecated/multi-market-pool.clar'
 clarity_version = 2
 epoch = '2.1'
+
+# @deprecated - Use multi-market-pool-v3 instead (exponential fees, LP protection)
+[contracts.multi-market-pool-v2]
+path = 'contracts/deprecated/multi-market-pool-v2.clar'
+clarity_version = 3
+epoch = '3.0'
+depends_on = ['usdcx', 'sip013-lp-token', 'pm-amm-core']
+
+[contracts.multi-market-pool-v3]
+path = 'contracts/multi-market-pool-v3.clar'
+clarity_version = 3
+epoch = '3.0'
+depends_on = ['usdcx', 'sip013-lp-token', 'pm-amm-core']
 
 [contracts.yield-distributor]
 path = 'contracts/yield-distributor.clar'
@@ -187,15 +201,15 @@ epoch = '2.1'
 
 [contracts.market-factory-v3]
 path = 'contracts/market-factory-v3.clar'
-clarity_version = 2
-epoch = '2.1'
-depends_on = ['multi-market-pool', 'multi-outcome-pool-v2']
+clarity_version = 3
+epoch = '3.0'
+depends_on = ['multi-market-pool-v3', 'multi-outcome-pool-v2']
 
 [contracts.market-fork-v2]
 path = 'contracts/market-fork-v2.clar'
-clarity_version = 2
-epoch = '2.1'
-depends_on = ['multi-market-pool', 'multi-outcome-pool-v2', 'market-factory-v3']
+clarity_version = 3
+epoch = '3.0'
+depends_on = ['multi-market-pool-v3', 'multi-outcome-pool-v2', 'market-factory-v3']
 
 [contracts.math-fixed-point]
 path = 'contracts/lib/math-fixed-point.clar'
