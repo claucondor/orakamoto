@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { openContractCall } from '@stacks/connect';
-import { uintCV, boolCV } from '@stacks/transactions';
+import { uintCV, boolCV, PostConditionMode } from '@stacks/transactions';
 import { StacksTestnet } from '@stacks/network';
 import { useWalletStore, useTxStore } from '@/lib/store';
 import { CONTRACTS, formatTokenAmount, parseTokenAmount } from '@/lib/constants';
@@ -88,6 +88,7 @@ export default function TradingPanel({ market, onTradeComplete }: TradingPanelPr
           uintCV(Number(amountInMicro)),
           uintCV(minTokensOut > 0 ? Math.floor(minTokensOut * 1000000) : 0),
         ],
+        postConditionMode: PostConditionMode.Allow,
         onFinish: (data) => {
           setPendingTx(data.txId);
           setTxSuccess(`Bought ${outcome.toUpperCase()} tokens!`);

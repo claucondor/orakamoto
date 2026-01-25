@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { openContractCall } from '@stacks/connect';
-import { uintCV } from '@stacks/transactions';
+import { uintCV, PostConditionMode } from '@stacks/transactions';
 import { StacksTestnet } from '@stacks/network';
 import { useWalletStore, useTxStore } from '@/lib/store';
 import { CONTRACTS, formatTokenAmount } from '@/lib/constants';
@@ -59,6 +59,7 @@ export default function UserPositions({ market }: UserPositionsProps) {
         contractName: CONTRACTS.MULTI_MARKET_POOL,
         functionName: 'claim',
         functionArgs: [uintCV(market.marketId)],
+        postConditionMode: PostConditionMode.Allow,
         onFinish: (data) => {
           setPendingTx(data.txId);
           setTxSuccess('Winnings claimed successfully!');

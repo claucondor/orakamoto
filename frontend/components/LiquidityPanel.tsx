@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { openContractCall } from '@stacks/connect';
-import { uintCV } from '@stacks/transactions';
+import { uintCV, PostConditionMode } from '@stacks/transactions';
 import { StacksTestnet } from '@stacks/network';
 import { useWalletStore, useTxStore } from '@/lib/store';
 import { CONTRACTS, formatTokenAmount, parseTokenAmount } from '@/lib/constants';
@@ -58,6 +58,7 @@ export default function LiquidityPanel({ market, position, onActionComplete }: L
           uintCV(market.marketId),
           uintCV(Number(amountInMicro)),
         ],
+        postConditionMode: PostConditionMode.Allow,
         onFinish: (data) => {
           setPendingTx(data.txId);
           setTxSuccess('Liquidity added successfully!');
@@ -105,6 +106,7 @@ export default function LiquidityPanel({ market, position, onActionComplete }: L
           uintCV(market.marketId),
           uintCV(Number(amountInMicro)),
         ],
+        postConditionMode: PostConditionMode.Allow,
         onFinish: (data) => {
           setPendingTx(data.txId);
           setTxSuccess('Liquidity removed successfully!');

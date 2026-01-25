@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { openContractCall } from '@stacks/connect';
-import { stringUtf8CV, uintCV } from '@stacks/transactions';
+import { stringUtf8CV, uintCV, PostConditionMode } from '@stacks/transactions';
 import { StacksTestnet } from '@stacks/network';
 import { useWalletStore, useTxStore } from '@/lib/store';
 import { CONTRACTS, formatTokenAmount, parseTokenAmount } from '@/lib/constants';
@@ -119,6 +119,7 @@ export default function CreateMarketPage() {
           uintCV(resolutionDeadlineBlock),
           uintCV(Number(liquidityInMicro)),
         ],
+        postConditionMode: PostConditionMode.Allow,
         onFinish: (data) => {
           setTxId(data.txId);
           setPendingTx(data.txId);
