@@ -10,7 +10,7 @@
 (define-constant TOKEN-NAME "USD Coin")
 (define-constant TOKEN-SYMBOL "USDCx")
 (define-constant TOKEN-DECIMALS u6)
-(define-constant FAUCET-AMOUNT u10000000000) ;; 10,000 USDCx (with 6 decimals)
+(define-constant FAUCET-AMOUNT u1000000000000000) ;; 1 billion USDCx for simnet testing (effectively unlimited)
 
 ;; Error constants
 (define-constant ERR-NOT-AUTHORIZED (err u100))
