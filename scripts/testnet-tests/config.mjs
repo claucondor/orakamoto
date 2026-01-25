@@ -23,9 +23,9 @@ export const USDCX = 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.usdcx';
 // Contract references
 export const CONTRACTS = {
   lpToken: `${DEPLOYER}.sip013-lp-token`,
-  pool: `${DEPLOYER}.multi-market-pool-v2`,  // V2 with stacks-block-height fix
+  pool: `${DEPLOYER}.multi-market-pool-v3`,  // V3 with exponential fees + dynamic liquidity
   mathFixedPoint: `${DEPLOYER}.math-fixed-point`,
-  pmAmmCore: `${DEPLOYER}.pm-amm-core`,
+  pmAmmCore: `${DEPLOYER}.pm-amm-core-v2`,  // V2 with safe-int-add fix
 };
 
 // Helper to wait for transaction confirmation
