@@ -1,0 +1,126 @@
+
+════════════════════════════════════════════════════════════════════════════════
+           LP PROTECTION RESEARCH - FINAL REPORT
+════════════════════════════════════════════════════════════════════════════════
+
+Date: 2026-01-24T19:46:41.282Z
+Iterations: 1000
+
+════════════════════════════════════════════════════════════════════════════════
+EXECUTIVE SUMMARY
+════════════════════════════════════════════════════════════════════════════════
+
+Baseline CPMM (3% fee):
+  Average Return: -4.51%
+  Win Rate: 19.40%
+  Std Dev: 5.13%
+
+pm-AMM + All Mechanisms:
+  Average Return: 10.36%
+  Win Rate: 98.60%
+  Std Dev: 4.85%
+
+Improvement:
+  Return: +14.87 percentage points
+  Win Rate: +79.20 pp
+
+════════════════════════════════════════════════════════════════════════════════
+STANDARD SCENARIO (50 trades, 15% informed, last 20%)
+════════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────┬──────────┬──────────┬──────────┬──────────┐
+│ Model                                   │ Return   │ Win Rate │ Std Dev  │ Sharpe   │
+├─────────────────────────────────────────┼──────────┼──────────┼──────────┼──────────┤
+│ pm-AMM + All                            │    10.36% │     98.6% │     4.85% │     2.13 │
+└─────────────────────────────────────────┴──────────┴──────────┴──────────┴──────────┘
+
+════════════════════════════════════════════════════════════════════════════════
+MECHANISM BREAKDOWN (Individual Impact)
+════════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────┬──────────┬──────────┬──────────┬──────────┐
+│ Model                                   │ Return   │ Win Rate │ Std Dev  │ Sharpe   │
+├─────────────────────────────────────────┼──────────┼──────────┼──────────┼──────────┤
+│ CPMM Baseline                           │    -4.51% │     19.4% │     5.13% │    -0.88 │
+│ pm-AMM Only                             │    -4.46% │     19.1% │     5.29% │    -0.84 │
+│ pm-AMM + Dynamic L                      │     5.81% │     90.0% │     4.75% │     1.22 │
+│ pm-AMM + Exp Fees                       │    -1.81% │     34.1% │     4.92% │    -0.37 │
+│ pm-AMM + Dynamic L + Exp Fees           │     7.62% │     95.0% │     4.65% │     1.64 │
+│ pm-AMM + All (with Global + Yield)      │    10.36% │     98.6% │     4.85% │     2.13 │
+└─────────────────────────────────────────┴──────────┴──────────┴──────────┴──────────┘
+
+════════════════════════════════════════════════════════════════════════════════
+EDGE CASE ANALYSIS
+════════════════════════════════════════════════════════════════════════════════
+
+Standard:
+  Price Move: 50.00%, Volatility: 1x
+  Informed At: last_20pct
+  Return: 10.97%, Win Rate: 98.60%
+
+Early Resolution:
+  Price Move: 90.00%, Volatility: 0.5x
+  Informed At: first_20pct
+  Return: 8.29%, Win Rate: 98.00%
+
+Contested:
+  Price Move: 10.00%, Volatility: 0.3x
+  Informed At: uniform
+  Return: 8.39%, Win Rate: 96.20%
+
+Blowout:
+  Price Move: 99.00%, Volatility: 2x
+  Informed At: last_10pct
+  Return: 13.20%, Win Rate: 99.80%
+
+Low Volume:
+  Price Move: 40.00%, Volatility: 0.8x
+  Informed At: last_30pct
+  Return: 4.16%, Win Rate: 93.60%
+
+════════════════════════════════════════════════════════════════════════════════
+RISK ANALYSIS (5th and 95th percentiles)
+════════════════════════════════════════════════════════════════════════════════
+
+CPMM Baseline:
+  5th percentile: -12.62% (worst 5% of outcomes)
+  95th percentile: 4.11% (best 5% of outcomes)
+  Max Loss: -17.89%
+
+pm-AMM + All:
+  5th percentile: 2.28% (worst 5% of outcomes)
+  95th percentile: 18.28% (best 5% of outcomes)
+  Max Loss: -2.95%
+
+════════════════════════════════════════════════════════════════════════════════
+RECOMMENDATION
+════════════════════════════════════════════════════════════════════════════════
+
+✅ RECOMMENDED: Implement pm-AMM with all protection mechanisms
+
+Rationale:
+- Positive expected return: 10.36% per market
+- High win rate: 98.60% of markets profitable
+- Reduced risk through diversification
+
+════════════════════════════════════════════════════════════════════════════════
+IMPLEMENTATION CHECKLIST
+════════════════════════════════════════════════════════════════════════════════
+
+Required Changes:
+
+1. contracts/lib/pm-amm-core.clar
+   - ✅ Already implemented pm-AMM invariant
+   - ✅ Already has get-dynamic-liquidity
+
+2. contracts/multi-market-pool-v2.clar
+   - Add exponential fee calculation
+   - Add time-based fee multiplier
+   - Update fee distribution logic
+
+3. contracts/market-factory-v3.clar
+   - Store market creation timestamp
+   - Pass to pool for fee calculation
+
+════════════════════════════════════════════════════════════════════════════════
+
