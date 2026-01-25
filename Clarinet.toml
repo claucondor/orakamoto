@@ -181,7 +181,7 @@ depends_on = ['usdcx', 'sip013-lp-token', 'pm-amm-core']
 path = 'contracts/multi-market-pool-v3.clar'
 clarity_version = 3
 epoch = '3.0'
-depends_on = ['usdcx', 'sip013-lp-token', 'pm-amm-core']
+depends_on = ['usdcx', 'sip013-lp-token', 'pm-amm-core-v2']
 
 [contracts.yield-distributor]
 path = 'contracts/yield-distributor.clar'
@@ -218,6 +218,11 @@ epoch = '2.1'
 
 [contracts.pm-amm-core]
 path = 'contracts/lib/pm-amm-core.clar'
+clarity_version = 2
+epoch = '2.1'
+
+[contracts.pm-amm-core-v2]
+path = 'contracts/lib/pm-amm-core-v2.clar'
 clarity_version = 2
 epoch = '2.1'
 

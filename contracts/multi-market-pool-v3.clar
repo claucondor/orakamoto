@@ -269,7 +269,7 @@
           ;; price = Phi((y-x)/L) for YES, 1 - price for NO
           (let
             (
-              (yes-price-8 (contract-call? .pm-amm-core get-yes-price x y L))
+              (yes-price-8 (contract-call? .pm-amm-core-v2 get-yes-price x y L))
               (yes-price (/ (* yes-price-8 u1000000) u100000000)) ;; Convert from 8 decimals to 6
               (no-price (- u1000000 yes-price))
             )
@@ -535,7 +535,7 @@
           ;; Calculate ratio: time-remaining / total-duration scaled by 100000000 (8 decimals)
           (ratio (/ (* time-remaining u100000000) total-duration))
           ;; Calculate sqrt of ratio using pm-amm-core int-sqrt
-          (sqrt-ratio (contract-call? .pm-amm-core int-sqrt ratio))
+          (sqrt-ratio (contract-call? .pm-amm-core-v2 int-sqrt ratio))
           ;; Apply to L0: L(t) = L0 * sqrt-ratio / 10000 (to account for 8-decimal scaling)
           (dynamic-L (/ (* L0 sqrt-ratio) u10000))
         )
@@ -597,7 +597,7 @@
     (buy-yes bool)
   )
   ;; Delegate to pm-amm-core library
-  (contract-call? .pm-amm-core calculate-swap-out amount-in yes-reserve no-reserve liquidity-param buy-yes)
+  (contract-call? .pm-amm-core-v2 calculate-swap-out amount-in yes-reserve no-reserve liquidity-param buy-yes)
 )
 
 ;; Calculate USDC out when selling outcome tokens (gross amount, before fees)
@@ -610,7 +610,7 @@
   )
   ;; For selling, we reverse the swap
   ;; Note: Fees are calculated separately in sell-outcome using calculate-time-based-fee
-  (contract-call? .pm-amm-core calculate-swap-out token-amount yes-reserve no-reserve liquidity-param (not sell-yes))
+  (contract-call? .pm-amm-core-v2 calculate-swap-out token-amount yes-reserve no-reserve liquidity-param (not sell-yes))
 )
 
 ;; Remove liquidity from a market
