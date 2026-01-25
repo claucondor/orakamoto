@@ -271,7 +271,7 @@ describe('Multi-Market Pool V3 - Exponential Fees', () => {
   });
 
   describe('calculate-time-based-fee', () => {
-    it('should calculate 1% fee at t=0 (no penalty)', () => {
+    it('should calculate 3% fee at t=0 (base fee)', () => {
       const amount = 1_000_000n; // 1 USDC
       const currentBlock = simnet.blockHeight;
       const deadline = currentBlock + 1000;
@@ -283,11 +283,11 @@ describe('Multi-Market Pool V3 - Exponential Fees', () => {
         deployer
       );
 
-      // At t=0, fee should be 1% = 10,000
-      expect(result.result).toStrictEqual(Cl.uint(10_000n));
+      // At t=0, fee should be 3% = 30,000
+      expect(result.result).toStrictEqual(Cl.uint(30_000n));
     });
 
-    it('should calculate approximately 4.47% fee at 50% progress', () => {
+    it('should calculate approximately 12.75% fee at 50% progress', () => {
       const amount = 1_000_000n; // 1 USDC
       const currentBlock = simnet.blockHeight;
       const deadline = currentBlock + 1000;
@@ -303,10 +303,10 @@ describe('Multi-Market Pool V3 - Exponential Fees', () => {
         deployer
       );
 
-      // 1% * 4.47 ≈ 4.47% = 44,700 (with some tolerance for fixed-point math)
+      // At 50%: scaled-mult = 425, fee = 3% * 4.25 = 12.75% ≈ 127,500
       const fee = Number(BigInt((result.result as any).value));
-      expect(fee).toBeGreaterThanOrEqual(40_000);
-      expect(fee).toBeLessThan(50_000);
+      expect(fee).toBeGreaterThanOrEqual(120_000);
+      expect(fee).toBeLessThan(135_000);
     });
 
     it('should cap fee at 20% regardless of progress', () => {
@@ -390,11 +390,11 @@ describe('Multi-Market Pool V3 - Exponential Fees', () => {
         deployer
       );
 
-      // Fee should be approximately 1% of 1,000,000 = 10,000
-      // (may vary slightly due to timing)
+      // Fee should be approximately 3% of 1,000,000 = 30,000
+      // (may vary slightly due to timing and progress)
       const accumulatedFees = Number((fees.result as any).value.value['accumulated-fees'].value);
-      expect(accumulatedFees).toBeGreaterThan(5_000);
-      expect(accumulatedFees).toBeLessThan(15_000);
+      expect(accumulatedFees).toBeGreaterThan(25_000);
+      expect(accumulatedFees).toBeLessThan(35_000);
     });
 
     it('should charge approximately 4.47% fee at 50% progress', () => {
@@ -429,10 +429,11 @@ describe('Multi-Market Pool V3 - Exponential Fees', () => {
         deployer
       );
 
-      // Fee should be approximately 4.47% of 1,000,000 ≈ 44,700
+      // At 50% progress: scaled-mult = 425, fee = 3% * 4.25 = 12.75%
+      // Fee should be approximately 12.75% of 1,000,000 ≈ 127,500
       const accumulatedFees = Number((fees.result as any).value.value['accumulated-fees'].value);
-      expect(accumulatedFees).toBeGreaterThanOrEqual(40_000);
-      expect(accumulatedFees).toBeLessThan(50_000);
+      expect(accumulatedFees).toBeGreaterThanOrEqual(120_000);
+      expect(accumulatedFees).toBeLessThan(135_000);
     });
 
     it('should charge max 20% fee at deadline', () => {
