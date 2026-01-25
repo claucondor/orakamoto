@@ -3,7 +3,6 @@
 .cache/**
 history.txt
 SESSION-CONTEXT.md
-PRD.md
 .ralphy/
 
 logs
@@ -15,7 +14,15 @@ costs-reports.json
 node_modules
 deployments/
 
-# PRD documents
-PRD.md
-PRD-*.md
-PRDV2*.md
+# PRD documents (reference only)
+prds/
+
+# Internal working documents
+docs/EXPONENTIAL-FEES-PROGRESS.md
+docs/LP-PROTECTION-ACADEMIC-PAPER.md
+docs/LP-PROTECTION-RESEARCH.md
+
+# Frontend build artifacts
+frontend/.next/
+frontend/out/
+frontend/.env*.local
