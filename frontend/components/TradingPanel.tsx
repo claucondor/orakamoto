@@ -8,7 +8,10 @@ import { useWalletStore, useTxStore } from '@/lib/store';
 import { CONTRACTS, formatTokenAmount, parseTokenAmount } from '@/lib/constants';
 import { getMarketPrices } from '@/lib/contracts';
 import type { Market } from '@/lib/contracts';
-import { ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowRight, AlertCircle, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import PriceChart from '@/components/trading/PriceChart';
+import TradeHistory from '@/components/trading/TradeHistory';
+import OrderBook from '@/components/trading/OrderBook';
 
 interface TradingPanelProps {
   market: Market;
@@ -22,6 +25,8 @@ export default function TradingPanel({ market, onTradeComplete }: TradingPanelPr
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [prices, setPrices] = useState<{ yesPrice: number; noPrice: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showTradeHistory, setShowTradeHistory] = useState(false);
+  const [activeTab, setActiveTab] = useState<'trade' | 'history' | 'orderbook'>('trade');
 
   const { address, isConnected, usdcxBalance } = useWalletStore();
   const { setPendingTx, setTxSuccess, setTxError } = useTxStore();
@@ -163,72 +168,137 @@ export default function TradingPanel({ market, onTradeComplete }: TradingPanelPr
 
   return (
     <div className="card">
-      <h3 className="text-lg font-semibold mb-4">Trade</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">Trade</h3>
 
-      {/* Outcome Selection */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+        {/* Tab navigation */}
+        <div className="flex gap-1 bg-dark-bg p-1">
+          <button
+            onClick={() => setActiveTab('trade')}
+            className={`px-4 py-2 text-sm font-semibold transition-colors ${
+              activeTab === 'trade'
+                ? 'bg-brand-primary text-white'
+                : 'text-text-secondary hover:text-white'
+            }`}
+          >
+            Trade
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-4 py-2 text-sm font-semibold transition-colors ${
+              activeTab === 'history'
+                ? 'bg-brand-primary text-white'
+                : 'text-text-secondary hover:text-white'
+            }`}
+          >
+            History
+          </button>
+          <button
+            onClick={() => setActiveTab('orderbook')}
+            className={`px-4 py-2 text-sm font-semibold transition-colors ${
+              activeTab === 'orderbook'
+                ? 'bg-brand-primary text-white'
+                : 'text-text-secondary hover:text-white'
+            }`}
+          >
+            Orders
+          </button>
+        </div>
+      </div>
+
+      {/* Trade History Tab */}
+      {activeTab === 'history' && (
+        <TradeHistory />
+      )}
+
+      {/* Order Book Tab */}
+      {activeTab === 'orderbook' && (
+        <OrderBook />
+      )}
+
+      {/* Trade Tab */}
+      {activeTab === 'trade' && (
+        <>
+          {/* Price Chart */}
+          <div className="mb-8 p-6 bg-dark-bg">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm text-text-secondary font-semibold">Price History</span>
+              <span className="text-sm text-text-secondary">Last 24h</span>
+            </div>
+            <PriceChart
+              data={outcome === 'yes'
+                ? Array.from({ length: 20 }, () => prices?.yesPrice ? prices.yesPrice / 100 + Math.random() * 5 - 2.5 : 50)
+                : Array.from({ length: 20 }, () => prices?.noPrice ? prices.noPrice / 100 + Math.random() * 5 - 2.5 : 50)
+              }
+              color={outcome === 'yes' ? '#00D4AA' : '#FF6B6B'}
+              className="w-full"
+            />
+          </div>
+
+          {/* Outcome Selection */}
+      <div className="grid grid-cols-2 gap-4 mb-8">
         <button
           onClick={() => setOutcome('yes')}
-          className={`p-4 rounded-xl border-2 transition-all ${
+          className={`p-6 border-2 transition-all ${
             outcome === 'yes'
               ? 'border-yes bg-yes/10'
               : 'border-dark-border hover:border-yes/50'
           }`}
         >
-          <div className="text-lg font-bold text-yes mb-1">YES</div>
-          <div className="text-sm text-text-muted">
+          <div className="text-2xl font-bold text-yes mb-2">YES</div>
+          <div className="text-base text-text-secondary">
             {prices ? `${(prices.yesPrice / 10000).toFixed(1)}%` : '...'}
           </div>
         </button>
         <button
           onClick={() => setOutcome('no')}
-          className={`p-4 rounded-xl border-2 transition-all ${
+          className={`p-6 border-2 transition-all ${
             outcome === 'no'
               ? 'border-no bg-no/10'
               : 'border-dark-border hover:border-no/50'
           }`}
         >
-          <div className="text-lg font-bold text-no mb-1">NO</div>
-          <div className="text-sm text-text-muted">
+          <div className="text-2xl font-bold text-no mb-2">NO</div>
+          <div className="text-base text-text-secondary">
             {prices ? `${(prices.noPrice / 10000).toFixed(1)}%` : '...'}
           </div>
         </button>
       </div>
 
       {/* Amount Input */}
-      <div className="mb-6">
-        <label className="label">Amount (USDCx)</label>
+      <div className="mb-8">
+        <label className="label text-base font-semibold text-text-secondary">Amount (USDCx)</label>
         <div className="relative">
           <input
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
-            className="input pr-20"
+            className="input pr-24 py-4 text-lg"
             min="0"
             step="0.01"
           />
           <button
             onClick={() => setAmount(formatTokenAmount(usdcxBalance).replace(/,/g, ''))}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-brand-primary hover:text-brand-primary/80"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-brand-primary hover:text-brand-primary/80 font-semibold"
           >
             MAX
           </button>
         </div>
-        <p className="text-xs text-text-muted mt-2">
+        <p className="text-sm text-text-secondary mt-3">
           Balance: ${formatTokenAmount(usdcxBalance)} USDCx
         </p>
       </div>
 
       {/* Slippage Tolerance */}
-      <div className="mb-6">
-        <label className="label">Slippage Tolerance</label>
-        <div className="flex gap-2">
+      <div className="mb-8">
+        <label className="label text-base font-semibold text-text-secondary">Slippage Tolerance</label>
+        <div className="flex gap-3">
           {[1, 3, 5, 10].map((val) => (
             <button
               key={val}
               onClick={() => setSlippage(val)}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex-1 py-3 text-base font-semibold transition-colors ${
                 slippage === val
                   ? 'bg-brand-primary text-white'
                   : 'bg-dark-hover text-text-secondary hover:text-white'
@@ -242,7 +312,7 @@ export default function TradingPanel({ market, onTradeComplete }: TradingPanelPr
 
       {/* Liquidity Warning */}
       {isLargeTrade && amountValue > 0 && (
-        <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-start gap-2 text-yellow-500 text-sm">
+        <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 flex items-start gap-3 text-yellow-500 text-base">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-semibold">High Slippage Warning</p>
@@ -256,28 +326,28 @@ export default function TradingPanel({ market, onTradeComplete }: TradingPanelPr
 
       {/* Trade Summary */}
       {amountValue > 0 && (
-        <div className="mb-6 p-4 bg-dark-hover rounded-lg space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-text-muted">You pay</span>
-            <span>${amountValue.toFixed(2)} USDCx</span>
+        <div className="mb-8 p-6 bg-dark-hover space-y-3">
+          <div className="flex justify-between text-base">
+            <span className="text-text-secondary">You pay</span>
+            <span className="font-semibold">${amountValue.toFixed(2)} USDCx</span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Trading fee (~3%+)</span>
-            <span className="text-text-muted">~${calculatedFee.toFixed(2)}</span>
+          <div className="flex justify-between text-base">
+            <span className="text-text-secondary">Trading fee (~3%+)</span>
+            <span className="text-text-secondary">~${calculatedFee.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Market liquidity</span>
-            <span className="text-text-muted">${formatTokenAmount(market.totalLiquidity)}</span>
+          <div className="flex justify-between text-base">
+            <span className="text-text-secondary">Market liquidity</span>
+            <span className="text-text-secondary">${formatTokenAmount(market.totalLiquidity)}</span>
           </div>
-          <div className="flex justify-between text-sm pt-2 border-t border-dark-border">
-            <span className="text-text-muted">Est. tokens received</span>
-            <span className={outcome === 'yes' ? 'text-yes' : 'text-no'}>
+          <div className="flex justify-between text-base pt-3 border-t border-dark-border">
+            <span className="text-text-secondary">Est. tokens received</span>
+            <span className={`font-bold ${outcome === 'yes' ? 'text-yes' : 'text-no'}`}>
               ~{estimatedTokens.toFixed(4)} {outcome.toUpperCase()}
             </span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-text-muted">Min. tokens ({slippage}% slippage)</span>
-            <span className="text-text-muted">
+          <div className="flex justify-between text-base">
+            <span className="text-text-secondary">Min. tokens ({slippage}% slippage)</span>
+            <span className="text-text-secondary">
               {(minTokensOutMicro / 1000000).toFixed(4)} {outcome.toUpperCase()}
             </span>
           </div>
@@ -286,7 +356,7 @@ export default function TradingPanel({ market, onTradeComplete }: TradingPanelPr
 
       {/* Error Message */}
       {error && (
-        <div className="mb-4 p-3 bg-no/10 border border-no/30 rounded-lg flex items-center gap-2 text-no text-sm">
+        <div className="mb-6 p-4 bg-no/10 border border-no/30 flex items-center gap-3 text-no text-base">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           {error}
         </div>
@@ -296,10 +366,10 @@ export default function TradingPanel({ market, onTradeComplete }: TradingPanelPr
       <button
         onClick={handleTrade}
         disabled={!isConnected || isSubmitting || amountValue <= 0}
-        className={`w-full py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 ${
+        className={`w-full py-5 font-bold text-lg transition-all flex items-center justify-center gap-2 ${
           outcome === 'yes'
-            ? 'bg-yes hover:bg-yes/90 text-white'
-            : 'bg-no hover:bg-no/90 text-white'
+            ? 'trade-button-yes'
+            : 'trade-button-no'
         } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         {isSubmitting ? (
@@ -316,6 +386,8 @@ export default function TradingPanel({ market, onTradeComplete }: TradingPanelPr
           </>
         )}
       </button>
+        </>
+      )}
     </div>
   );
 }
