@@ -142,31 +142,31 @@ export default function CreateMarketPage() {
 
   if (txId) {
     return (
-      <main className="min-h-screen py-8">
+      <main className="min-h-screen py-12">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="card text-center py-12">
-            <div className="w-16 h-16 bg-yes/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-8 h-8 text-yes" />
+          <div className="card card-spacing text-center py-16">
+            <div className="w-20 h-20 bg-yes/10 flex items-center justify-center mx-auto mb-8">
+              <CheckCircle className="w-10 h-10 text-yes" />
             </div>
-            <h2 className="text-2xl font-bold mb-4">Market Created!</h2>
-            <p className="text-text-muted mb-6">
+            <h2 className="text-3xl font-bold mb-6">Market Created!</h2>
+            <p className="text-text-secondary mb-8 text-lg">
               Your prediction market has been submitted to the blockchain.
             </p>
-            <div className="p-4 bg-dark-hover rounded-lg mb-6">
-              <p className="text-sm text-text-muted mb-1">Transaction ID</p>
+            <div className="p-6 bg-dark-hover mb-8">
+              <p className="text-base text-text-secondary mb-2">Transaction ID</p>
               <a
                 href={`https://explorer.hiro.so/txid/${txId}?chain=testnet`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-mono text-sm text-brand-primary hover:underline break-all"
+                className="font-mono text-base text-brand-primary hover:underline break-all font-semibold"
               >
                 {txId}
               </a>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
               <Link
                 href="/markets"
-                className="px-6 py-3 bg-brand-primary text-white rounded-xl font-bold hover:bg-brand-primary/90 transition-all"
+                className="px-10 py-5 bg-brand-primary text-white font-bold hover:bg-brand-primary/90 transition-all text-base"
               >
                 View Markets
               </Link>
@@ -181,7 +181,7 @@ export default function CreateMarketPage() {
                   setLiquidity('10');
                   setShowAdvanced(false);
                 }}
-                className="px-6 py-3 bg-dark-hover border border-dark-border text-white rounded-xl font-bold hover:bg-dark-card transition-all"
+                className="px-10 py-5 bg-dark-hover border-2 border-dark-border text-white font-bold hover:bg-dark-card transition-all text-base"
               >
                 Create Another
               </button>
@@ -193,58 +193,58 @@ export default function CreateMarketPage() {
   }
 
   return (
-    <main className="min-h-screen py-8">
+    <main className="min-h-screen py-12">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back Button */}
         <Link
           href="/markets"
-          className="inline-flex items-center gap-2 text-text-muted hover:text-white mb-6 transition-colors"
+          className="inline-flex items-center gap-2 text-text-secondary hover:text-white mb-8 transition-colors text-base"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-5 h-5" />
           Back to Markets
         </Link>
 
-        <div className="card">
-          <h1 className="text-2xl font-bold mb-2">Create Prediction Market</h1>
-          <p className="text-text-muted mb-8">
+        <div className="card card-spacing">
+          <h1 className="text-3xl font-bold mb-3">Create Prediction Market</h1>
+          <p className="text-text-secondary mb-10 text-lg">
             Create a new binary (YES/NO) market. You'll earn 10% of all trading fees (3% → 20% exponential).
           </p>
 
           {/* Question Input */}
-          <div className="mb-6">
-            <label className="label flex items-center gap-2">
-              <HelpCircle className="w-4 h-4" />
+          <div className="mb-8">
+            <label className="label text-base font-semibold text-text-secondary flex items-center gap-2">
+              <HelpCircle className="w-5 h-5" />
               Market Question
             </label>
             <textarea
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="Will Bitcoin reach $100,000 by December 2025?"
-              className="input min-h-[100px] resize-none"
+              className="input min-h-[120px] resize-none py-4 text-base"
               maxLength={256}
             />
-            <div className="flex justify-between mt-2">
-              <p className="text-xs text-text-muted">
+            <div className="flex justify-between mt-3">
+              <p className="text-sm text-text-secondary">
                 Ask a clear yes/no question about a future event
               </p>
-              <p className={`text-xs ${question.length > 200 ? 'text-warning' : 'text-text-muted'}`}>
+              <p className={`text-sm ${question.length > 200 ? 'text-warning' : 'text-text-secondary'}`}>
                 {question.length}/256
               </p>
             </div>
           </div>
 
           {/* Deadline Input */}
-          <div className="mb-6">
-            <label className="label flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
+          <div className="mb-8">
+            <label className="label text-base font-semibold text-text-secondary flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
               Trading Deadline
             </label>
 
             {/* Mode Toggle */}
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-3 mb-6">
               <button
                 onClick={() => setDeadlineMode('quick')}
-                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex-1 py-3 px-6 text-base font-semibold transition-colors ${
                   deadlineMode === 'quick'
                     ? 'bg-brand-primary text-white'
                     : 'bg-dark-hover text-text-secondary hover:text-white'
@@ -254,7 +254,7 @@ export default function CreateMarketPage() {
               </button>
               <button
                 onClick={() => setDeadlineMode('custom')}
-                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex-1 py-3 px-6 text-base font-semibold transition-colors ${
                   deadlineMode === 'custom'
                     ? 'bg-brand-primary text-white'
                     : 'bg-dark-hover text-text-secondary hover:text-white'
@@ -266,12 +266,12 @@ export default function CreateMarketPage() {
 
             {/* Quick Duration Options */}
             {deadlineMode === 'quick' && (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-3">
                 {quickOptions.map((option) => (
                   <button
                     key={option.minutes}
                     onClick={() => setQuickDuration(option.minutes)}
-                    className={`py-3 px-4 rounded-lg text-sm font-medium transition-all ${
+                    className={`py-4 px-6 text-base font-semibold transition-all ${
                       quickDuration === option.minutes
                         ? 'bg-brand-secondary text-white ring-2 ring-brand-secondary/50'
                         : 'bg-dark-hover text-text-secondary hover:text-white hover:bg-dark-card'
@@ -290,24 +290,24 @@ export default function CreateMarketPage() {
                   type="date"
                   value={deadlineDate}
                   onChange={(e) => setDeadlineDate(e.target.value)}
-                  className="input"
+                  className="input py-4 text-base"
                   min={new Date().toISOString().split('T')[0]}
                 />
                 <input
                   type="time"
                   value={deadlineTime}
                   onChange={(e) => setDeadlineTime(e.target.value)}
-                  className="input"
+                  className="input py-4 text-base"
                 />
               </div>
             )}
 
             {/* Duration Summary */}
             {deadlineBlock > 0 && (
-              <div className="mt-3 p-3 bg-yes/5 border border-yes/20 rounded-lg">
+              <div className="mt-4 p-4 bg-yes/5 border border-yes/20">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-text-muted">Trading ends in:</span>
-                  <span className="text-lg font-bold text-yes">
+                  <span className="text-base text-text-secondary">Trading ends in:</span>
+                  <span className="text-xl font-bold text-yes">
                     {deadlineMode === 'quick' && quickDuration
                       ? formatDuration(quickDuration)
                       : `~${formatDuration(Math.floor((deadlineBlock - currentBlock) / 6))}`}
@@ -318,28 +318,28 @@ export default function CreateMarketPage() {
 
             {/* Advanced Block Info (Collapsible) */}
             {deadlineBlock > 0 && (
-              <div className="mt-2">
+              <div className="mt-3">
                 <button
                   onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="text-xs text-text-muted hover:text-white flex items-center gap-1"
+                  className="text-sm text-text-secondary hover:text-white flex items-center gap-2"
                 >
                   {showAdvanced ? '▼' : '▶'} Advanced: Block Details
                 </button>
                 {showAdvanced && (
-                  <div className="mt-2 p-3 bg-dark-hover rounded-lg text-xs">
+                  <div className="mt-3 p-4 bg-dark-hover text-sm">
                     <div className="flex justify-between">
-                      <span className="text-text-muted">Current block:</span>
+                      <span className="text-text-secondary">Current block:</span>
                       <span className="font-mono">{currentBlock.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between mt-1">
-                      <span className="text-text-muted">Deadline block:</span>
+                    <div className="flex justify-between mt-2">
+                      <span className="text-text-secondary">Deadline block:</span>
                       <span className="font-mono">{deadlineBlock.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between mt-1">
-                      <span className="text-text-muted">Blocks remaining:</span>
+                    <div className="flex justify-between mt-2">
+                      <span className="text-text-secondary">Blocks remaining:</span>
                       <span className="font-mono text-brand-primary">{(deadlineBlock - currentBlock).toLocaleString()}</span>
                     </div>
-                    <p className="text-text-muted mt-2 pt-2 border-t border-dark-border">
+                    <p className="text-text-secondary mt-3 pt-3 border-t border-dark-border">
                       Nakamoto upgrade: ~10 seconds per block
                     </p>
                   </div>
@@ -349,9 +349,9 @@ export default function CreateMarketPage() {
           </div>
 
           {/* Liquidity Input */}
-          <div className="mb-6">
-            <label className="label flex items-center gap-2">
-              <Coins className="w-4 h-4" />
+          <div className="mb-8">
+            <label className="label text-base font-semibold text-text-secondary flex items-center gap-2">
+              <Coins className="w-5 h-5" />
               Initial Liquidity (USDCx)
             </label>
             <div className="relative">
@@ -360,34 +360,34 @@ export default function CreateMarketPage() {
                 value={liquidity}
                 onChange={(e) => setLiquidity(e.target.value)}
                 placeholder="10"
-                className="input pr-20"
+                className="input pr-24 py-4 text-base"
                 min="1"
                 step="1"
               />
               <button
                 onClick={() => setLiquidity(formatTokenAmount(usdcxBalance).replace(/,/g, ''))}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-brand-primary hover:text-brand-primary/80"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-brand-primary hover:text-brand-primary/80 font-semibold"
               >
                 MAX
               </button>
             </div>
-            <div className="flex justify-between mt-2">
-              <p className="text-xs text-text-muted">
+            <div className="flex justify-between mt-3">
+              <p className="text-sm text-text-secondary">
                 Minimum: 1 USDCx | Your balance: ${formatTokenAmount(usdcxBalance)}
               </p>
               {liquidityInMicro > usdcxBalance && (
-                <p className="text-xs text-no">Insufficient balance</p>
+                <p className="text-sm text-no font-semibold">Insufficient balance</p>
               )}
             </div>
           </div>
 
           {/* Info Box */}
-          <div className="p-4 bg-brand-primary/5 border border-brand-primary/20 rounded-lg mb-6">
-            <div className="flex items-start gap-3">
-              <Lightbulb className="w-5 h-5 text-brand-primary flex-shrink-0 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-medium text-brand-primary mb-1">Creator Benefits</p>
-                <ul className="text-text-muted space-y-1">
+          <div className="p-6 bg-brand-primary/5 border border-brand-primary/20 mb-8">
+            <div className="flex items-start gap-4">
+              <Lightbulb className="w-6 h-6 text-brand-primary flex-shrink-0 mt-1" />
+              <div className="text-base">
+                <p className="font-bold text-brand-primary mb-2">Creator Benefits</p>
+                <ul className="text-text-secondary space-y-2">
                   <li>- Earn 10% of all trading fees from your market</li>
                   <li>- Receive LP tokens for your initial liquidity</li>
                   <li>- You control when the market resolves after deadline</li>
@@ -398,15 +398,15 @@ export default function CreateMarketPage() {
 
           {/* Preview */}
           {question && deadlineBlock > 0 && liquidityAmount >= 1 && (
-            <div className="p-4 bg-dark-hover rounded-lg mb-6">
-              <p className="text-sm font-medium mb-3">Market Preview</p>
-              <div className="space-y-2 text-sm">
+            <div className="p-6 bg-dark-hover mb-8">
+              <p className="text-base font-bold mb-4">Market Preview</p>
+              <div className="space-y-3 text-base">
                 <div className="flex justify-between">
-                  <span className="text-text-muted">Question</span>
+                  <span className="text-text-secondary">Question</span>
                   <span className="text-right max-w-[60%] truncate">{question}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-text-muted">Trading Duration</span>
+                  <span className="text-text-secondary">Trading Duration</span>
                   <span>
                     {deadlineMode === 'quick' && quickDuration
                       ? formatDuration(quickDuration)
@@ -414,11 +414,11 @@ export default function CreateMarketPage() {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-text-muted">Initial Liquidity</span>
+                  <span className="text-text-secondary">Initial Liquidity</span>
                   <span>${liquidityAmount.toFixed(2)} USDCx</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-text-muted">Initial YES/NO Price</span>
+                  <span className="text-text-secondary">Initial YES/NO Price</span>
                   <span>50% / 50%</span>
                 </div>
               </div>
@@ -427,9 +427,9 @@ export default function CreateMarketPage() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-no/10 border border-no/30 rounded-lg flex items-center gap-3 text-no">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <p className="text-sm">{error}</p>
+            <div className="mb-8 p-4 bg-no/10 border border-no/30 flex items-center gap-3 text-no">
+              <AlertCircle className="w-6 h-6 flex-shrink-0" />
+              <p className="text-base">{error}</p>
             </div>
           )}
 
@@ -437,7 +437,7 @@ export default function CreateMarketPage() {
           <button
             onClick={handleCreate}
             disabled={!canCreate || isSubmitting}
-            className="w-full py-4 rounded-xl font-bold text-lg bg-brand-primary text-white hover:bg-brand-primary/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-5 font-bold text-lg bg-brand-primary text-white hover:bg-brand-primary/90 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <>
@@ -456,7 +456,7 @@ export default function CreateMarketPage() {
 
           {/* Connect Wallet Prompt */}
           {!isConnected && (
-            <p className="text-center text-sm text-text-muted mt-4">
+            <p className="text-center text-base text-text-secondary mt-6">
               Please connect your wallet to create a market
             </p>
           )}

@@ -84,58 +84,58 @@ export default function FaucetPage() {
   if (!mounted) return null;
 
   return (
-    <main className="min-h-screen py-8">
+    <main className="min-h-screen py-12">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-brand-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Droplets className="w-8 h-8 text-brand-primary" />
+        <div className="text-center mb-12">
+          <div className="w-20 h-20 bg-brand-primary/10 flex items-center justify-center mx-auto mb-6">
+            <Droplets className="w-10 h-10 text-brand-primary" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Testnet Faucet</h1>
-          <p className="text-text-muted">
+          <h1 className="text-4xl font-bold mb-3">Testnet Faucet</h1>
+          <p className="text-text-secondary text-lg">
             Get free USDCx tokens to test trading on Orakamoto
           </p>
         </div>
 
         {/* Main Card */}
-        <div className="card mb-6">
+        <div className="card card-spacing mb-8">
           {/* Balance Display */}
           {isConnected && (
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="p-4 bg-dark-hover rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Coins className="w-4 h-4 text-brand-primary" />
-                  <span className="text-sm text-text-muted">Your Balance</span>
+            <div className="grid grid-cols-2 gap-6 mb-8">
+              <div className="p-6 bg-dark-hover">
+                <div className="flex items-center gap-3 mb-3">
+                  <Coins className="w-6 h-6 text-brand-primary" />
+                  <span className="text-base text-text-secondary font-semibold">Your Balance</span>
                 </div>
-                <p className="text-2xl font-bold">${formatTokenAmount(usdcxBalance)}</p>
+                <p className="text-3xl font-bold">${formatTokenAmount(usdcxBalance)}</p>
               </div>
-              <div className="p-4 bg-dark-hover rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Gift className="w-4 h-4 text-yes" />
-                  <span className="text-sm text-text-muted">Faucet Remaining</span>
+              <div className="p-6 bg-dark-hover">
+                <div className="flex items-center gap-3 mb-3">
+                  <Gift className="w-6 h-6 text-yes" />
+                  <span className="text-base text-text-secondary font-semibold">Faucet Remaining</span>
                 </div>
-                <p className="text-2xl font-bold text-yes">${formatTokenAmount(faucetRemaining)}</p>
+                <p className="text-3xl font-bold text-yes">${formatTokenAmount(faucetRemaining)}</p>
               </div>
             </div>
           )}
 
           {/* Amount Selection */}
-          <div className="mb-6">
-            <label className="label">Select Amount</label>
-            <div className="grid grid-cols-4 gap-3">
+          <div className="mb-8">
+            <label className="label text-base font-semibold text-text-secondary">Select Amount</label>
+            <div className="grid grid-cols-4 gap-4">
               {FAUCET_AMOUNTS.map((amount) => (
                 <button
                   key={amount}
                   onClick={() => setSelectedAmount(amount)}
                   disabled={isConnected && parseTokenAmount(amount) > faucetRemaining}
-                  className={`p-4 rounded-xl border-2 transition-all ${
+                  className={`p-6 border-2 transition-all ${
                     selectedAmount === amount
                       ? 'border-brand-primary bg-brand-primary/10'
                       : 'border-dark-border hover:border-brand-primary/50'
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
-                  <p className="text-lg font-bold">${amount}</p>
-                  <p className="text-xs text-text-muted">USDCx</p>
+                  <p className="text-2xl font-bold">${amount}</p>
+                  <p className="text-sm text-text-secondary">USDCx</p>
                 </button>
               ))}
             </div>
@@ -143,31 +143,31 @@ export default function FaucetPage() {
 
           {/* Success Message */}
           {txId && (
-            <div className="mb-6 p-4 bg-yes/10 border border-yes/30 rounded-lg">
-              <div className="flex items-center gap-2 text-yes mb-2">
-                <CheckCircle className="w-5 h-5" />
-                <span className="font-medium">Tokens Requested!</span>
+            <div className="mb-8 p-6 bg-yes/10 border border-yes/30">
+              <div className="flex items-center gap-3 text-yes mb-3">
+                <CheckCircle className="w-6 h-6" />
+                <span className="text-lg font-bold">Tokens Requested!</span>
               </div>
-              <p className="text-sm text-text-muted mb-2">
+              <p className="text-base text-text-secondary mb-3">
                 Your {selectedAmount} USDCx will arrive shortly.
               </p>
               <a
                 href={`https://explorer.hiro.so/txid/${txId}?chain=testnet`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-brand-primary hover:underline"
+                className="inline-flex items-center gap-2 text-base text-brand-primary hover:underline font-semibold"
               >
                 View Transaction
-                <ExternalLink className="w-3 h-3" />
+                <ExternalLink className="w-4 h-4" />
               </a>
             </div>
           )}
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-no/10 border border-no/30 rounded-lg flex items-center gap-3 text-no">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <p className="text-sm">{error}</p>
+            <div className="mb-8 p-4 bg-no/10 border border-no/30 flex items-center gap-3 text-no">
+              <AlertCircle className="w-6 h-6 flex-shrink-0" />
+              <p className="text-base">{error}</p>
             </div>
           )}
 
@@ -175,7 +175,7 @@ export default function FaucetPage() {
           <button
             onClick={handleRequestTokens}
             disabled={!isConnected || isRequesting || (isConnected && faucetRemaining === BigInt(0))}
-            className="w-full py-4 rounded-xl font-bold text-lg bg-brand-primary text-white hover:bg-brand-primary/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-5 font-bold text-lg bg-brand-primary text-white hover:bg-brand-primary/90 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isRequesting ? (
               <>
@@ -198,62 +198,62 @@ export default function FaucetPage() {
           </button>
 
           {/* Info */}
-          <p className="text-center text-sm text-text-muted mt-4">
+          <p className="text-center text-base text-text-secondary mt-6">
             Maximum 10,000 USDCx per wallet on testnet
           </p>
         </div>
 
         {/* Next Steps */}
-        <div className="card">
-          <h3 className="font-semibold mb-4">Next Steps</h3>
-          <div className="space-y-3">
+        <div className="card card-spacing">
+          <h3 className="text-xl font-bold mb-6">Next Steps</h3>
+          <div className="space-y-4">
             <Link
               href="/markets"
-              className="flex items-center justify-between p-4 bg-dark-hover rounded-lg hover:bg-dark-card transition-colors group"
+              className="flex items-center justify-between p-6 bg-dark-hover hover:bg-dark-card transition-colors group"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-brand-primary/10 rounded-lg flex items-center justify-center">
-                  <Coins className="w-5 h-5 text-brand-primary" />
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-brand-primary/10 flex items-center justify-center">
+                  <Coins className="w-7 h-7 text-brand-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">Browse Markets</p>
-                  <p className="text-sm text-text-muted">Find a market to trade</p>
+                  <p className="text-lg font-bold">Browse Markets</p>
+                  <p className="text-base text-text-secondary">Find a market to trade</p>
                 </div>
               </div>
-              <ArrowRight className="w-5 h-5 text-text-muted group-hover:text-brand-primary transition-colors" />
+              <ArrowRight className="w-6 h-6 text-text-secondary group-hover:text-brand-primary transition-colors" />
             </Link>
 
             <Link
               href="/create"
-              className="flex items-center justify-between p-4 bg-dark-hover rounded-lg hover:bg-dark-card transition-colors group"
+              className="flex items-center justify-between p-6 bg-dark-hover hover:bg-dark-card transition-colors group"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-brand-secondary/10 rounded-lg flex items-center justify-center">
-                  <Gift className="w-5 h-5 text-brand-secondary" />
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-brand-secondary/10 flex items-center justify-center">
+                  <Gift className="w-7 h-7 text-brand-secondary" />
                 </div>
                 <div>
-                  <p className="font-medium">Create a Market</p>
-                  <p className="text-sm text-text-muted">Start your own prediction market</p>
+                  <p className="text-lg font-bold">Create a Market</p>
+                  <p className="text-base text-text-secondary">Start your own prediction market</p>
                 </div>
               </div>
-              <ArrowRight className="w-5 h-5 text-text-muted group-hover:text-brand-primary transition-colors" />
+              <ArrowRight className="w-6 h-6 text-text-secondary group-hover:text-brand-primary transition-colors" />
             </Link>
           </div>
         </div>
 
         {/* STX Faucet Link */}
-        <div className="mt-6 p-4 bg-dark-card border border-dark-border rounded-xl">
-          <p className="text-sm text-text-muted mb-2">
+        <div className="mt-8 p-6 bg-dark-card border-2 border-dark-border">
+          <p className="text-base text-text-secondary mb-3">
             Need STX for transaction fees?
           </p>
           <a
             href="https://explorer.hiro.so/sandbox/faucet?chain=testnet"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-brand-primary hover:underline"
+            className="inline-flex items-center gap-2 text-lg text-brand-primary hover:underline font-semibold"
           >
             Get testnet STX from Hiro Faucet
-            <ExternalLink className="w-4 h-4" />
+            <ExternalLink className="w-5 h-5" />
           </a>
         </div>
       </div>
