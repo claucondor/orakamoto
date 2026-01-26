@@ -4,15 +4,22 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useMarketsStore } from '@/lib/store';
 import MarketCard from '@/components/MarketCard';
-import { Search, Filter, Loader2, Plus, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import CategoryNav from '@/components/markets/CategoryNav';
+import MarketSearch from '@/components/markets/MarketSearch';
+import ViewToggle from '@/components/ui/ViewToggle';
+import SortDropdown, { SortOption } from '@/components/ui/SortDropdown';
+import { MarketCardSkeleton } from '@/components/feedback/LoadingSkeleton';
+import { Plus, TrendingUp } from 'lucide-react';
 
-type FilterType = 'all' | 'active' | 'ended' | 'resolved';
+type ViewType = 'grid' | 'list';
 
 export default function MarketsPage() {
   const { markets, isLoading, fetchMarkets, fetchBlockHeight, currentBlockHeight } = useMarketsStore();
   const [mounted, setMounted] = useState(false);
-  const [filter, setFilter] = useState<FilterType>('all');
-  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('volume');
+  const [viewType, setViewType] = useState<ViewType>('grid');
 
   useEffect(() => {
     setMounted(true);
@@ -20,145 +27,140 @@ export default function MarketsPage() {
     fetchBlockHeight();
   }, [fetchMarkets, fetchBlockHeight]);
 
+  // Handle URL search params on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const searchParam = params.get('search');
+      if (searchParam) {
+        setSearchQuery(searchParam);
+      }
+    }
+  }, []);
+
   if (!mounted) return null;
 
-  // Filter markets
-  const filteredMarkets = markets.filter((market) => {
-    // Search filter
-    if (search && !market.question.toLowerCase().includes(search.toLowerCase())) {
-      return false;
-    }
+  // Filter and sort markets
+  const filteredMarkets = markets
+    .filter((market) => {
+      // Search filter
+      if (searchQuery && !market.question.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
 
-    // Status filter
-    switch (filter) {
-      case 'active':
-        return !market.isResolved && currentBlockHeight < market.deadline;
-      case 'ended':
-        return !market.isResolved && currentBlockHeight >= market.deadline;
-      case 'resolved':
-        return market.isResolved;
-      default:
-        return true;
-    }
-  });
+      // Category filter (mock implementation - in production this would use market metadata)
+      if (selectedCategory !== 'all') {
+        const categoryMap: Record<number, string> = {
+          0: 'crypto',
+          1: 'politics',
+          2: 'sports',
+          3: 'tech',
+          4: 'ai',
+        };
+        const marketCategory = categoryMap[market.marketId % 5] || 'crypto';
+        if (marketCategory !== selectedCategory) {
+          return false;
+        }
+      }
 
-  // Count by status
-  const activeCount = markets.filter(m => !m.isResolved && currentBlockHeight < m.deadline).length;
-  const endedCount = markets.filter(m => !m.isResolved && currentBlockHeight >= m.deadline).length;
-  const resolvedCount = markets.filter(m => m.isResolved).length;
+      return true;
+    })
+    .sort((a, b) => {
+      // Sort markets
+      switch (sortBy) {
+        case 'volume':
+          // Sort by liquidity as proxy for volume
+          return Number(b.totalLiquidity - a.totalLiquidity);
+        case 'liquidity':
+          return Number(b.totalLiquidity - a.totalLiquidity);
+        case 'ending-soon':
+          return a.deadline - b.deadline;
+        case 'newest':
+          return b.marketId - a.marketId;
+        default:
+          return 0;
+      }
+    });
 
   return (
-    <main className="min-h-screen py-8">
+    <main className="min-h-screen py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Prediction Markets</h1>
-            <p className="text-text-muted">
+            <h1 className="text-4xl font-bold mb-3">Prediction Markets</h1>
+            <p className="text-text-secondary text-lg">
               Browse and trade on {markets.length} prediction markets
             </p>
           </div>
           <Link
             href="/create"
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-brand-primary text-white rounded-xl font-bold hover:bg-brand-primary/90 transition-all"
+            className="flex items-center justify-center gap-3 px-10 py-5 btn-gradient hover-scale gpu-accelerated text-base font-semibold"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-6 h-6" />
             Create Market
           </Link>
         </div>
 
-        {/* Search and Filters */}
-        <div className="flex flex-col lg:flex-row gap-4 mb-8">
+        {/* Category Navigation */}
+        <div className="mb-8">
+          <CategoryNav
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+          />
+        </div>
+
+        {/* Search and Controls */}
+        <div className="flex flex-col lg:flex-row gap-4 mb-12">
           {/* Search */}
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
-            <input
-              type="text"
-              placeholder="Search markets..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="input pl-12"
+          <div className="flex-1">
+            <MarketSearch
+              onSearch={setSearchQuery}
+              placeholder="Search markets by question, category, or ID..."
             />
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex items-center gap-2 p-1 bg-dark-card rounded-xl border border-dark-border">
-            <button
-              onClick={() => setFilter('all')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === 'all'
-                  ? 'bg-brand-primary text-white'
-                  : 'text-text-secondary hover:text-white'
-              }`}
-            >
-              <Filter className="w-4 h-4" />
-              All ({markets.length})
-            </button>
-            <button
-              onClick={() => setFilter('active')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === 'active'
-                  ? 'bg-yes text-white'
-                  : 'text-text-secondary hover:text-white'
-              }`}
-            >
-              <TrendingUp className="w-4 h-4" />
-              Active ({activeCount})
-            </button>
-            <button
-              onClick={() => setFilter('ended')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === 'ended'
-                  ? 'bg-warning text-white'
-                  : 'text-text-secondary hover:text-white'
-              }`}
-            >
-              <Clock className="w-4 h-4" />
-              Ended ({endedCount})
-            </button>
-            <button
-              onClick={() => setFilter('resolved')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === 'resolved'
-                  ? 'bg-brand-secondary text-white'
-                  : 'text-text-secondary hover:text-white'
-              }`}
-            >
-              <CheckCircle className="w-4 h-4" />
-              Resolved ({resolvedCount})
-            </button>
+          {/* Sort and View Toggle */}
+          <div className="flex items-center gap-3">
+            <SortDropdown value={sortBy} onChange={setSortBy} />
+            <ViewToggle currentView={viewType} onViewChange={setViewType} />
           </div>
         </div>
 
         {/* Markets Grid */}
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
-            <p className="text-text-muted">Loading markets...</p>
+          <div className={viewType === 'grid' ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-8' : 'flex flex-col gap-6'}>
+            <MarketCardSkeleton count={viewType === 'grid' ? 6 : 5} />
           </div>
         ) : filteredMarkets.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 bg-dark-card rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <TrendingUp className="w-8 h-8 text-text-muted" />
+          <div className="text-center py-24">
+            <div className="w-20 h-20 bg-dark-card flex items-center justify-center mx-auto mb-6">
+              <TrendingUp className="w-10 h-10 text-text-secondary" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">No markets found</h3>
-            <p className="text-text-muted mb-6">
-              {search
+            <h3 className="text-2xl font-bold mb-3">No markets found</h3>
+            <p className="text-text-secondary mb-8 text-lg">
+              {searchQuery
                 ? 'Try a different search term'
-                : filter !== 'all'
+                : selectedCategory !== 'all'
                 ? 'No markets in this category'
                 : 'Be the first to create a prediction market'}
             </p>
             <Link
               href="/create"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-brand-primary text-white rounded-xl font-bold hover:bg-brand-primary/90 transition-all"
+              className="inline-flex items-center gap-3 px-10 py-5 btn-gradient hover-scale gpu-accelerated text-base font-semibold"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-6 h-6" />
               Create Market
             </Link>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div
+            className={
+              viewType === 'grid'
+                ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-8'
+                : 'flex flex-col gap-6'
+            }
+          >
             {filteredMarkets.map((market) => (
               <MarketCard key={market.marketId} market={market} />
             ))}
@@ -166,14 +168,14 @@ export default function MarketsPage() {
         )}
 
         {/* Refresh Button */}
-        <div className="text-center mt-8">
+        <div className="text-center mt-12">
           <button
             onClick={() => {
               fetchMarkets();
               fetchBlockHeight();
             }}
             disabled={isLoading}
-            className="text-sm text-text-muted hover:text-white transition-colors"
+            className="text-base text-text-secondary hover:text-white transition-colors px-6 py-3 hover:bg-dark-hover font-mono"
           >
             {isLoading ? 'Refreshing...' : 'Refresh Markets'}
           </button>

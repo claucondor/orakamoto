@@ -35,64 +35,87 @@ export default function Home() {
   if (!mounted) return null;
 
   return (
-    <main className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Background Effects */}
-        <div className="absolute inset-0 bg-gradient-to-b from-brand-primary/5 via-transparent to-transparent pointer-events-none"></div>
-        <div className="absolute top-20 left-1/4 w-96 h-96 bg-brand-primary/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute top-40 right-1/4 w-96 h-96 bg-brand-secondary/10 rounded-full blur-3xl pointer-events-none"></div>
+    <main className="min-h-screen font-mono">
+      {/* Terminal Hero Section */}
+      <section className="matrix-bg crt-screen min-h-screen flex items-center justify-center relative overflow-hidden py-20 lg:py-32">
+        {/* ASCII Art Bitcoin Logo */}
+        <div className="absolute top-10 left-10 opacity-20 font-mono text-xs leading-tight text-matrix-green hidden sm:block">
+          <pre className="text-matrix-green">
+{`
+      .---.
+     /     \\
+    |() () |
+     \\  ^  /
+      |||||
+     '.___.'
+    ₿ ORAKAMOTO
+`}
+          </pre>
+        </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-          <div className="text-center max-w-4xl mx-auto">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-dark-card border border-dark-border rounded-full mb-8">
-              <Bitcoin className="w-4 h-4 text-brand-primary" />
-              <span className="text-sm text-text-secondary">Built on Stacks - Secured by Bitcoin</span>
+        {/* Terminal Window */}
+        <div className="max-w-4xl w-full mx-4">
+          <div className="terminal-window shadow-2xl">
+            {/* Terminal Header */}
+            <div className="terminal-header">
+              <div className="flex gap-2">
+                <div className="w-3 h-3 bg-matrix-green"></div>
+                <div className="w-3 h-3 bg-cyber-yellow"></div>
+                <div className="w-3 h-3 bg-cyber-magenta"></div>
+              </div>
+              <span className="font-mono text-sm text-matrix-green ml-4">
+                root@orakamoto:~$ ./start-trading.sh
+              </span>
             </div>
 
-            {/* Heading */}
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold mb-6">
-              <span className="gradient-text">Orakamoto</span>
-            </h1>
-            <p className="text-xl sm:text-2xl text-text-secondary mb-4">
-              Decentralized Prediction Markets
-            </p>
-            <p className="text-lg text-text-muted max-w-2xl mx-auto mb-10">
-              Trade on real-world outcomes with AI-powered resolution.
-              Your predictions, verified by oracles, secured by Bitcoin.
-            </p>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                href="/markets"
-                className="w-full sm:w-auto px-8 py-4 bg-brand-primary text-white rounded-xl font-bold text-lg hover:bg-brand-primary/90 transition-all flex items-center justify-center gap-2 glow-primary"
-              >
-                Explore Markets
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-              <Link
-                href="/create"
-                className="w-full sm:w-auto px-8 py-4 bg-dark-card border border-dark-border text-white rounded-xl font-bold text-lg hover:bg-dark-hover transition-all flex items-center justify-center gap-2"
-              >
-                Create Market
-              </Link>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-8 mt-16 max-w-2xl mx-auto">
-              <div>
-                <p className="text-3xl font-bold text-brand-primary">{markets.length}</p>
-                <p className="text-sm text-text-muted">Markets</p>
+            {/* Terminal Content */}
+            <div className="terminal-content">
+              <div className="text-matrix-green mb-10 text-sm flicker">
+                <span className="text-matrix-dark">$</span> Loading prediction markets...
+                <span className="animate-pulse">_</span>
               </div>
-              <div>
-                <p className="text-3xl font-bold text-brand-secondary">3-20%</p>
-                <p className="text-sm text-text-muted">Exponential Fees</p>
+
+              <h1 className="text-6xl md:text-8xl font-bold mb-6 neon-text-orange glitch-text">
+                ORAKAMOTO
+              </h1>
+
+              <p className="text-matrix-green mb-4 text-xl neon-text-green">
+                &gt; Decentralized Prediction Markets
+              </p>
+              <p className="text-text-secondary mb-10 text-base">
+                &gt; Trade on future outcomes. Secured by Bitcoin.
+              </p>
+
+              {/* Badge */}
+              <div className="inline-flex items-center gap-3 mb-10 terminal-badge terminal-badge-orange">
+                <Bitcoin className="w-5 h-5" />
+                <span className="text-base">Built on Stacks - Secured by Bitcoin</span>
               </div>
-              <div>
-                <p className="text-3xl font-bold text-yes">AI</p>
-                <p className="text-sm text-text-muted">Powered Resolution</p>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-6 mb-10 border-2 border-matrix-green/30 p-6 bg-matrix-green/5 holographic">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-matrix-green pulse-ring">{markets.length}</div>
+                  <div className="text-sm text-text-secondary mt-2">ACTIVE MARKETS</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-cyber-cyan">3-20%</div>
+                  <div className="text-sm text-text-secondary mt-2">LP FEES</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-btc-orange">BTC</div>
+                  <div className="text-sm text-text-secondary mt-2">SECURED</div>
+                </div>
+              </div>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-6">
+                <Link href="/markets" className="glitch-button" data-text="EXPLORE_MARKETS">
+                  EXPLORE_MARKETS_
+                </Link>
+                <Link href="/create" className="brutalist-button">
+                  CREATE_MARKET_
+                </Link>
               </div>
             </div>
           </div>
@@ -101,19 +124,21 @@ export default function Home() {
 
       {/* Featured Markets */}
       {activeMarkets.length > 0 && (
-        <section className="py-16 border-t border-dark-border">
+        <section className="section-spacing border-t-2 border-dark-border bg-void-black">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold">Active Markets</h2>
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="text-2xl font-bold neon-text-cyan">
+                &gt; ACTIVE_MARKETS
+              </h2>
               <Link
                 href="/markets"
-                className="text-brand-primary hover:text-brand-primary/80 flex items-center gap-1"
+                className="text-btc-orange hover:text-btc-dark flex items-center gap-1 font-mono text-sm"
               >
-                View all
+                VIEW_ALL_
                 <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {activeMarkets.map((market) => (
                 <MarketCard key={market.marketId} market={market} />
               ))}
@@ -123,53 +148,53 @@ export default function Home() {
       )}
 
       {/* What is Orakamoto */}
-      <section className="py-20 border-t border-dark-border">
+      <section className="section-spacing border-t-2 border-dark-border bg-void-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">What is Orakamoto?</h2>
-            <p className="text-text-secondary max-w-2xl mx-auto">
-              Orakamoto combines the power of prediction markets with AI-driven oracle resolution,
+          <div className="text-center mb-20">
+            <h2 className="text-4xl font-bold mb-6 neon-text-green">WHAT_IS_ORAKAMOTO?</h2>
+            <p className="text-text-secondary max-w-3xl mx-auto font-mono text-lg leading-relaxed">
+              &gt; Orakamoto combines the power of prediction markets with AI-driven oracle resolution,
               all secured by Bitcoin through the Stacks blockchain.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="card text-center">
-              <div className="w-12 h-12 bg-brand-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="w-6 h-6 text-brand-primary" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="brutalist-card card-spacing text-center noise-texture">
+              <div className="w-16 h-16 border-2 border-btc-orange flex items-center justify-center mx-auto mb-6">
+                <TrendingUp className="w-8 h-8 text-btc-orange" />
               </div>
-              <h3 className="font-semibold mb-2">Prediction Markets</h3>
-              <p className="text-sm text-text-muted">
+              <h3 className="text-xl font-bold mb-4 text-btc-orange">PREDICTION_MARKETS</h3>
+              <p className="text-base text-text-secondary font-mono leading-relaxed">
                 Trade on the outcome of real-world events. Buy YES or NO tokens based on your predictions.
               </p>
             </div>
 
-            <div className="card text-center">
-              <div className="w-12 h-12 bg-brand-secondary/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Brain className="w-6 h-6 text-brand-secondary" />
+            <div className="brutalist-card card-spacing text-center noise-texture">
+              <div className="w-16 h-16 border-2 border-cyber-cyan flex items-center justify-center mx-auto mb-6">
+                <Brain className="w-8 h-8 text-cyber-cyan" />
               </div>
-              <h3 className="font-semibold mb-2">AI Oracle Resolution</h3>
-              <p className="text-sm text-text-muted">
+              <h3 className="text-xl font-bold mb-4 text-cyber-cyan">AI_ORACLE_RESOLUTION</h3>
+              <p className="text-base text-text-secondary font-mono leading-relaxed">
                 Markets are resolved by AI agents that verify outcomes from multiple data sources.
               </p>
             </div>
 
-            <div className="card text-center">
-              <div className="w-12 h-12 bg-yes/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-6 h-6 text-yes" />
+            <div className="brutalist-card card-spacing text-center noise-texture">
+              <div className="w-16 h-16 border-2 border-matrix-green flex items-center justify-center mx-auto mb-6">
+                <Shield className="w-8 h-8 text-matrix-green" />
               </div>
-              <h3 className="font-semibold mb-2">Bitcoin Security</h3>
-              <p className="text-sm text-text-muted">
+              <h3 className="text-xl font-bold mb-4 text-matrix-green">BITCOIN_SECURITY</h3>
+              <p className="text-base text-text-secondary font-mono leading-relaxed">
                 Built on Stacks, inheriting the security and finality of Bitcoin through proof-of-transfer.
               </p>
             </div>
 
-            <div className="card text-center">
-              <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Coins className="w-6 h-6 text-warning" />
+            <div className="brutalist-card card-spacing text-center noise-texture">
+              <div className="w-16 h-16 border-2 border-cyber-yellow flex items-center justify-center mx-auto mb-6">
+                <Coins className="w-8 h-8 text-cyber-yellow" />
               </div>
-              <h3 className="font-semibold mb-2">USDCx Trading</h3>
-              <p className="text-sm text-text-muted">
+              <h3 className="text-xl font-bold mb-4 text-cyber-yellow">USDCx_TRADING</h3>
+              <p className="text-base text-text-secondary font-mono leading-relaxed">
                 Trade with USDCx stablecoin for predictable value and easy settlements.
               </p>
             </div>
@@ -178,79 +203,79 @@ export default function Home() {
       </section>
 
       {/* How it Works */}
-      <section className="py-20 border-t border-dark-border bg-dark-card/50">
+      <section className="section-spacing border-t-2 border-dark-border bg-terminal-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">How It Works</h2>
-            <p className="text-text-secondary max-w-2xl mx-auto">
-              Start trading predictions in minutes
+          <div className="text-center mb-20">
+            <h2 className="text-4xl font-bold mb-6 neon-text-cyan">HOW_IT_WORKS</h2>
+            <p className="text-text-secondary max-w-2xl mx-auto font-mono text-lg">
+              &gt; Start trading predictions in minutes
             </p>
           </div>
 
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-4 gap-12">
             <div className="text-center">
-              <div className="w-12 h-12 bg-brand-primary rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold">
+              <div className="w-16 h-16 border-2 border-btc-orange flex items-center justify-center mx-auto mb-6 text-btc-orange font-bold text-2xl">
                 1
               </div>
-              <h3 className="font-semibold mb-2">Connect Wallet</h3>
-              <p className="text-sm text-text-muted">
+              <h3 className="text-xl font-bold mb-4 text-btc-orange">CONNECT_WALLET</h3>
+              <p className="text-base text-text-secondary font-mono leading-relaxed">
                 Connect your Hiro or Leather wallet to get started
               </p>
             </div>
 
             <div className="text-center">
-              <div className="w-12 h-12 bg-brand-primary rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold">
+              <div className="w-16 h-16 border-2 border-btc-orange flex items-center justify-center mx-auto mb-6 text-btc-orange font-bold text-2xl">
                 2
               </div>
-              <h3 className="font-semibold mb-2">Get USDCx</h3>
-              <p className="text-sm text-text-muted">
+              <h3 className="text-xl font-bold mb-4 text-btc-orange">GET_USDCx</h3>
+              <p className="text-base text-text-secondary font-mono leading-relaxed">
                 Use the testnet faucet to get free USDCx for trading
               </p>
             </div>
 
             <div className="text-center">
-              <div className="w-12 h-12 bg-brand-primary rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold">
+              <div className="w-16 h-16 border-2 border-btc-orange flex items-center justify-center mx-auto mb-6 text-btc-orange font-bold text-2xl">
                 3
               </div>
-              <h3 className="font-semibold mb-2">Trade Markets</h3>
-              <p className="text-sm text-text-muted">
+              <h3 className="text-xl font-bold mb-4 text-btc-orange">TRADE_MARKETS</h3>
+              <p className="text-base text-text-secondary font-mono leading-relaxed">
                 Buy YES or NO tokens on any active prediction market
               </p>
             </div>
 
             <div className="text-center">
-              <div className="w-12 h-12 bg-brand-primary rounded-full flex items-center justify-center mx-auto mb-4 text-white font-bold">
+              <div className="w-16 h-16 border-2 border-btc-orange flex items-center justify-center mx-auto mb-6 text-btc-orange font-bold text-2xl">
                 4
               </div>
-              <h3 className="font-semibold mb-2">Claim Winnings</h3>
-              <p className="text-sm text-text-muted">
+              <h3 className="text-xl font-bold mb-4 text-btc-orange">CLAIM_WINNINGS</h3>
+              <p className="text-base text-text-secondary font-mono leading-relaxed">
                 When the market resolves, claim your USDCx winnings
               </p>
             </div>
           </div>
 
-          <div className="text-center mt-12">
+          <div className="text-center mt-16">
             <Link
               href="/faucet"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-dark-hover border border-dark-border rounded-xl hover:bg-dark-card transition-colors"
+              className="terminal-button"
             >
-              <Zap className="w-5 h-5 text-brand-primary" />
-              Get Test USDCx
+              <Zap className="w-5 h-5 mr-2" />
+              GET_TEST_USDCx
             </Link>
           </div>
         </div>
       </section>
 
       {/* The Name */}
-      <section className="py-20 border-t border-dark-border">
+      <section className="section-spacing border-t-2 border-dark-border bg-void-black">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-6">Why "Orakamoto"?</h2>
-          <div className="card">
-            <p className="text-lg text-text-secondary mb-4">
-              <span className="text-brand-primary font-semibold">Oracle</span> + <span className="text-brand-secondary font-semibold">Nakamoto</span> = <span className="gradient-text font-bold">Orakamoto</span>
+          <h2 className="text-4xl font-bold mb-8 neon-text-magenta">WHY_ORAKAMOTO?</h2>
+          <div className="card border-2 border-cyber-magenta card-spacing">
+            <p className="text-xl text-text-secondary mb-6 font-mono leading-relaxed">
+              <span className="text-btc-orange font-bold">Oracle</span> + <span className="text-brand-secondary font-bold">Nakamoto</span> = <span className="gradient-text font-bold">Orakamoto</span>
             </p>
-            <p className="text-text-muted">
-              We combine the concept of blockchain oracles (sources of truth that bring real-world data on-chain)
+            <p className="text-text-secondary font-mono text-lg leading-relaxed">
+              &gt; We combine the concept of blockchain oracles (sources of truth that bring real-world data on-chain)
               with Satoshi Nakamoto's vision of decentralized consensus. Our AI-powered oracles resolve markets
               with the same trustless principles that Bitcoin brought to money.
             </p>
@@ -259,52 +284,53 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 border-t border-dark-border">
+      <section className="section-spacing border-t-2 border-dark-border bg-void-black">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to predict the future?</h2>
-          <p className="text-text-secondary mb-8">
-            Join Orakamoto and start trading on real-world outcomes today.
+          <h2 className="text-4xl font-bold mb-6 neon-text-green">READY_TO_PREDICT_THE_FUTURE?</h2>
+          <p className="text-text-secondary mb-12 font-mono text-lg">
+            &gt; Join Orakamoto and start trading on real-world outcomes today.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <Link
               href="/markets"
-              className="px-8 py-4 bg-brand-primary text-white rounded-xl font-bold hover:bg-brand-primary/90 transition-all flex items-center gap-2"
+              className="glitch-button"
+              data-text="START_TRADING"
             >
-              <TrendingUp className="w-5 h-5" />
-              Start Trading
+              <TrendingUp className="w-5 h-5 mr-2" />
+              START_TRADING
             </Link>
             <Link
               href="/create"
-              className="px-8 py-4 bg-dark-card border border-dark-border rounded-xl font-bold hover:bg-dark-hover transition-all flex items-center gap-2"
+              className="brutalist-button"
             >
-              <Users className="w-5 h-5" />
-              Create a Market
+              <Users className="w-5 h-5 mr-2" />
+              CREATE_MARKET
             </Link>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-dark-border py-8">
+      <footer className="border-t-2 border-dark-border bg-terminal-bg py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-gradient-to-br from-brand-primary to-brand-secondary flex items-center justify-center">
-                <span className="text-white font-bold text-sm">O</span>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 border-2 border-btc-orange flex items-center justify-center">
+                <span className="text-btc-orange font-bold text-lg">O</span>
               </div>
-              <span className="font-semibold">Orakamoto</span>
+              <span className="text-xl font-bold">Orakamoto</span>
             </div>
-            <p className="text-sm text-text-muted">
+            <p className="text-base text-text-secondary font-mono">
               Built for Circle xReserve Hackathon 2025
             </p>
-            <div className="flex items-center gap-4 text-sm text-text-muted">
+            <div className="flex items-center gap-6 text-base text-text-secondary font-mono">
               <span>Testnet</span>
               <span>|</span>
               <a
                 href="https://explorer.hiro.so/?chain=testnet"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-white transition-colors"
+                className="hover:text-matrix-green transition-colors"
               >
                 Explorer
               </a>

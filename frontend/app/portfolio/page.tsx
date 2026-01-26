@@ -12,10 +12,10 @@ import {
   Droplets,
   Trophy,
   ArrowRight,
-  Loader2,
   ExternalLink,
   Coins,
 } from 'lucide-react';
+import { TableSkeleton } from '@/components/feedback/LoadingSkeleton';
 
 interface PositionWithMarket {
   market: Market;
@@ -116,147 +116,144 @@ export default function PortfolioPage() {
   const resolvedPositions = positions.filter(p => p.market.isResolved);
 
   return (
-    <main className="min-h-screen py-8">
+    <main className="min-h-screen py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold mb-8">Portfolio</h1>
+        <h1 className="text-4xl font-bold mb-12">Portfolio</h1>
 
         {!isConnected ? (
-          <div className="card text-center py-12">
-            <Wallet className="w-12 h-12 text-text-muted mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Connect Your Wallet</h2>
-            <p className="text-text-muted mb-6">
+          <div className="card card-spacing text-center py-16">
+            <Wallet className="w-16 h-16 text-text-secondary mx-auto mb-6" />
+            <h2 className="text-2xl font-bold mb-3">Connect Your Wallet</h2>
+            <p className="text-text-secondary mb-8 text-lg">
               Connect your wallet to view your positions and trading history
             </p>
           </div>
         ) : (
           <>
             {/* Portfolio Summary */}
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
-              <div className="card">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-brand-primary/10 rounded-lg flex items-center justify-center">
-                    <Coins className="w-5 h-5 text-brand-primary" />
+            <div className="grid md:grid-cols-3 gap-8 mb-12">
+              <div className="card card-spacing">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-14 h-14 bg-brand-primary/10 flex items-center justify-center">
+                    <Coins className="w-7 h-7 text-brand-primary" />
                   </div>
-                  <span className="text-text-muted">USDCx Balance</span>
+                  <span className="text-text-secondary font-semibold">USDCx Balance</span>
                 </div>
-                <p className="text-3xl font-bold">${formatTokenAmount(usdcxBalance)}</p>
+                <p className="text-4xl font-bold">${formatTokenAmount(usdcxBalance)}</p>
               </div>
 
-              <div className="card">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-brand-secondary/10 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-brand-secondary" />
+              <div className="card card-spacing">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-14 h-14 bg-brand-secondary/10 flex items-center justify-center">
+                    <TrendingUp className="w-7 h-7 text-brand-secondary" />
                   </div>
-                  <span className="text-text-muted">Portfolio Value</span>
+                  <span className="text-text-secondary font-semibold">Portfolio Value</span>
                 </div>
-                <p className="text-3xl font-bold">${formatTokenAmount(portfolioValue)}</p>
+                <p className="text-4xl font-bold">${formatTokenAmount(portfolioValue)}</p>
               </div>
 
-              <div className="card">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-yes/10 rounded-lg flex items-center justify-center">
-                    <Trophy className="w-5 h-5 text-yes" />
+              <div className="card card-spacing">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-14 h-14 bg-yes/10 flex items-center justify-center">
+                    <Trophy className="w-7 h-7 text-yes" />
                   </div>
-                  <span className="text-text-muted">Active Positions</span>
+                  <span className="text-text-secondary font-semibold">Active Positions</span>
                 </div>
-                <p className="text-3xl font-bold">{positions.length}</p>
+                <p className="text-4xl font-bold">{positions.length}</p>
               </div>
             </div>
 
             {/* Wallet Info */}
-            <div className="card mb-8">
+            <div className="card card-spacing mb-12">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-text-muted mb-1">Connected Wallet</p>
-                  <p className="font-mono">{formatAddress(address || '', 8)}</p>
+                  <p className="text-base text-text-secondary mb-2 font-semibold">Connected Wallet</p>
+                  <p className="font-mono text-lg">{formatAddress(address || '', 8)}</p>
                 </div>
                 <a
                   href={`https://explorer.hiro.so/address/${address}?chain=testnet`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-brand-primary hover:underline"
+                  className="flex items-center gap-2 text-brand-primary hover:underline text-base font-semibold"
                 >
                   View on Explorer
-                  <ExternalLink className="w-4 h-4" />
+                  <ExternalLink className="w-5 h-5" />
                 </a>
               </div>
             </div>
 
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
-                <p className="text-text-muted">Loading positions...</p>
-              </div>
+              <TableSkeleton count={5} />
             ) : positions.length === 0 ? (
-              <div className="card text-center py-12">
-                <TrendingUp className="w-12 h-12 text-text-muted mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">No Positions Yet</h2>
-                <p className="text-text-muted mb-6">
+              <div className="card card-spacing text-center py-16">
+                <TrendingUp className="w-16 h-16 text-text-secondary mx-auto mb-6" />
+                <h2 className="text-2xl font-bold mb-3">No Positions Yet</h2>
+                <p className="text-text-secondary mb-8 text-lg">
                   Start trading to build your portfolio
                 </p>
                 <Link
                   href="/markets"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-brand-primary text-white rounded-xl font-bold hover:bg-brand-primary/90 transition-all"
+                  className="inline-flex items-center gap-3 px-10 py-5 btn-gradient hover-scale gpu-accelerated text-base font-semibold"
                 >
                   Browse Markets
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-6 h-6" />
                 </Link>
               </div>
             ) : (
               <>
                 {/* Active Positions */}
                 {activePositions.length > 0 && (
-                  <div className="mb-8">
-                    <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-yes" />
+                  <div className="mb-12">
+                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                      <TrendingUp className="w-6 h-6 text-yes" />
                       Active Positions ({activePositions.length})
                     </h2>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       {activePositions.map(({ market, position, prices }) => (
                         <Link
                           key={market.marketId}
                           href={`/markets/${market.marketId}`}
-                          className="card block hover:border-brand-primary/50 transition-colors"
+                          className="card card-spacing block hover:border-brand-primary/50 transition-colors"
                         >
-                          <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-start justify-between mb-6">
                             <div className="flex-1">
-                              <p className="font-semibold line-clamp-1">{market.question}</p>
-                              <p className="text-sm text-text-muted">Market #{market.marketId}</p>
+                              <p className="text-lg font-bold line-clamp-1">{market.question}</p>
+                              <p className="text-base text-text-secondary mt-1">Market #{market.marketId}</p>
                             </div>
-                            <ArrowRight className="w-5 h-5 text-text-muted flex-shrink-0" />
+                            <ArrowRight className="w-6 h-6 text-text-secondary flex-shrink-0" />
                           </div>
 
-                          <div className="grid grid-cols-3 gap-4">
+                          <div className="grid grid-cols-3 gap-6">
                             {position.yesBalance > BigInt(0) && (
-                              <div className="p-3 bg-yes/5 border border-yes/20 rounded-lg">
-                                <p className="text-xs text-text-muted mb-1">YES Tokens</p>
-                                <p className="font-bold text-yes">
+                              <div className="p-4 bg-yes/5 border border-yes/20">
+                                <p className="text-sm text-text-secondary mb-2">YES Tokens</p>
+                                <p className="text-xl font-bold text-yes">
                                   {formatTokenAmount(position.yesBalance)}
                                 </p>
                                 {prices && (
-                                  <p className="text-xs text-text-muted">
+                                  <p className="text-sm text-text-secondary mt-1">
                                     @ {(prices.yesPrice / 10000).toFixed(1)}%
                                   </p>
                                 )}
                               </div>
                             )}
                             {position.noBalance > BigInt(0) && (
-                              <div className="p-3 bg-no/5 border border-no/20 rounded-lg">
-                                <p className="text-xs text-text-muted mb-1">NO Tokens</p>
-                                <p className="font-bold text-no">
+                              <div className="p-4 bg-no/5 border border-no/20">
+                                <p className="text-sm text-text-secondary mb-2">NO Tokens</p>
+                                <p className="text-xl font-bold text-no">
                                   {formatTokenAmount(position.noBalance)}
                                 </p>
                                 {prices && (
-                                  <p className="text-xs text-text-muted">
+                                  <p className="text-sm text-text-secondary mt-1">
                                     @ {(prices.noPrice / 10000).toFixed(1)}%
                                   </p>
                                 )}
                               </div>
                             )}
                             {position.lpBalance > BigInt(0) && (
-                              <div className="p-3 bg-brand-secondary/5 border border-brand-secondary/20 rounded-lg">
-                                <p className="text-xs text-text-muted mb-1">LP Tokens</p>
-                                <p className="font-bold text-brand-secondary">
+                              <div className="p-4 bg-brand-secondary/5 border border-brand-secondary/20">
+                                <p className="text-sm text-text-secondary mb-2">LP Tokens</p>
+                                <p className="text-xl font-bold text-brand-secondary">
                                   {formatTokenAmount(position.lpBalance)}
                                 </p>
                               </div>
@@ -271,11 +268,11 @@ export default function PortfolioPage() {
                 {/* Resolved Positions */}
                 {resolvedPositions.length > 0 && (
                   <div>
-                    <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                      <Trophy className="w-5 h-5 text-brand-secondary" />
+                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                      <Trophy className="w-6 h-6 text-brand-secondary" />
                       Resolved Markets ({resolvedPositions.length})
                     </h2>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       {resolvedPositions.map(({ market, position }) => {
                         const isWinner =
                           (market.winningOutcome === 0 && position.yesBalance > BigInt(0)) ||
@@ -287,32 +284,32 @@ export default function PortfolioPage() {
                           <Link
                             key={market.marketId}
                             href={`/markets/${market.marketId}`}
-                            className="card block hover:border-brand-primary/50 transition-colors"
+                            className="card card-spacing block hover:border-brand-primary/50 transition-colors"
                           >
-                            <div className="flex items-start justify-between mb-4">
+                            <div className="flex items-start justify-between mb-6">
                               <div className="flex-1">
-                                <p className="font-semibold line-clamp-1">{market.question}</p>
-                                <p className="text-sm text-text-muted">
+                                <p className="text-lg font-bold line-clamp-1">{market.question}</p>
+                                <p className="text-base text-text-secondary mt-1">
                                   Resolved: {market.winningOutcome === 0 ? 'YES' : 'NO'}
                                 </p>
                               </div>
-                              <ArrowRight className="w-5 h-5 text-text-muted flex-shrink-0" />
+                              <ArrowRight className="w-6 h-6 text-text-secondary flex-shrink-0" />
                             </div>
 
                             {isWinner && winningBalance > BigInt(0) ? (
-                              <div className="p-4 bg-yes/10 border border-yes/30 rounded-lg">
+                              <div className="p-6 bg-yes/10 border border-yes/30">
                                 <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <Trophy className="w-5 h-5 text-yes" />
-                                    <span className="font-medium text-yes">Winner!</span>
+                                  <div className="flex items-center gap-3">
+                                    <Trophy className="w-6 h-6 text-yes" />
+                                    <span className="text-lg font-bold text-yes">Winner!</span>
                                   </div>
-                                  <span className="font-bold text-yes">
+                                  <span className="text-xl font-bold text-yes">
                                     Claim ${formatTokenAmount(winningBalance)}
                                   </span>
                                 </div>
                               </div>
                             ) : (
-                              <div className="p-4 bg-dark-hover rounded-lg text-center text-text-muted">
+                              <div className="p-6 bg-dark-hover text-center text-text-secondary">
                                 No winnings to claim
                               </div>
                             )}
@@ -326,29 +323,29 @@ export default function PortfolioPage() {
             )}
 
             {/* Quick Actions */}
-            <div className="mt-8 grid grid-cols-2 gap-4">
+            <div className="mt-12 grid grid-cols-2 gap-6">
               <Link
                 href="/faucet"
-                className="card flex items-center gap-3 hover:border-brand-primary/50 transition-colors"
+                className="card card-spacing flex items-center gap-4 hover:border-brand-primary/50 transition-colors"
               >
-                <div className="w-10 h-10 bg-brand-primary/10 rounded-lg flex items-center justify-center">
-                  <Droplets className="w-5 h-5 text-brand-primary" />
+                <div className="w-14 h-14 bg-brand-primary/10 flex items-center justify-center">
+                  <Droplets className="w-7 h-7 text-brand-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">Get USDCx</p>
-                  <p className="text-sm text-text-muted">Testnet faucet</p>
+                  <p className="text-lg font-bold">Get USDCx</p>
+                  <p className="text-base text-text-secondary">Testnet faucet</p>
                 </div>
               </Link>
               <Link
                 href="/create"
-                className="card flex items-center gap-3 hover:border-brand-primary/50 transition-colors"
+                className="card card-spacing flex items-center gap-4 hover:border-brand-primary/50 transition-colors"
               >
-                <div className="w-10 h-10 bg-brand-secondary/10 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-brand-secondary" />
+                <div className="w-14 h-14 bg-brand-secondary/10 flex items-center justify-center">
+                  <TrendingUp className="w-7 h-7 text-brand-secondary" />
                 </div>
                 <div>
-                  <p className="font-medium">Create Market</p>
-                  <p className="text-sm text-text-muted">Start earning fees</p>
+                  <p className="text-lg font-bold">Create Market</p>
+                  <p className="text-base text-text-secondary">Start earning fees</p>
                 </div>
               </Link>
             </div>

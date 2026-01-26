@@ -12,6 +12,7 @@ import { CONTRACTS, formatTokenAmount, formatAddress, timeUntilBlock } from '@/l
 import TradingPanel from '@/components/TradingPanel';
 import LiquidityPanel from '@/components/LiquidityPanel';
 import UserPositions from '@/components/UserPositions';
+import { TradingPanelSkeleton } from '@/components/feedback/LoadingSkeleton';
 import type { Market, UserPosition } from '@/lib/contracts';
 import {
   ArrowLeft,
@@ -133,9 +134,21 @@ export default function MarketDetailPage() {
     return (
       <main className="min-h-screen py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-4" />
-            <p className="text-text-muted">Loading market...</p>
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              {/* Market header skeleton */}
+              <div className="card space-y-4">
+                <div className="h-8 skeleton rounded w-1/3"></div>
+                <div className="h-10 skeleton rounded"></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="h-20 skeleton rounded"></div>
+                  <div className="h-20 skeleton rounded"></div>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-6">
+              <TradingPanelSkeleton />
+            </div>
           </div>
         </div>
       </main>
@@ -151,7 +164,7 @@ export default function MarketDetailPage() {
             <p className="text-text-muted mb-6">This market does not exist or has been removed.</p>
             <Link
               href="/markets"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-brand-primary text-white rounded-xl font-bold"
+              className="inline-flex items-center gap-2 px-6 py-3 btn-gradient hover-scale gpu-accelerated"
             >
               <ArrowLeft className="w-5 h-5" />
               Back to Markets
