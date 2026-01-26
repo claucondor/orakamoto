@@ -22,6 +22,8 @@ prds/
 docs/EXPONENTIAL-FEES-PROGRESS.md
 docs/LP-PROTECTION-ACADEMIC-PAPER.md
 docs/LP-PROTECTION-RESEARCH.md
+docs/FRONTEND-REDESIGN-PLAN.md
+docs/PHASE-0-IMPROVEMENT-PLAN.md
 
 # Frontend build artifacts
 frontend/.next/
