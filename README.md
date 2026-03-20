@@ -4,8 +4,6 @@
 
 A decentralized prediction market protocol built on Stacks (Bitcoin L2). Create markets on any event, trade with real USDC via Circle's xReserve, provide liquidity, and earn fees — all secured by Bitcoin's finality.
 
-🏆 **Circle USDCx Hackathon Submission** - First prediction market using official USDCx on Stacks
-
 ---
 
 ## 🚀 Live Demo
@@ -167,7 +165,7 @@ See [ROADMAP.md](./docs/ROADMAP.md) for detailed phases.
 - **LP Positions:** 5 active LPs
 - **Fees Earned:** 0.5+ USDCx distributed
 
-*Updated: Jan 25, 2026*
+*Updated: Mar 2026*
 
 ---
 
@@ -263,36 +261,6 @@ Orakamoto is built solo but open to contributors. We need help with:
 
 ---
 
-## 🎯 Circle USDCx Hackathon
-
-**Submission Details:**
-
-This project was built for the Circle USDCx Hackathon (January 2026).
-
-**What we built:**
-- ✅ Full USDCx integration via xReserve bridge
-- ✅ Working prediction market protocol
-- ✅ Production-ready frontend
-- ✅ Comprehensive test suite
-- ✅ Live testnet deployment
-
-**Technical Innovation:**
-1. **First** prediction market using Circle's official USDCx on Stacks
-2. **Advanced AMM** (pm-AMM from Paradigm Research)
-3. **Transferable LP tokens** (SIP-013 standard)
-4. **Multi-market architecture** (single pool, unlimited markets)
-5. **Dynamic fee model** (3%-20% based on market lifecycle)
-
-**Demo Video:** *[Link to be added]*
-
-**Judging Criteria Met:**
-- ✅ Technical innovation: pm-AMM + SIP-013 + multi-market pool
-- ✅ USDCx integration depth: Bridge + trading + LP management
-- ✅ Usability: Clean UI, 1-click bridge, slippage protection
-- ✅ Presentation: Full demo + documentation
-- ✅ Real product potential: Polymarket proved $3B market exists
-
----
 
 ## 📜 License
 
