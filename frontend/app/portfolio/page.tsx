@@ -9,11 +9,11 @@ import type { Market, UserPosition } from '@/lib/contracts';
 import {
   Wallet,
   TrendingUp,
-  Droplets,
   Trophy,
   ArrowRight,
   ExternalLink,
   Coins,
+  BarChart2,
 } from 'lucide-react';
 import { TableSkeleton } from '@/components/feedback/LoadingSkeleton';
 
@@ -325,15 +325,15 @@ export default function PortfolioPage() {
             {/* Quick Actions */}
             <div className="mt-12 grid grid-cols-2 gap-6">
               <Link
-                href="/faucet"
+                href="/markets"
                 className="card card-spacing flex items-center gap-4 hover:border-brand-primary/50 transition-colors"
               >
                 <div className="w-14 h-14 bg-brand-primary/10 flex items-center justify-center">
-                  <Droplets className="w-7 h-7 text-brand-primary" />
+                  <BarChart2 className="w-7 h-7 text-brand-primary" />
                 </div>
                 <div>
-                  <p className="text-lg font-bold">Get USDCx</p>
-                  <p className="text-base text-text-secondary">Testnet faucet</p>
+                  <p className="text-lg font-bold">Explore Markets</p>
+                  <p className="text-base text-text-secondary">Browse active markets</p>
                 </div>
               </Link>
               <Link

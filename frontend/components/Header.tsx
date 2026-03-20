@@ -13,7 +13,6 @@ import StatsTicker from '@/components/layout/StatsTicker';
 const navigation = [
   { name: '> markets', href: '/markets' },
   { name: '> create', href: '/create' },
-  { name: '> bridge', href: '/bridge' },
   { name: '> portfolio', href: '/portfolio' },
 ];
 
