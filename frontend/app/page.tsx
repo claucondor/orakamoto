@@ -229,7 +229,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-bold mb-4 text-btc-orange">GET_USDCx</h3>
               <p className="text-base text-text-secondary font-mono leading-relaxed">
-                Use the testnet faucet to get free USDCx for trading
+                Get USDCx — Circle's official USDC on Stacks — to use as collateral
               </p>
             </div>
 
@@ -256,11 +256,11 @@ export default function Home() {
 
           <div className="text-center mt-16">
             <Link
-              href="/faucet"
+              href="/markets"
               className="terminal-button"
             >
               <Zap className="w-5 h-5 mr-2" />
-              GET_TEST_USDCx
+              EXPLORE_MARKETS
             </Link>
           </div>
         </div>
@@ -321,7 +321,7 @@ export default function Home() {
               <span className="text-xl font-bold">Orakamoto</span>
             </div>
             <p className="text-base text-text-secondary font-mono">
-              Built for Circle xReserve Hackathon 2025
+              Built on Bitcoin. Powered by USDCx.
             </p>
             <div className="flex items-center gap-6 text-base text-text-secondary font-mono">
               <span>Testnet</span>
